@@ -1,0 +1,51 @@
+environment: "Development"
+replicaCount: 1
+
+image:
+  repository: dotnet-project
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v0.0.0"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+metrics:
+  statsd_host: "datadog-statsd.datadog.svc.cluster.local"
+  statsd_port: 8125
+logs:
+  datadogSite: "https://http-intake.logs.datadoghq.eu"
+  logLevel: "INFO"
+  
+resources:
+  cpu: 100m
+  memory: 128Mi
+
+apm:
+  environment:
+    - name: CORECLR_ENABLE_PROFILING
+      value: "1"
+    - name: CORECLR_PROFILER
+      value: "{846F5F1C-F9AE-4B07-969E-05C26BC060D8}"
+    - name: CORECLR_PROFILER_PATH
+      value: "/opt/datadog/Datadog.Trace.ClrProfiler.Native.so"
+    - name: DD_DOTNET_TRACER_HOME
+      value: "/opt/datadog"
+    - name: DD_INTEGRATIONS
+      value: "/opt/datadog/integrations.json"
+    - name: LD_PRELOAD
+      value: "/opt/datadog/continuousprofiler/Datadog.Linux.ApiWrapper.x64.so"
+      
+nodes:
+  taint: "kubernetes.sneaksanddata.com/servicenodetype"
+  taintValue: "dotnet-project"
+
+secretStorage:
+  address: "https://hashicorp-vault.production.sneaksanddata.com"
+  roleName: "application"
+  deploymentClusterName: "<name of the the kubernetes cluster where the application is deployed>"

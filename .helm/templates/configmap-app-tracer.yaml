@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "app.name" . }}-tracer
+  labels:
+    app.kubernetes.io/name: {{ template "app.name" . }}
+    {{- include "app.labels" . | nindent 4 }}
+data:
+  DD_ENV: "{{ .Values.environment }}"
+  DD_SERVICE: "{{ template "app.name" . }}"
+  DD_VERSION: "{{ .Values.image.tag }}"
+  DD_LOGS_INJECTION: "true"
+  DD_APPSEC_ENABLED: "false"
+  DD_TRACE_SAMPLE_RATE: "1.0"
+  DD_RUNTIME_METRICS_ENABLED: "true"
+  DD_PROFILING_ENABLED: "0"
