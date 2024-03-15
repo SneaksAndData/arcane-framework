@@ -38,7 +38,7 @@ jobs:
         if: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')) && always() }}
         with:
           fetch-depth: 0
-      - uses: azure/setup-helm@v3
+      - uses: azure/setup-helm@v4
         with:
           version: '3.9.2'
         id: install_helm
