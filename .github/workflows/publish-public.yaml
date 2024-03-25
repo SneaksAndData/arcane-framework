@@ -1,0 +1,50 @@
+name: Publish to Nuget.org package feed
+
+run-name: Publish ${{github.ref_name}} by @${{ github.actor }}
+
+on: workflow_dispatch
+
+jobs:
+  release_to_nuget:
+    name: Release distribution to Github package feed
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
+      - name: Set Package Version
+        run: |
+          set -e
+          version=$(git describe --tags --abbrev=7 | tr -d "v")
+          sed -i "s/<Version>0.0.0/<Version>$version/" src/Arcane.Framework.csproj
+      - name: Import Secrets
+        uses: hashicorp/vault-action@v2.4.1
+        with:
+          url: https://hashicorp-vault.production.sneaksanddata.com/
+          role: github
+          method: jwt
+          secrets: |
+            /secret/data/common/code_signing_certificates certificate.p12 | CERT ;
+            /secret/data/common/nuget_publish api_key | API_KEY ;
+            
+      - name: Build NuGet
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          version=$(git describe --tags --abbrev=7 | tr -d "v")
+          cd src/
+          dotnet pack --configuration Release Arcane.Framework.csproj
+          
+          echo "$CERT" | base64 --decode > cert.p12
+          
+          dotnet sign "bin/Release/Arcane.Framework.$version.nupkg"  \
+            --certificate-path --certificate-path cert.p12 \
+            --timestamper http://timestamp.digicert.com
+          
+          dotnet nuget push "bin/Release/Arcane.Framework.$version.nupkg" --api-key "$API_KEY" \
+            --source  https://api.nuget.org/v3/index.json
+          
+          rm cert.p12

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>10</LangVersion>
+        <RootNamespace>Arcane.Framework</RootNamespace>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="SnD.Sdk" Version="1.0.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" Visible="false" PackagePath="\" />
+    </ItemGroup>
+    
+    <PropertyGroup>
+        <PackageId>Arcane.Framework</PackageId>
+        <Authors>Sneaks&amp;Data</Authors>
+        <Version>0.0.0</Version>
+        <Company>Sneaks&amp;Data</Company>
+        <RepositoryUrl>https://github.com/SneaksAndData/arcane-framework</RepositoryUrl>
+        <PackageDescription>Streaming Framework for Arcane streaming service</PackageDescription>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+</Project>

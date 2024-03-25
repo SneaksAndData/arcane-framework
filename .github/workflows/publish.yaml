@@ -1,0 +1,30 @@
+name: Publish to Github package feed
+
+run-name: Publish ${{github.ref_name}} by @${{ github.actor }}
+
+on: workflow_dispatch
+
+jobs:
+  release_to_nuget:
+    name: Release distribution to Github package feed
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set Package Version
+        run: |
+          set -e
+          version=$(git describe --tags --abbrev=7 | tr -d "v")
+          sed -i "s/<Version>0.0.0/<Version>$version/" src/Arcane.Framework.csproj
+      - name: Build NuGet
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          version=$(git describe --tags --abbrev=7 | tr -d "v")
+          cd src/
+          dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/SneaksAndData/index.json"
+          dotnet pack --configuration Release SnD.ApiClient.csproj
+          dotnet nuget push "bin/Release/SnD.ApiClient.$version.nupkg" --source "github"
