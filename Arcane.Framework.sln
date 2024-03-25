@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetProject", "src\DotnetProject.csproj", "{67711D50-E64C-4A18-871B-DC6A485DD9E4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arcane.Framework", "src\Arcane.Framework.csproj", "{67711D50-E64C-4A18-871B-DC6A485DD9E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetProjectTests", "test\DotnetProjectTests.csproj", "{B74A1EEE-CC43-4FFF-A6AB-129387D32F40}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arcane.Framework.Tests", "test\Arcane.Framework.Tests.csproj", "{B74A1EEE-CC43-4FFF-A6AB-129387D32F40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

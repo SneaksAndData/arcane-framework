@@ -1,24 +1,33 @@
----
 name: Bug report
-about: Create a report to help us improve
-title: "[BUG]"
+description: Create a bug report to help us to improve
+title: "[BUG] ..."
 labels: code/bug
-assignees: ''
+body:
+- type: textarea
+  attributes:
+  label: Description
+  description: |
+  Briefly describe the problem you are having in a few paragraphs.
+  validations:
+  required: true
 
----
+- type: textarea
+  attributes:
+  label: Steps to reproduce the issue
+  value: |
+  1.
+  2.
+  3.
 
-**Describe the bug**  
-A clear and concise description of what the bug is.
+- type: textarea
+  attributes:
+  label: Describe the results you expected
+  validations:
+  required: true
 
-**To Reproduce**  
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-**Expected behavior**  
-A clear and concise description of what you expected to happen.
-
-**Additional context**  
-Add any other context about the problem here.
+- type: input
+  attributes:
+  label: System information
+  placeholder: Arcane version, OS, dotnet version etc.
+  validations:
+  required: true
