@@ -17,10 +17,6 @@
     <ItemGroup>
         <None Include="../README.md" Pack="true" Visible="false" PackagePath="\"/>
     </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Metrics\" />
-    </ItemGroup>
     
     <ItemGroup>
         <None Update="Sources\SqlServer\SqlSnippets\GetColumns.sql">

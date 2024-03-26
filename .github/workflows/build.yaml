@@ -18,7 +18,7 @@ jobs:
           - 1433:1433
         env:
           ACCEPT_EULA: True
-          MSSQL_SA_PASSWORD: QY_SK8zr099m
+          MSSQL_SA_PASSWORD: tMIxN11yGZgMC
 
     steps:
       - uses: actions/checkout@v3

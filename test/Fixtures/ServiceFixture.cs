@@ -31,7 +31,7 @@ namespace Arcane.Framework.Tests.Fixtures
             this.MockKubeCluster = new Mock<IKubeCluster>();
             this.MockStreamConfigurationProvider = new Mock<IStreamConfigurationProvider>();
 
-            this.TestDbConnectionString = OperatingSystem.IsWindows() ? @"Server=(localdb)\MSSQLLocalDB;Integrated Security=true;Trust Server Certificate=true" : "Server=.,1433;UID=sa;PWD=QY_SK8zr099m;TrustServerCertificate=true";
+            this.TestDbConnectionString = OperatingSystem.IsWindows() ? @"Server=(localdb)\MSSQLLocalDB;Integrated Security=true;Trust Server Certificate=true" : "Server=.,1433;UID=sa;PWD=tMIxN11yGZgMC;TrustServerCertificate=true";
 
             using (var sqlCon = new SqlConnection(this.TestDbConnectionString))
             {

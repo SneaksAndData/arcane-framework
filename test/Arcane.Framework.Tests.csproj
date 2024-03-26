@@ -2,9 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-
         <IsPackable>false</IsPackable>
-
         <RootNamespace>Arcane.Framework.Tests</RootNamespace>
     </PropertyGroup>
 
@@ -33,15 +31,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Models\TestData\RetailChannelTable.cdm.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\TestData\CdmBaseEntity\**">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\TestData\CdmChangeFeed\**">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="Operations\RestApiTestData\open_api_schema_simple.yaml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
