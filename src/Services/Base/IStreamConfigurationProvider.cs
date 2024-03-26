@@ -13,5 +13,5 @@ public class IStreamConfigurationProvider
     /// <summary>
     /// True if stream is running in backfill (full reload) mode
     /// </summary>
-    public bool IsFullLoad { get; }
+    public bool IsRunningInBackfillMode { get; }
 }

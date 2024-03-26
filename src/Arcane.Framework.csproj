@@ -5,15 +5,35 @@
         <RootNamespace>Arcane.Framework</RootNamespace>
         <OutputType>Library</OutputType>
     </PropertyGroup>
-    
+
     <ItemGroup>
-        <PackageReference Include="SnD.Sdk" Version="1.0.4" />
+        <PackageReference Include="SnD.Sdk" Version="1.0.4"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5"/>
+        <PackageReference Include="Parquet.Net" Version="3.9.1"/>
+        <PackageReference Include="Microsoft.OpenApi" Version="1.6.6"/>
+        <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.6"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../README.md" Pack="true" Visible="false" PackagePath="\" />
+        <None Include="../README.md" Pack="true" Visible="false" PackagePath="\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Metrics\" />
     </ItemGroup>
     
+    <ItemGroup>
+        <None Update="Sources\SqlServer\SqlSnippets\GetColumns.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Sources\SqlServer\SqlSnippets\GetSelectAllQuery.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
     <PropertyGroup>
         <PackageId>Arcane.Framework</PackageId>
         <Authors>Sneaks&amp;Data</Authors>

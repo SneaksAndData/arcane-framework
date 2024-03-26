@@ -1,0 +1,29 @@
+﻿{
+  "type": "object",
+  "properties": {
+    "page": {
+      "pattern": "\\d+",
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+    },
+    "limit": {
+      "pattern": "\\d+",
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+    },
+    "pages": {
+      "pattern": "\\d+",
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+    },
+    "total": {
+      "pattern": "\\d+",
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+    }
+  }
+}
