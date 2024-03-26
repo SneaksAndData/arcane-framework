@@ -11,6 +11,14 @@ jobs:
     name: Validate commit
     runs-on: ubuntu-latest
     if: ${{ github.ref != 'refs/heads/main' }}
+    services:
+      mssql_server:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+          - 1433:1433
+        env:
+          ACCEPT_EULA: True
+          MSSQL_SA_PASSWORD: QY_SK8zr099m
 
     steps:
       - uses: actions/checkout@v3
