@@ -14,7 +14,6 @@ namespace Arcane.Framework.Sources.RestApi.Extensions;
 /// </summary>
 public static class RestApiExtensions
 {
-
     /// <summary>
     /// Parse OpenApi schema from base64 encoded string.
     /// </summary>
@@ -28,8 +27,10 @@ public static class RestApiExtensions
             openApiStringReader.ReadFragment<OpenApiSchema>(schemaValue, OpenApiSpecVersion.OpenApi3_0,
                 out var diagnostic);
         if (diagnostic.Errors.Count > 0)
+        {
             throw new ApplicationException(
                 $"Encountered errors when parsing OpenApi V3 schema: {schemaValue}, error: {string.Join("\n", diagnostic.Errors.Select(err => err.Message))}");
+        }
 
         return openApiSchema;
     }
@@ -65,7 +66,10 @@ public static class RestApiExtensions
             : responsePropertyKeyChain.Aggregate(response,
                 (je, property) =>
                 {
-                    if (je.TryGetProperty(property, out var propertyValue)) return propertyValue;
+                    if (je.TryGetProperty(property, out var propertyValue))
+                    {
+                        return propertyValue;
+                    }
 
                     return JsonSerializer.Deserialize<JsonElement>($"{{ \"{property}\": {{ }}  }}");
                 }).TryEnumerateArray().AsEnumerable();

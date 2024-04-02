@@ -59,9 +59,9 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     /// <inheritdoc cref="IParquetSource.GetParquetSchema"/>
     public Schema GetParquetSchema()
     {
-        using var sqlCon = new SqlConnection(connectionString);
+        using var sqlCon = new SqlConnection(this.connectionString);
         sqlCon.Open();
-        var command = new SqlCommand(GetQuery(), sqlCon) { CommandTimeout = commandTimeout };
+        var command = new SqlCommand(GetQuery(), sqlCon) { CommandTimeout = this.commandTimeout };
         using var schemaReader = command.ExecuteReader(CommandBehavior.SchemaOnly);
 
         return schemaReader.ToParquetSchema();
@@ -70,12 +70,12 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     /// <inheritdoc cref="ITaggedSource.GetDefaultTags"/>
     public SourceTags GetDefaultTags()
     {
-        var sqlConBuilder = new SqlConnectionStringBuilder(connectionString);
+        var sqlConBuilder = new SqlConnectionStringBuilder(this.connectionString);
         return new SourceTags
         {
-            StreamKind = streamKind,
+            StreamKind = this.streamKind,
             SourceLocation = sqlConBuilder.InitialCatalog,
-            SourceEntity = $"{sqlConBuilder.InitialCatalog}.{schemaName}.{tableName}"
+            SourceEntity = $"{sqlConBuilder.InitialCatalog}.{this.schemaName}.{this.tableName}"
         };
     }
 
@@ -101,8 +101,8 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
 
     private string GetQuery()
     {
-        var sqlConBuilder = new SqlConnectionStringBuilder(connectionString);
-        return $"SELECT * FROM [{sqlConBuilder.InitialCatalog}].[{schemaName}].[{tableName}]";
+        var sqlConBuilder = new SqlConnectionStringBuilder(this.connectionString);
+        return $"SELECT * FROM [{sqlConBuilder.InitialCatalog}].[{this.schemaName}].[{this.tableName}]";
     }
 
     private sealed class SourceLogic : TimerGraphStageLogic
@@ -117,8 +117,8 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
         public SourceLogic(SqlServerSource source) : base(source.Shape)
         {
             this.source = source;
-            sqlConnection = new SqlConnection(this.source.connectionString);
-            decider = Decider.From((ex) => ex.GetType().Name switch
+            this.sqlConnection = new SqlConnection(this.source.connectionString);
+            this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
                 nameof(ArgumentNullException) => Directive.Stop,
@@ -136,20 +136,24 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
 
         private void Finish(Exception cause)
         {
-            reader.Close();
-            sqlConnection.Close();
-            sqlConnection.Dispose();
+            this.reader.Close();
+            this.sqlConnection.Close();
+            this.sqlConnection.Dispose();
             if (cause is not null && cause is not SubscriptionWithCancelException.NonFailureCancellation)
+            {
                 FailStage(cause);
+            }
             else
+            {
                 CompleteStage();
+            }
         }
 
         private void OnRecordReceived(Task<Option<List<DataCell>>> readTask)
         {
             if (readTask.IsFaulted || readTask.IsCanceled)
             {
-                switch (decider.Decide(readTask.Exception))
+                switch (this.decider.Decide(readTask.Exception))
                 {
                     case Directive.Stop:
                         FailStage(readTask.Exception);
@@ -164,32 +168,39 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
 
             // No more records from Sql Server
             if (readTask.Result.IsEmpty)
+            {
                 Finish(null);
+            }
             else
-                Emit(source.Out, readTask.Result.Value);
+            {
+                Emit(this.source.Out, readTask.Result.Value);
+            }
         }
 
         public override void PreStart()
         {
-            recordsReceived = GetAsyncCallback<Task<Option<List<DataCell>>>>(OnRecordReceived);
-            sqlConnection.Open();
-            var command = new SqlCommand(source.GetQuery(), sqlConnection) { CommandTimeout = source.commandTimeout };
-            reader = command.ExecuteReader();
+            this.recordsReceived = GetAsyncCallback<Task<Option<List<DataCell>>>>(OnRecordReceived);
+            this.sqlConnection.Open();
+            var command = new SqlCommand(this.source.GetQuery(), this.sqlConnection)
+                { CommandTimeout = this.source.commandTimeout };
+            this.reader = command.ExecuteReader();
         }
 
         private void PullReader()
         {
-            reader.ReadAsync().Map(result =>
+            this.reader.ReadAsync().Map(result =>
             {
                 if (result)
-                    return Enumerable.Range(0, reader.FieldCount)
-                        .Select(ixCol => new DataCell(reader.GetName(ixCol), reader.GetFieldType(ixCol),
-                            reader.GetValue(ixCol)))
+                {
+                    return Enumerable.Range(0, this.reader.FieldCount)
+                        .Select(ixCol => new DataCell(this.reader.GetName(ixCol), this.reader.GetFieldType(ixCol),
+                            this.reader.GetValue(ixCol)))
                         .ToList()
                         .AsOption();
+                }
 
                 return Option<List<DataCell>>.None;
-            }).ContinueWith(recordsReceived);
+            }).ContinueWith(this.recordsReceived);
         }
 
         protected override void OnTimer(object timerKey)

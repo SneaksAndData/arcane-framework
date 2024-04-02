@@ -13,10 +13,10 @@ namespace Arcane.Framework.Sources.RestApi.Services.UriProviders;
 /// </summary>
 public class SimpleUriProvider : IRestApiUriProvider
 {
+    private readonly List<RestApiTemplatedField> _templatedFields;
     private readonly DateTimeOffset backFillStartDate;
     private readonly RestApiTemplate bodyTemplate;
     private readonly HttpMethod requestMethod;
-    private readonly List<RestApiTemplatedField> _templatedFields;
     private readonly RestApiTemplate urlTemplate;
 
     /// <summary>
@@ -50,19 +50,20 @@ public class SimpleUriProvider : IRestApiUriProvider
         TimeSpan lookBackInterval,
         TimeSpan changeCaptureInterval)
     {
-        var resultUri = urlTemplate.CreateResolver();
-        var resultBody = bodyTemplate.CreateResolver();
+        var resultUri = this.urlTemplate.CreateResolver();
+        var resultBody = this.bodyTemplate.CreateResolver();
 
         var filterTimestamp = (isFullLoad: isBackfill, paginatedResponse.IsEmpty) switch
         {
-            (true, _) => backFillStartDate,
+            (true, _) => this.backFillStartDate,
             (false, true) => DateTimeOffset.UtcNow.Subtract(lookBackInterval),
             (false, false) => DateTimeOffset.UtcNow.Subtract(changeCaptureInterval)
         };
 
-        if (_templatedFields.FirstOrDefault(field =>
+        if (this._templatedFields.FirstOrDefault(field =>
                 field.FieldType is TemplatedFieldType.FILTER_DATE_FROM or TemplatedFieldType.FILTER_DATE_BETWEEN_FROM)
             is { } dateField)
+        {
             switch (dateField.Placement)
             {
                 case TemplatedFieldPlacement.URL:
@@ -76,9 +77,11 @@ public class SimpleUriProvider : IRestApiUriProvider
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
 
-        if (_templatedFields.FirstOrDefault(
+        if (this._templatedFields.FirstOrDefault(
                 field => field.FieldType == TemplatedFieldType.FILTER_DATE_BETWEEN_TO) is { } dateFieldTo)
+        {
             switch (dateFieldTo.Placement)
             {
                 case TemplatedFieldPlacement.URL:
@@ -92,8 +95,9 @@ public class SimpleUriProvider : IRestApiUriProvider
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
 
-        return (new Uri(resultUri.GetResolvedRequestElement()), requestMethod,
+        return (new Uri(resultUri.GetResolvedRequestElement()), this.requestMethod,
             resultBody.GetResolvedRequestElement());
     }
 }

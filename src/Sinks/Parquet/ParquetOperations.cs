@@ -62,7 +62,10 @@ public static class ParquetOperations
         if (cellGroups.Count > 0)
         {
             var (srcFields, sinkFields) = (cellGroups.First().Count, parquetSchema.GetDataFields().Length);
-            if (srcFields != sinkFields) throw new SchemaInconsistentException(srcFields, sinkFields);
+            if (srcFields != sinkFields)
+            {
+                throw new SchemaInconsistentException(srcFields, sinkFields);
+            }
         }
 
         var columns = parquetSchema.GetDataFields().Select((field, _) =>
@@ -72,7 +75,6 @@ public static class ParquetOperations
         {
             foreach (var (cell, ix_col) in cellGroup.Select((c, ix) => (c, ix)))
             {
-
                 if ((columns[ix_col].Field.ClrType == typeof(DateTimeOffset?) ||
                      columns[ix_col].Field.ClrType == typeof(DateTimeOffset)) && cell.FieldType == typeof(DateTime) &&
                     cell.Value != DBNull.Value && cell.Value != null)
@@ -94,10 +96,14 @@ public static class ParquetOperations
                 }
                 else
                 {
-                    if (cell.Value != DBNull.Value) columns[ix_col].Data.SetValue(cell.Value, ix_rec);
+                    if (cell.Value != DBNull.Value)
+                    {
+                        columns[ix_col].Data.SetValue(cell.Value, ix_rec);
+                    }
                 }
             }
         }
+
         return columns;
     }
 
@@ -119,7 +125,10 @@ public static class ParquetOperations
 
             using (var groupWriter = parquetWriter.CreateRowGroup())
             {
-                foreach (var parquetColumn in GetEmptyRowGroup(parquetSchema)) groupWriter.WriteColumn(parquetColumn);
+                foreach (var parquetColumn in GetEmptyRowGroup(parquetSchema))
+                {
+                    groupWriter.WriteColumn(parquetColumn);
+                }
             }
         }
 
@@ -136,9 +145,15 @@ public static class ParquetOperations
 
     private static Type GetNullableClrType(this Type clrType)
     {
-        if (clrType == typeof(Guid)) return typeof(string);
+        if (clrType == typeof(Guid))
+        {
+            return typeof(string);
+        }
 
-        if (clrType == typeof(string) || clrType.IsArray) return clrType;
+        if (clrType == typeof(string) || clrType.IsArray)
+        {
+            return clrType;
+        }
 
         return typeof(Nullable<>).MakeGenericType(clrType);
     }
@@ -146,10 +161,12 @@ public static class ParquetOperations
     private static Field ResolveObjectProperty(this KeyValuePair<string, OpenApiSchema> objectProperty)
     {
         var propertyType = objectProperty.Value.MapOpenApiPrimitiveTypeToSimpleType();
-        if (propertyType != typeof(object)) return new DataField(objectProperty.Key, propertyType.GetNullableClrType());
+        if (propertyType != typeof(object))
+        {
+            return new DataField(objectProperty.Key, propertyType.GetNullableClrType());
+        }
 
         return new StructField(objectProperty.Key,
             objectProperty.Value.Properties.Select(prop => prop.ResolveObjectProperty()).ToArray());
     }
-
 }

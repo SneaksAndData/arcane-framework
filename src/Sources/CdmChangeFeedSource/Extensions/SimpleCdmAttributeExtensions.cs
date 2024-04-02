@@ -50,7 +50,10 @@ public static class SimpleCdmAttributeExtensions
         var definitions = complexTypes
             .Where(ct => ct.GetProperty("dataTypeName").GetString() == typeName)
             .ToArray();
-        if (!definitions.Any()) throw new InvalidOperationException($"Unknown primitive type: {typeName}");
+        if (!definitions.Any())
+        {
+            throw new InvalidOperationException($"Unknown primitive type: {typeName}");
+        }
 
         return definitions.FirstOrDefault();
     }

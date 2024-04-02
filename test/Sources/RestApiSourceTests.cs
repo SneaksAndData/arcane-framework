@@ -21,27 +21,11 @@ namespace Arcane.Framework.Tests.Sources;
 public class RestApiSourceTests : IClassFixture<AkkaFixture>
 {
     private readonly AkkaFixture akkaFixture;
-    private readonly Mock<HttpClient> mockHttp;
     private readonly SimpleUriProvider db;
-    private readonly FixedHeaderAuthenticatedMessageProvider fa;
     private readonly DynamicBearerAuthenticatedMessageProvider dynamicAuth;
+    private readonly FixedHeaderAuthenticatedMessageProvider fa;
+    private readonly Mock<HttpClient> mockHttp;
     private readonly PagedUriProvider pdb;
-
-    private class MockResult
-    {
-        public string MockValue { get; set; }
-    }
-
-    private class MockChainResult
-    {
-        public MockResult[] MockEntryValue { get; set; }
-    }
-
-    private class MockChainResultRoot
-    {
-        public int TotalPages { get; set; }
-        public MockChainResult MockRootValue { get; set; }
-    }
 
     public RestApiSourceTests(AkkaFixture akkaFixture)
     {
@@ -53,33 +37,35 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
             {
                 FieldName = "date", FieldType = TemplatedFieldType.FILTER_DATE_FROM,
                 FormatString = "yyyy-MM-ddTHH:mm:ssZ", Placement = TemplatedFieldPlacement.URL
-            },
+            }
         }, new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero), HttpMethod.Get);
         this.fa = new FixedHeaderAuthenticatedMessageProvider(new Dictionary<string, string> { { "Bearer", "test" } });
-        this.dynamicAuth = new DynamicBearerAuthenticatedMessageProvider("https://localhost/auth", "token", "expiresIn");
+        this.dynamicAuth =
+            new DynamicBearerAuthenticatedMessageProvider("https://localhost/auth", "token", "expiresIn");
         this.pdb = new PagedUriProvider(
-            "https://localhost/data_paged?page=@page&filter=updatedAt>=<@dateFrom,@dateTo",
-            new List<RestApiTemplatedField>
-            {
-                new()
+                "https://localhost/data_paged?page=@page&filter=updatedAt>=<@dateFrom,@dateTo",
+                new List<RestApiTemplatedField>
                 {
-                    FieldName = "page", FieldType = TemplatedFieldType.RESPONSE_PAGE, FormatString = string.Empty,
-                    Placement = TemplatedFieldPlacement.URL
+                    new()
+                    {
+                        FieldName = "page", FieldType = TemplatedFieldType.RESPONSE_PAGE, FormatString = string.Empty,
+                        Placement = TemplatedFieldPlacement.URL
+                    },
+                    new()
+                    {
+                        FieldName = "dateFrom", FieldType = TemplatedFieldType.FILTER_DATE_BETWEEN_FROM,
+                        FormatString = "yyyyMMddHHmmss", Placement = TemplatedFieldPlacement.URL
+                    },
+                    new()
+                    {
+                        FieldName = "dateTo", FieldType = TemplatedFieldType.FILTER_DATE_BETWEEN_TO,
+                        FormatString = "yyyyMMddHHmmss", Placement = TemplatedFieldPlacement.URL
+                    }
                 },
-                new()
-                {
-                    FieldName = "dateFrom", FieldType = TemplatedFieldType.FILTER_DATE_BETWEEN_FROM,
-                    FormatString = "yyyyMMddHHmmss", Placement = TemplatedFieldPlacement.URL
-                },
-                new()
-                {
-                    FieldName = "dateTo", FieldType = TemplatedFieldType.FILTER_DATE_BETWEEN_TO,
-                    FormatString = "yyyyMMddHHmmss", Placement = TemplatedFieldPlacement.URL
-                }
-            },
-            new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero),
-            HttpMethod.Get)
-            .WithPageResolver(new PageResolverConfiguration { ResolverPropertyKeyChain = new[] { "TotalPages" }, ResolverType = PageResolverType.COUNTER });
+                new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                HttpMethod.Get)
+            .WithPageResolver(new PageResolverConfiguration
+                { ResolverPropertyKeyChain = new[] { "TotalPages" }, ResolverType = PageResolverType.COUNTER });
     }
 
     [Fact]
@@ -223,5 +209,21 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
         var result = await Source.FromGraph(src).RunWith(Sink.Seq<JsonElement>(), this.akkaFixture.Materializer);
 
         Assert.Equal(mockContent.TotalPages * 2, result.Count);
+    }
+
+    private class MockResult
+    {
+        public string MockValue { get; set; }
+    }
+
+    private class MockChainResult
+    {
+        public MockResult[] MockEntryValue { get; set; }
+    }
+
+    private class MockChainResultRoot
+    {
+        public int TotalPages { get; set; }
+        public MockChainResult MockRootValue { get; set; }
     }
 }

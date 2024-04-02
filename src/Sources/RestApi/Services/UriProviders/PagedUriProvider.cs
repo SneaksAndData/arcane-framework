@@ -61,82 +61,88 @@ public class PagedUriProvider : IPaginatedApiUriProvider
         TimeSpan lookBackInterval,
         TimeSpan changeCaptureInterval)
     {
-        var resultUri = urlTemplate.CreateResolver();
-        var resultBody = bodyTemplate.CreateResolver();
+        var resultUri = this.urlTemplate.CreateResolver();
+        var resultBody = this.bodyTemplate.CreateResolver();
 
-        queryRange ??= isBackfill
-            ? new TimestampRange(_backFillStartDate, DateTimeOffset.UtcNow)
+        this.queryRange ??= isBackfill
+            ? new TimestampRange(this._backFillStartDate, DateTimeOffset.UtcNow)
             : paginatedResponse.IsEmpty
                 ? new TimestampRange(DateTimeOffset.UtcNow.Subtract(lookBackInterval), DateTimeOffset.UtcNow)
                 : new TimestampRange(DateTimeOffset.UtcNow.Subtract(changeCaptureInterval), DateTimeOffset.UtcNow);
 
-        if (templatedFields.FirstOrDefault(field =>
+        if (this.templatedFields.FirstOrDefault(field =>
                 field.FieldType is TemplatedFieldType.FILTER_DATE_FROM or TemplatedFieldType.FILTER_DATE_BETWEEN_FROM)
             is { } dateField)
+        {
             switch (dateField.Placement)
             {
                 case TemplatedFieldPlacement.URL:
                     resultUri = resultUri.ResolveField(dateField.FieldName,
-                        queryRange.Start.ToString(dateField.FormatString));
+                        this.queryRange.Start.ToString(dateField.FormatString));
                     break;
                 case TemplatedFieldPlacement.BODY:
                     resultBody = resultBody.ResolveField(dateField.FieldName,
-                        queryRange.Start.ToString(dateField.FormatString));
+                        this.queryRange.Start.ToString(dateField.FormatString));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
 
-        if (templatedFields.FirstOrDefault(field => field.FieldType == TemplatedFieldType.FILTER_DATE_BETWEEN_TO)
+        if (this.templatedFields.FirstOrDefault(field => field.FieldType == TemplatedFieldType.FILTER_DATE_BETWEEN_TO)
             is { } dateFieldTo)
+        {
             switch (dateFieldTo.Placement)
             {
                 case TemplatedFieldPlacement.URL:
                     resultUri = resultUri.ResolveField(dateFieldTo.FieldName,
-                        queryRange.End.ToString(dateFieldTo.FormatString));
+                        this.queryRange.End.ToString(dateFieldTo.FormatString));
                     break;
                 case TemplatedFieldPlacement.BODY:
                     resultBody = resultBody.ResolveField(dateFieldTo.FieldName,
-                        queryRange.End.ToString(dateFieldTo.FormatString));
+                        this.queryRange.End.ToString(dateFieldTo.FormatString));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
 
         var pageField =
-            templatedFields.FirstOrDefault(field => field.FieldType == TemplatedFieldType.RESPONSE_PAGE);
+            this.templatedFields.FirstOrDefault(field => field.FieldType == TemplatedFieldType.RESPONSE_PAGE);
 
         if (pageField == null)
+        {
             throw new ApplicationException(
                 "No field in either body or request url has a `page` parameter, though API is initialized as paged");
+        }
 
         // reset query range when pagination has been finished
-        if (!pageResolver.Next(paginatedResponse))
+        if (!this.pageResolver.Next(paginatedResponse))
         {
-            queryRange = null;
-            return (Option<Uri>.None, requestMethod, Option<string>.None);
+            this.queryRange = null;
+            return (Option<Uri>.None, this.requestMethod, Option<string>.None);
         }
 
         switch (pageField.Placement)
         {
             case TemplatedFieldPlacement.URL:
-                resultUri = pageResolver.ResolvePage(resultUri, pageField);
+                resultUri = this.pageResolver.ResolvePage(resultUri, pageField);
                 break;
             case TemplatedFieldPlacement.BODY:
-                resultBody = pageResolver.ResolvePage(resultBody, pageField);
+                resultBody = this.pageResolver.ResolvePage(resultBody, pageField);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
 
-        return (new Uri(resultUri.GetResolvedRequestElement()), requestMethod,
+        return (new Uri(resultUri.GetResolvedRequestElement()), this.requestMethod,
             resultBody.GetResolvedRequestElement());
     }
 
     /// <inheritdoc cref="IPaginatedApiUriProvider.HasReadAllPages"/>
     public bool HasReadAllPages()
     {
-        return queryRange == null;
+        return this.queryRange == null;
     }
 
     /// <inheritdoc cref="IRestApiUriProvider.BaseUri"/>
@@ -151,16 +157,19 @@ public class PagedUriProvider : IPaginatedApiUriProvider
         switch (resolverConfiguration.ResolverType)
         {
             case PageResolverType.COUNTER:
-                pageResolver = new PageCountingResolver(resolverConfiguration.ResolverPropertyKeyChain);
+                this.pageResolver = new PageCountingResolver(resolverConfiguration.ResolverPropertyKeyChain);
                 break;
             case PageResolverType.OFFSET:
                 if (!resolverConfiguration.ResponseSize.HasValue)
+                {
                     throw new ApplicationException($"Response size is required when using {PageResolverType.OFFSET}");
-                pageResolver = new PageOffsetResolver(resolverConfiguration.ResponseSize.Value,
+                }
+
+                this.pageResolver = new PageOffsetResolver(resolverConfiguration.ResponseSize.Value,
                     resolverConfiguration.ResolverPropertyKeyChain);
                 break;
             case PageResolverType.TOKEN:
-                pageResolver = new PageNextTokenResolver(resolverConfiguration.ResolverPropertyKeyChain);
+                this.pageResolver = new PageNextTokenResolver(resolverConfiguration.ResolverPropertyKeyChain);
                 break;
         }
 

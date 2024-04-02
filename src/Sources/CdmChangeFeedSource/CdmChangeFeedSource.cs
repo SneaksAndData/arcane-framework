@@ -33,11 +33,11 @@ namespace Arcane.Framework.Sources.CdmChangeFeedSource;
 /// </summary>
 public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IParquetSource, ITaggedSource
 {
+    private const string mergeColumnName = "RECID";
     private readonly IBlobStorageService blobStorage;
     private readonly TimeSpan changeCaptureInterval;
     private readonly string entityName;
     private readonly bool fullLoadOnStart;
-    private const string mergeColumnName = "RECID";
     private readonly string rootPath;
     private readonly TimeSpan schemaUpdateInterval;
     private readonly bool stopAfterFullLoad;
@@ -85,9 +85,9 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     {
         return new SourceTags
         {
-            SourceEntity = entityName,
-            SourceLocation = rootPath,
-            StreamKind = streamKind
+            SourceEntity = this.entityName,
+            SourceLocation = this.rootPath,
+            StreamKind = this.streamKind
         };
     }
 
@@ -113,8 +113,10 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         TimeSpan? schemaUpdateInterval = null)
     {
         if (stopAfterFullLoad && !fullLoadOnStart)
+        {
             throw new ArgumentException(
                 $"{nameof(fullLoadOnStart)} must be true if {nameof(stopAfterFullLoad)} is set to true");
+        }
 
         return new CdmChangeFeedSource(rootPath,
             entityName,
@@ -134,8 +136,8 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
     private SimpleCdmEntity GetCdmSchema()
     {
-        var schemaPath = $"ChangeFeed/{entityName}.cdm.json";
-        var schemaData = blobStorage.GetBlobContent(rootPath, schemaPath,
+        var schemaPath = $"ChangeFeed/{this.entityName}.cdm.json";
+        var schemaData = this.blobStorage.GetBlobContent(this.rootPath, schemaPath,
             bd => JsonSerializer.Deserialize<JsonDocument>(bd.ToString()));
 
         return SimpleCdmEntity.FromJson(schemaData);
@@ -157,10 +159,10 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         public SourceLogic(CdmChangeFeedSource source) : base(source.Shape)
         {
             this.source = source;
-            changeFeedPath = $"{source.rootPath}/ChangeFeed/{source.entityName}";
-            tablesPath = $"{source.rootPath}/Tables";
+            this.changeFeedPath = $"{source.rootPath}/ChangeFeed/{source.entityName}";
+            this.tablesPath = $"{source.rootPath}/Tables";
 
-            decider = Decider.From((ex) => ex.GetType().Name switch
+            this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
                 nameof(ArgumentNullException) => Directive.Stop,
@@ -180,12 +182,12 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         public bool IsRunningInBackfillMode { get; set; }
 
         /// <inheritdoc cref="IStopAfterBackfill.StopAfterBackfill"/>
-        public bool StopAfterBackfill => source.stopAfterFullLoad;
+        public bool StopAfterBackfill => this.source.stopAfterFullLoad;
 
         public override void PreStart()
         {
             UpdateSchema(false);
-            if (source.fullLoadOnStart)
+            if (this.source.fullLoadOnStart)
             {
                 PrepareEntityAsChanges();
             }
@@ -197,11 +199,14 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
         private void DecideOnFailure(Exception ex)
         {
-            switch (decider.Decide(ex))
+            switch (this.decider.Decide(ex))
             {
                 case Directive.Stop:
                     // wrap exception in schema change if we catch out of range on csv parse
-                    if (ex is IndexOutOfRangeException) ex = new SchemaMismatchException(ex);
+                    if (ex is IndexOutOfRangeException)
+                    {
+                        ex = new SchemaMismatchException(ex);
+                    }
 
                     FailStage(ex);
                     break;
@@ -222,17 +227,20 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             Dictionary<string, int> fieldSortIndexes)
         {
             var blobSchemaPath = string.Join("/",
-                blob.Name.Split("/")[1..^2].Append($"{source.entityName}.cdm.json"));
-            var blobSchema = SimpleCdmEntity.FromJson(source.blobStorage.GetBlobContent(source.rootPath,
+                blob.Name.Split("/")[1..^2].Append($"{this.source.entityName}.cdm.json"));
+            var blobSchema = SimpleCdmEntity.FromJson(this.source.blobStorage.GetBlobContent(this.source.rootPath,
                 blobSchemaPath, (bd) => JsonSerializer.Deserialize<JsonDocument>(bd.ToString())));
-            var blobStream = source.blobStorage.StreamBlobContent(source.rootPath,
+            var blobStream = this.source.blobStorage.StreamBlobContent(this.source.rootPath,
                 string.Join("/", blob.Name.Split("/")[1..]));
             using StreamReader sr = new(blobStream);
             while (!sr.EndOfStream)
             {
                 var csvLine = sr.ReadLine();
 
-                while (!CsvOperations.IsComplete(csvLine)) csvLine += sr.ReadLine();
+                while (!CsvOperations.IsComplete(csvLine))
+                {
+                    csvLine += sr.ReadLine();
+                }
 
                 // need to align base entity with change feed schema
                 // first we parse entity line using entity schema and then modify the resulting DataCell collection to fit change feed schema
@@ -275,12 +283,12 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         {
             try
             {
-                var tableBlobs = source.blobStorage.ListBlobsAsEnumerable(tablesPath).Where(blob =>
-                    blob.Name.Split("/")[^1].StartsWith($"{source.entityName.ToUpper()}_") &&
+                var tableBlobs = this.source.blobStorage.ListBlobsAsEnumerable(this.tablesPath).Where(blob =>
+                    blob.Name.Split("/")[^1].StartsWith($"{this.source.entityName.ToUpper()}_") &&
                     blob.Name.EndsWith(".csv")).ToList();
-                var sortIndexes = changeFeedSchema.Attributes.Select((attr, ix) => (attr.Name, ix))
+                var sortIndexes = this.changeFeedSchema.Attributes.Select((attr, ix) => (attr.Name, ix))
                     .ToDictionary(v => v.Name, v => v.ix);
-                changes = tableBlobs.SelectMany(blob => ProcessEntityBlob(blob, sortIndexes));
+                this.changes = tableBlobs.SelectMany(blob => ProcessEntityBlob(blob, sortIndexes));
                 IsRunningInBackfillMode = true;
             }
             catch (Exception ex)
@@ -291,15 +299,15 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
         private void PrepareChanges()
         {
-            var blobList = source.blobStorage.ListBlobsAsEnumerable(changeFeedPath).Where(blob =>
-                blob.LastModified > lastProcessedTimestamp && blob.Name.EndsWith(".csv")).ToList();
-            maxAvailableTimestamp = blobList.Select(b => b.LastModified).Max();
-            changes = blobList
+            var blobList = this.source.blobStorage.ListBlobsAsEnumerable(this.changeFeedPath).Where(blob =>
+                blob.LastModified > this.lastProcessedTimestamp && blob.Name.EndsWith(".csv")).ToList();
+            this.maxAvailableTimestamp = blobList.Select(b => b.LastModified).Max();
+            this.changes = blobList
                 .Select(blob =>
                 {
                     try
                     {
-                        var fileContents = source.blobStorage.GetBlobContent(changeFeedPath,
+                        var fileContents = this.source.blobStorage.GetBlobContent(this.changeFeedPath,
                             blob.Name.Split("/")[^1], (bd) => bd.ToString());
                         return CsvOperations.ReplaceQuotedNewlines(fileContents).Split("\n").AsOption();
                     }
@@ -319,11 +327,11 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                 .Where(line => !string.IsNullOrEmpty(line))
                 .Select(line =>
                 {
-                    var cells = CsvOperations.ParseCsvLine(line, changeFeedSchema.Attributes.Length).Select(
+                    var cells = CsvOperations.ParseCsvLine(line, this.changeFeedSchema.Attributes.Length).Select(
                         (v, ix) =>
                         {
-                            var (tp, value) = ConvertToCdmType(changeFeedSchema.Attributes[ix].DataType, v);
-                            return new DataCell(changeFeedSchema.Attributes[ix].Name, tp,
+                            var (tp, value) = ConvertToCdmType(this.changeFeedSchema.Attributes[ix].DataType, v);
+                            return new DataCell(this.changeFeedSchema.Attributes[ix].Name, tp,
                                 value);
                         }).ToList();
 
@@ -341,31 +349,37 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
         private void PullChanges()
         {
-            if (DateTimeOffset.Now > nextSchemaUpdateTimestamp) UpdateSchema(true);
-
-            if (!changes.Any())
+            if (DateTimeOffset.Now > this.nextSchemaUpdateTimestamp)
             {
-                if (!this.CompleteStageAfterFullLoad()) ScheduleOnce(TimerKey, source.changeCaptureInterval);
+                UpdateSchema(true);
+            }
+
+            if (!this.changes.Any())
+            {
+                if (!this.CompleteStageAfterFullLoad())
+                {
+                    ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
+                }
             }
             else
             {
-                lastProcessedTimestamp = maxAvailableTimestamp.GetValueOrDefault(DateTimeOffset.MinValue);
-                EmitMultiple(source.Out, changes);
+                this.lastProcessedTimestamp = this.maxAvailableTimestamp.GetValueOrDefault(DateTimeOffset.MinValue);
+                EmitMultiple(this.source.Out, this.changes);
 
-                changes = Enumerable.Empty<List<DataCell>>();
+                this.changes = Enumerable.Empty<List<DataCell>>();
             }
         }
 
         private void UpdateSchema(bool allowMissingSchema)
         {
-            var changeFeedSchemaPath = $"ChangeFeed/{source.entityName}.cdm.json";
-            var schemaContent = source
+            var changeFeedSchemaPath = $"ChangeFeed/{this.source.entityName}.cdm.json";
+            var schemaContent = this.source
                 .blobStorage
-                .GetBlobContent(source.rootPath, changeFeedSchemaPath, bd
+                .GetBlobContent(this.source.rootPath, changeFeedSchemaPath, bd
                     => (bd, allowMissingSchema) switch
                     {
                         (null, true) => null,
-                        (null, false) => throw new SchemaNotFoundException(source.entityName),
+                        (null, false) => throw new SchemaNotFoundException(this.source.entityName),
                         var (data, _) => JsonSerializer.Deserialize<JsonDocument>(data.ToString())
                     }
                 );
@@ -377,15 +391,15 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             {
                 var newSchema = SimpleCdmEntity.FromJson(schemaContent);
                 var schemaUnchanged =
-                    SimpleCdmEntity.SimpleCdmEntityComparer.Equals(changeFeedSchema, newSchema);
-                changeFeedSchema = (changeFeedSchema == null, schemaEquals: schemaUnchanged) switch
+                    SimpleCdmEntity.SimpleCdmEntityComparer.Equals(this.changeFeedSchema, newSchema);
+                this.changeFeedSchema = (this.changeFeedSchema == null, schemaEquals: schemaUnchanged) switch
                 {
                     (true, _) or (false, true) => newSchema,
                     (false, false) => throw new SchemaMismatchException()
                 };
             }
 
-            nextSchemaUpdateTimestamp = DateTimeOffset.Now + source.schemaUpdateInterval;
+            this.nextSchemaUpdateTimestamp = DateTimeOffset.Now + this.source.schemaUpdateInterval;
         }
 
         protected override void OnTimer(object timerKey)

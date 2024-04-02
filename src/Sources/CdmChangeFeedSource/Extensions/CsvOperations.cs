@@ -27,13 +27,22 @@ public static class CsvOperations
         {
             // detect quoted fields
             if (line[ix_ch] == '"' && ix_ch < line.Length - 1 && quoteSum == 0)
+            {
                 quoteSum += 1;
-            else if (line[ix_ch] == '"') quoteSum -= 1;
+            }
+            else if (line[ix_ch] == '"')
+            {
+                quoteSum -= 1;
+            }
 
             // hit a delimiter - decide what to do
             if ((line[ix_ch] == delimiter || ix_ch == line.Length - 1) && quoteSum == 0)
             {
-                if (line[prevCharIndex] == '"') prevCharIndex += 1;
+                if (line[prevCharIndex] == '"')
+                {
+                    prevCharIndex += 1;
+                }
+
                 if (ix_ch == prevCharIndex)
                 {
                     result[fieldCounter] = line[prevCharIndex] == delimiter ? null : line[ix_ch].ToString();
@@ -59,8 +68,10 @@ public static class CsvOperations
         }
 
         if (quoteSum != 0)
+        {
             throw new InvalidOperationException(
                 $"CSV line {line} with delimiter {delimiter} has mismatching field quotes");
+        }
 
         return result;
     }

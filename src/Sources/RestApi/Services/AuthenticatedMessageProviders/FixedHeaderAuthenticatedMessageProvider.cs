@@ -25,7 +25,10 @@ public record FixedHeaderAuthenticatedMessageProvider : IRestApiAuthenticatedMes
     public Task<HttpRequestMessage> GetAuthenticatedMessage(HttpClient httpClient = null)
     {
         var msg = new HttpRequestMessage();
-        foreach (var (header, headerValue) in customHeaders) msg.Headers.Add(header, headerValue);
+        foreach (var (header, headerValue) in this.customHeaders)
+        {
+            msg.Headers.Add(header, headerValue);
+        }
 
         return Task.FromResult(msg);
     }

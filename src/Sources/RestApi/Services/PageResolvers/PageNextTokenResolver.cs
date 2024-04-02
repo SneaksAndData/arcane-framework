@@ -27,17 +27,17 @@ public class PageNextTokenResolver : PageResolverBase<string>
         if (!apiResponse.IsEmpty)
         {
             // read next page token from response
-            pagePointer = nextPageTokenPropertyKeyChain
+            this.pagePointer = this.nextPageTokenPropertyKeyChain
                 .Aggregate(GetResponse(apiResponse), (je, property) => je.GetProperty(property)).GetString();
 
             // check if we are starting to list pages, or are in the process already, or have finished
-            return pagePointer switch
+            return this.pagePointer switch
             {
                 null => false,
                 _ => true
             };
         }
 
-        return string.IsNullOrEmpty(pagePointer);
+        return string.IsNullOrEmpty(this.pagePointer);
     }
 }

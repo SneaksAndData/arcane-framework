@@ -20,7 +20,7 @@ public sealed class PageCountingResolver : PageResolverBase<int?>
     public PageCountingResolver(string[] totalPagesPropertyKeyChain)
     {
         this.totalPagesPropertyKeyChain = totalPagesPropertyKeyChain;
-        totalPages = null;
+        this.totalPages = null;
     }
 
 
@@ -30,34 +30,34 @@ public sealed class PageCountingResolver : PageResolverBase<int?>
         if (!apiResponse.IsEmpty)
         {
             // read total pages from the first response
-            totalPages ??= totalPagesPropertyKeyChain
+            this.totalPages ??= this.totalPagesPropertyKeyChain
                 .Aggregate(GetResponse(apiResponse), (je, property) => je.GetProperty(property)).GetInt32();
 
             // check if we are starting to list pages, or are in the process already, or have finished
-            switch (pagePointer)
+            switch (this.pagePointer)
             {
                 case null:
-                    pagePointer = 1;
+                    this.pagePointer = 1;
                     return true;
-                case var value when value < totalPages:
-                    pagePointer += 1;
+                case var value when value < this.totalPages:
+                    this.pagePointer += 1;
                     return true;
                 default:
-                    pagePointer = null;
-                    totalPages = null;
+                    this.pagePointer = null;
+                    this.totalPages = null;
                     return false;
             }
         }
 
-        if (!pagePointer.HasValue)
+        if (!this.pagePointer.HasValue)
         {
-            pagePointer = 1;
+            this.pagePointer = 1;
             return true;
         }
 
         // next got called without overfilling the total pages, but empty response was received - maybe page count was incorrect - thus do a full reset
-        pagePointer = null;
-        totalPages = null;
+        this.pagePointer = null;
+        this.totalPages = null;
         return false;
     }
 }

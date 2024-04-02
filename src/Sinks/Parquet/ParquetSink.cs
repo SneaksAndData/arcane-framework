@@ -41,7 +41,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     {
         this.parquetSchema = parquetSchema;
         this.storageWriter = storageWriter;
-        path = parquetFilePath;
+        this.path = parquetFilePath;
         this.rowGroupsPerFile = rowGroupsPerFile == 0
             ? throw new ArgumentException(
                 $"{nameof(rowGroupsPerFile)} should be greater then 0, but was {rowGroupsPerFile}")
@@ -111,13 +111,13 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         {
             this.sink = sink;
             this.taskCompletion = taskCompletion;
-            decider = Decider.From((ex) => ex.GetType().Name switch
+            this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
                 nameof(ArgumentNullException) => Directive.Stop,
                 _ => Directive.Stop
             });
-            writeInProgress = false;
+            this.writeInProgress = false;
 
             SetHandler(sink.In,
                 () => WriteRowGroup(Grab(sink.In)),
@@ -125,8 +125,10 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
                 {
                     // It is most likely that we receive the finish event before the task from the last element has finished
                     // so if the task is still running we need to complete the stage later
-                    if (!writeInProgress)
+                    if (!this.writeInProgress)
+                    {
                         Finish();
+                    }
                 },
                 ex =>
                 {
@@ -141,58 +143,64 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
             // Keep going even if the upstream has finished so that we can process the task from the last element
             SetKeepGoing(true);
 
-            if (sink.createSchemaFile)
+            if (this.sink.createSchemaFile)
                 // dump empty schema file and then pull first element
-                CreateSchemaFile().ContinueWith(_ => GetAsyncCallback(() => Pull(sink.In)).Invoke());
+            {
+                CreateSchemaFile().ContinueWith(_ => GetAsyncCallback(() => Pull(this.sink.In)).Invoke());
+            }
             else
                 // request the first element
-                Pull(sink.In);
+            {
+                Pull(this.sink.In);
+            }
         }
 
         private string GetSavePath()
         {
-            var basePath = sink.partitionByDate
-                ? $"{sink.path}/_batch_date={DateTimeOffset.UtcNow:yyyy-MM-dd}"
-                : sink.path;
-            return $"{basePath}/{sink.dataSinkPathSegment}";
+            var basePath = this.sink.partitionByDate
+                ? $"{this.sink.path}/_batch_date={DateTimeOffset.UtcNow:yyyy-MM-dd}"
+                : this.sink.path;
+            return $"{basePath}/{this.sink.dataSinkPathSegment}";
         }
 
         private string GetSchemaPath()
         {
-            return $"{sink.path}/{sink.schemaSinkPathSegment}";
+            return $"{this.sink.path}/{this.sink.schemaSinkPathSegment}";
         }
 
         private Task<UploadedBlob> CreateSchemaFile()
         {
-            var (fullHash, shortHash, schemaBytes) = sink.parquetSchema.GetSchemaHash();
-            schemaHash = shortHash;
+            var (fullHash, shortHash, schemaBytes) = this.sink.parquetSchema.GetSchemaHash();
+            this.schemaHash = shortHash;
             Log.Info("Schema hash length for this source: {schemaByteLength}", schemaBytes.Length);
             Log.Info("Full schema hash for this source: {schemaHash}", fullHash);
 
             var schemaId = Guid.NewGuid();
             // Save empty file to base output location and schema store
-            return sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), GetSavePath(),
-                    $"part-{schemaId}-{schemaHash}-chunk.parquet")
-                .Map(_ => sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), GetSchemaPath(),
-                    $"schema-{schemaId}-{schemaHash}.parquet"))
+            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), GetSavePath(),
+                    $"part-{schemaId}-{this.schemaHash}-chunk.parquet")
+                .Map(_ => this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), GetSchemaPath(),
+                    $"schema-{schemaId}-{this.schemaHash}.parquet"))
                 .Flatten();
         }
 
         private Task<UploadedBlob> SavePart()
         {
-            return sink.storageWriter.SaveBytesAsBlob(new BinaryData(memoryStream.ToArray()), GetSavePath(),
-                string.IsNullOrEmpty(schemaHash)
+            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()), GetSavePath(),
+                string.IsNullOrEmpty(this.schemaHash)
                     ? $"part-{Guid.NewGuid()}-chunk.parquet"
-                    : $"part-{Guid.NewGuid()}-{schemaHash}-chunk.parquet");
+                    : $"part-{Guid.NewGuid()}-{this.schemaHash}-chunk.parquet");
         }
 
         private Task<UploadedBlob> SaveCompletionToken()
         {
-            if (sink.dropCompletionToken)
+            if (this.sink.dropCompletionToken)
                 // there seems to be an issue with Moq library and how it serializes BinaryData type
                 // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
-                return sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }), GetSavePath(),
-                    $"{schemaHash}.COMPLETED");
+            {
+                return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }), GetSavePath(),
+                    $"{this.schemaHash}.COMPLETED");
+            }
 
             return Task.FromResult(new UploadedBlob());
         }
@@ -201,31 +209,37 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         {
             if (parquetColumns.Count == 0)
             {
-                Log.Info("Received and empty chunk for {sinkPath}", sink.path);
+                Log.Info("Received and empty chunk for {sinkPath}", this.sink.path);
                 return;
             }
 
-            if (blockCount == 0) memoryStream = new MemoryStream();
+            if (this.blockCount == 0)
+            {
+                this.memoryStream = new MemoryStream();
+            }
 
-            writeInProgress = true;
-            blockCount += 1;
-            Log.Info("Processing inlet {blockCount} for {sinkPath}, size {dataLength}", blockCount, sink.path,
+            this.writeInProgress = true;
+            this.blockCount += 1;
+            Log.Info("Processing inlet {blockCount} for {sinkPath}, size {dataLength}", this.blockCount, this.sink.path,
                 parquetColumns[0].Data.Length);
             try
             {
-                using (var parquetWriter = new ParquetWriter(sink.parquetSchema, memoryStream,
-                           append: sink.rowGroupsPerFile > 1 && blockCount > 1))
+                using (var parquetWriter = new ParquetWriter(this.sink.parquetSchema, this.memoryStream,
+                           append: this.sink.rowGroupsPerFile > 1 && this.blockCount > 1))
                 {
                     using (var groupWriter = parquetWriter.CreateRowGroup())
                     {
-                        foreach (var parquetColumn in parquetColumns) groupWriter.WriteColumn(parquetColumn);
+                        foreach (var parquetColumn in parquetColumns)
+                        {
+                            groupWriter.WriteColumn(parquetColumn);
+                        }
                     }
                 }
 
-                if (blockCount % sink.rowGroupsPerFile == 0 || IsClosed(sink.In))
+                if (this.blockCount % this.sink.rowGroupsPerFile == 0 || IsClosed(this.sink.In))
                 {
                     SavePart().ContinueWith(_ => GetAsyncCallback(PullOrComplete).Invoke());
-                    blockCount = 0;
+                    this.blockCount = 0;
                 }
                 else
                 {
@@ -234,10 +248,10 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
             }
             catch (Exception ex)
             {
-                switch (decider.Decide(ex))
+                switch (this.decider.Decide(ex))
                 {
                     case Directive.Stop:
-                        taskCompletion.TrySetException(ex);
+                        this.taskCompletion.TrySetException(ex);
                         FailStage(ex);
                         break;
                     case Directive.Resume:
@@ -254,26 +268,34 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
 
         private void CompleteSink()
         {
-            taskCompletion.TrySetResult(NotUsed.Instance);
+            this.taskCompletion.TrySetResult(NotUsed.Instance);
             CompleteStage();
         }
 
         private void Finish()
         {
-            if (memoryStream is { Length: > 0 })
+            if (this.memoryStream is { Length: > 0 })
+            {
                 SavePart().Map(_ => SaveCompletionToken()).Flatten()
                     .ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+            }
             else
+            {
                 SaveCompletionToken().ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+            }
         }
 
         private void PullOrComplete()
         {
-            writeInProgress = false;
-            if (IsClosed(sink.In))
+            this.writeInProgress = false;
+            if (IsClosed(this.sink.In))
+            {
                 Finish();
+            }
             else
-                Pull(sink.In);
+            {
+                Pull(this.sink.In);
+            }
         }
     }
 }

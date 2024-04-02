@@ -9,7 +9,6 @@ namespace Arcane.Framework.Sources.SqlServer.Exceptions;
 [ExcludeFromCodeCoverage]
 public class SqlServerConnectionException : Exception
 {
-
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlServerConnectionException"/> class.
     /// </summary>

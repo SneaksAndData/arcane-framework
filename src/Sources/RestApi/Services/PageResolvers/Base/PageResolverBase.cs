@@ -20,7 +20,7 @@ public abstract class PageResolverBase<TPagePointer> : IPageResolver
     /// </summary>
     protected PageResolverBase()
     {
-        pagePointer = default;
+        this.pagePointer = default;
     }
 
     /// <summary>
@@ -32,7 +32,7 @@ public abstract class PageResolverBase<TPagePointer> : IPageResolver
     /// <inheritdoc cref="IPageResolver.ResolvePage"/>
     public RestApiTemplate ResolvePage(RestApiTemplate template, RestApiTemplatedField pageField)
     {
-        return template.ResolveField(pageField.FieldName, pagePointer.ToString());
+        return template.ResolveField(pageField.FieldName, this.pagePointer.ToString());
     }
 
     /// <summary>

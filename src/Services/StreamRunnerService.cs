@@ -36,24 +36,27 @@ public class StreamRunnerService : IStreamRunnerService
         this.materializer = materializer;
         this.logger = logger;
         this.applicationLifetime = applicationLifetime;
-        streamId = streamConfigurationProvider.StreamId;
+        this.streamId = streamConfigurationProvider.StreamId;
     }
 
     /// <inheritdoc/>
     public Task RunStream(Func<IRunnableGraph<(UniqueKillSwitch, Task)>> streamFactory)
     {
-        (killSwitch, streamTask) = streamFactory().Run(materializer);
-        applicationLifetime.ApplicationStopped.Register(StopStream);
-        logger.LogInformation("Started stream with id {streamId}", streamId);
-        return streamTask;
+        (this.killSwitch, this.streamTask) = streamFactory().Run(this.materializer);
+        this.applicationLifetime.ApplicationStopped.Register(StopStream);
+        this.logger.LogInformation("Started stream with id {streamId}", this.streamId);
+        return this.streamTask;
     }
 
     /// <inheritdoc/>
     public void StopStream()
     {
-        if (killSwitch == null)
+        if (this.killSwitch == null)
+        {
             throw new InvalidOperationException("Requested to stop a stream that didn't start correctly.");
-        logger.LogInformation("Requested shutdown of a stream with id {streamId}", streamId);
-        killSwitch.Shutdown();
+        }
+
+        this.logger.LogInformation("Requested shutdown of a stream with id {streamId}", this.streamId);
+        this.killSwitch.Shutdown();
     }
 }

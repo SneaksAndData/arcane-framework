@@ -70,7 +70,9 @@ public class SimpleCdmEntity
         var dt = new DataTable();
 
         foreach (var attr in Attributes)
+        {
             dt.Columns.Add(new DataColumn(attr.Name, SimpleCdmAttribute.MapCdmType(attr.DataType)));
+        }
 
         dt.Columns.Add(new DataColumn(mergeColumnName, typeof(string)));
 
@@ -81,10 +83,26 @@ public class SimpleCdmEntity
     {
         public bool Equals(SimpleCdmEntity x, SimpleCdmEntity y)
         {
-            if (ReferenceEquals(x, y)) return true;
-            if (ReferenceEquals(x, null)) return false;
-            if (ReferenceEquals(y, null)) return false;
-            if (x.GetType() != y.GetType()) return false;
+            if (ReferenceEquals(x, y))
+            {
+                return true;
+            }
+
+            if (ReferenceEquals(x, null))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(y, null))
+            {
+                return false;
+            }
+
+            if (x.GetType() != y.GetType())
+            {
+                return false;
+            }
+
             return x.EntityName == y.EntityName
                    && x.VersionNumber == y.VersionNumber
                    && x.Attributes.SequenceEqual(y.Attributes, SimpleCdmAttribute.SimpleCdmAttributeComparer);

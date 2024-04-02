@@ -49,7 +49,8 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     /// <param name="tokenPropertyName">Token property name</param>
     /// <param name="requestMethod">HTTP method for token request</param>
     /// <param name="tokenRequestBody">HTTP body for token request</param>
-    public DynamicBearerAuthenticatedMessageProvider(string tokenSource, string tokenPropertyName, TimeSpan expirationPeriod,
+    public DynamicBearerAuthenticatedMessageProvider(string tokenSource, string tokenPropertyName,
+        TimeSpan expirationPeriod,
         HttpMethod requestMethod = null, string tokenRequestBody = null)
     {
         this.tokenSource = new Uri(tokenSource);
@@ -62,17 +63,21 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     /// <inheritdoc cref="IRestApiAuthenticatedMessageProvider.GetAuthenticatedMessage"/>
     public Task<HttpRequestMessage> GetAuthenticatedMessage(HttpClient httpClient)
     {
-        if (validTo.GetValueOrDefault(DateTimeOffset.MaxValue) <
+        if (this.validTo.GetValueOrDefault(DateTimeOffset.MaxValue) <
             DateTimeOffset.UtcNow.Subtract(TimeSpan.FromMinutes(1)))
+        {
             return Task.FromResult(new HttpRequestMessage
             {
-                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", currentToken) }
+                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", this.currentToken) }
             });
+        }
 
-        var tokenHrm = new HttpRequestMessage(requestMethod, tokenSource);
+        var tokenHrm = new HttpRequestMessage(this.requestMethod, this.tokenSource);
 
-        if (!string.IsNullOrEmpty(tokenRequestBody))
-            tokenHrm.Content = new StringContent(tokenRequestBody, Encoding.UTF8, "application/json");
+        if (!string.IsNullOrEmpty(this.tokenRequestBody))
+        {
+            tokenHrm.Content = new StringContent(this.tokenRequestBody, Encoding.UTF8, "application/json");
+        }
 
         return httpClient.SendAsync(tokenHrm, CancellationToken.None).Map(response =>
         {
@@ -81,13 +86,14 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
         }).FlatMap(result =>
         {
             var tokenResponse = JsonSerializer.Deserialize<JsonElement>(result);
-            currentToken = tokenResponse.GetProperty(tokenPropertyName).GetString();
-            validTo = !string.IsNullOrEmpty(expirationPeriodPropertyName)
-                ? DateTimeOffset.UtcNow.AddSeconds(tokenResponse.GetProperty(expirationPeriodPropertyName).GetInt32())
-                : DateTimeOffset.UtcNow.Add(expirationPeriod);
+            this.currentToken = tokenResponse.GetProperty(this.tokenPropertyName).GetString();
+            this.validTo = !string.IsNullOrEmpty(this.expirationPeriodPropertyName)
+                ? DateTimeOffset.UtcNow.AddSeconds(tokenResponse.GetProperty(this.expirationPeriodPropertyName)
+                    .GetInt32())
+                : DateTimeOffset.UtcNow.Add(this.expirationPeriod);
             return new HttpRequestMessage
             {
-                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", currentToken) }
+                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", this.currentToken) }
             };
         });
     }

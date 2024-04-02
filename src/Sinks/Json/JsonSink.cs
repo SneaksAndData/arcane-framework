@@ -79,13 +79,13 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
         {
             this.sink = sink;
             this.taskCompletion = taskCompletion;
-            decider = Decider.From((ex) => ex.GetType().Name switch
+            this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
                 nameof(ArgumentNullException) => Directive.Stop,
                 _ => Directive.Stop
             });
-            writeInProgress = false;
+            this.writeInProgress = false;
 
             SetHandler(sink.In,
                 () => WriteJson(Grab(sink.In)),
@@ -93,8 +93,10 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
                 {
                     // It is most likely that we receive the finish event before the task from the last element has finished
                     // so if the task is still running we need to complete the stage later
-                    if (!writeInProgress)
+                    if (!this.writeInProgress)
+                    {
                         Finish();
+                    }
                 },
                 ex =>
                 {
@@ -109,25 +111,26 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
             // Keep going even if the upstream has finished so that we can process the task from the last element
             SetKeepGoing(true);
             // Request the first element
-            Pull(sink.In);
+            Pull(this.sink.In);
         }
 
         private Task<UploadedBlob> SavePart()
         {
-            return sink.storageWriter.SaveBytesAsBlob(new BinaryData(memoryStream.ToArray()), currentSavePath,
-                $"part-{Guid.NewGuid()}-{sink.jsonFileName}");
+            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
+                this.currentSavePath,
+                $"part-{Guid.NewGuid()}-{this.sink.jsonFileName}");
         }
 
         private void WriteJson((string, List<(DateTimeOffset, JsonDocument)>) batch)
         {
             var (path, data) = batch;
-            currentSavePath = $"{sink.jsonSinkPath}{path}";
-            writeInProgress = true;
-            memoryStream = new MemoryStream();
+            this.currentSavePath = $"{this.sink.jsonSinkPath}{path}";
+            this.writeInProgress = true;
+            this.memoryStream = new MemoryStream();
 
             try
             {
-                using (var writer = new StreamWriter(memoryStream))
+                using (var writer = new StreamWriter(this.memoryStream))
                 {
                     foreach (var doc in data)
                     {
@@ -145,10 +148,10 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
             }
             catch (Exception ex)
             {
-                switch (decider.Decide(ex))
+                switch (this.decider.Decide(ex))
                 {
                     case Directive.Stop:
-                        taskCompletion.TrySetException(ex);
+                        this.taskCompletion.TrySetException(ex);
                         FailStage(ex);
                         break;
                     case Directive.Resume:
@@ -165,25 +168,33 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
 
         private void CompleteSink()
         {
-            taskCompletion.TrySetResult(NotUsed.Instance);
+            this.taskCompletion.TrySetResult(NotUsed.Instance);
             CompleteStage();
         }
 
         private void Finish()
         {
-            if (memoryStream != null && memoryStream.CanRead && memoryStream.Length > 0)
+            if (this.memoryStream != null && this.memoryStream.CanRead && this.memoryStream.Length > 0)
+            {
                 SavePart().ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+            }
             else
+            {
                 CompleteSink();
+            }
         }
 
         private void PullOrComplete()
         {
-            writeInProgress = false;
-            if (IsClosed(sink.In))
+            this.writeInProgress = false;
+            if (IsClosed(this.sink.In))
+            {
                 Finish();
+            }
             else
-                Pull(sink.In);
+            {
+                Pull(this.sink.In);
+            }
         }
     }
 }

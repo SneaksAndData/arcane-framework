@@ -88,7 +88,10 @@ public class SimpleCdmAttribute
     /// <exception cref="InvalidOperationException">Thrown if type is not supported</exception>
     public static Type MapCdmType(string cdmTypeName)
     {
-        if (cdmTypeMap.ContainsKey(cdmTypeName.ToLower())) return cdmTypeMap[cdmTypeName.ToLower()];
+        if (cdmTypeMap.ContainsKey(cdmTypeName.ToLower()))
+        {
+            return cdmTypeMap[cdmTypeName.ToLower()];
+        }
 
         throw new InvalidOperationException($"Unsupported type: {cdmTypeName}");
     }
@@ -105,7 +108,10 @@ public class SimpleCdmAttribute
         var typeName = objectKind == JsonValueKind.Object
             ? startFrom.GetProperty("extendsDataType").GetProperty("dataTypeReference").GetString()
             : startFrom.GetProperty("extendsDataType").GetString();
-        if (!IsComplexType(typeName)) return typeName;
+        if (!IsComplexType(typeName))
+        {
+            return typeName;
+        }
 
         return ResolveComplexType(
             types.Where(tp => tp.GetProperty("dataTypeName").GetString() == typeName).FirstOrDefault(), types);
@@ -115,10 +121,26 @@ public class SimpleCdmAttribute
     {
         public bool Equals(SimpleCdmAttribute x, SimpleCdmAttribute y)
         {
-            if (ReferenceEquals(x, y)) return true;
-            if (ReferenceEquals(x, null)) return false;
-            if (ReferenceEquals(y, null)) return false;
-            if (x.GetType() != y.GetType()) return false;
+            if (ReferenceEquals(x, y))
+            {
+                return true;
+            }
+
+            if (ReferenceEquals(x, null))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(y, null))
+            {
+                return false;
+            }
+
+            if (x.GetType() != y.GetType())
+            {
+                return false;
+            }
+
             return x.Name == y.Name &&
                    x.DataFormat == y.DataFormat &&
                    x.DataType == y.DataType &&

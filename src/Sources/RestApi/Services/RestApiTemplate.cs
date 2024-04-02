@@ -25,16 +25,20 @@ public sealed class RestApiTemplate
         this.templatedFieldNames = templatedFieldNames;
     }
 
-    private bool IsEmpty => string.IsNullOrEmpty(baseTemplate);
+    private bool IsEmpty => string.IsNullOrEmpty(this.baseTemplate);
 
     /// <summary>
     /// Create a resolver for the template.
     /// </summary>
     public RestApiTemplate CreateResolver()
     {
-        if (IsEmpty) return this;
-        resolvedTemplate = baseTemplate;
-        remainingFieldNames = templatedFieldNames.Select(v => v).ToList();
+        if (IsEmpty)
+        {
+            return this;
+        }
+
+        this.resolvedTemplate = this.baseTemplate;
+        this.remainingFieldNames = this.templatedFieldNames.Select(v => v).ToList();
 
         return this;
     }
@@ -55,14 +59,17 @@ public sealed class RestApiTemplate
     /// <returns></returns>
     public RestApiTemplate ResolveField(string fieldName, string fieldValue)
     {
-        if (IsEmpty) return this;
+        if (IsEmpty)
+        {
+            return this;
+        }
 
-        if (remainingFieldNames.Contains(fieldName))
+        if (this.remainingFieldNames.Contains(fieldName))
         {
             var parameters = new Dictionary<string, object> { { $"@{fieldName}", fieldValue } };
-            resolvedTemplate = parameters.Aggregate(resolvedTemplate,
+            this.resolvedTemplate = parameters.Aggregate(this.resolvedTemplate,
                 (current, parameter) => current.Replace(parameter.Key, parameter.Value.ToString()));
-            remainingFieldNames.Remove(fieldName);
+            this.remainingFieldNames.Remove(fieldName);
         }
 
         return this;
@@ -75,11 +82,17 @@ public sealed class RestApiTemplate
     /// <exception cref="ApplicationException">Thrown when there are unresolved fields</exception>
     public string GetResolvedRequestElement()
     {
-        if (IsEmpty) return string.Empty;
-        if (remainingFieldNames.Count > 0)
-            throw new ApplicationException(
-                $"Cannot return the resolved template as there are unresolved fields: {string.Join(",", remainingFieldNames)}");
+        if (IsEmpty)
+        {
+            return string.Empty;
+        }
 
-        return resolvedTemplate;
+        if (this.remainingFieldNames.Count > 0)
+        {
+            throw new ApplicationException(
+                $"Cannot return the resolved template as there are unresolved fields: {string.Join(",", this.remainingFieldNames)}");
+        }
+
+        return this.resolvedTemplate;
     }
 }

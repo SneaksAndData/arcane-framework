@@ -34,8 +34,8 @@ namespace Arcane.Framework.Sources.RestApi;
 /// </summary>
 public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSource, ITaggedSource
 {
-    private readonly OpenApiSchema apiSchema;
     private readonly IRestApiAuthenticatedMessageProvider _authenticatedMessageProvider;
+    private readonly OpenApiSchema apiSchema;
     private readonly TimeSpan changeCaptureInterval;
     private readonly bool fullLoadOnStart;
     private readonly HttpClient httpClient;
@@ -137,7 +137,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <inheritdoc cref="IParquetSource.GetParquetSchema"/>
     public Schema GetParquetSchema()
     {
-        return apiSchema.ToParquetSchema();
+        return this.apiSchema.ToParquetSchema();
     }
 
     /// <inheritdoc cref="ITaggedSource.GetDefaultTags"/>
@@ -145,9 +145,9 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     {
         return new SourceTags
         {
-            SourceEntity = uriProvider.BaseUri.AbsolutePath,
-            SourceLocation = uriProvider.BaseUri.Host,
-            StreamKind = streamKind
+            SourceEntity = this.uriProvider.BaseUri.AbsolutePath,
+            SourceLocation = this.uriProvider.BaseUri.Host,
+            StreamKind = this.streamKind
         };
     }
 
@@ -176,7 +176,8 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema)
     {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart, changeCaptureInterval,
+        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+            changeCaptureInterval,
             lookBackInterval, httpRequestTimeout, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema);
     }
 
@@ -205,7 +206,8 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema)
     {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart, changeCaptureInterval,
+        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+            changeCaptureInterval,
             lookBackInterval, httpClient, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema);
     }
 
@@ -236,7 +238,8 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
-        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart, changeCaptureInterval,
+        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
+            changeCaptureInterval,
             lookBackInterval, httpRequestTimeout, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
@@ -268,7 +271,8 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart, changeCaptureInterval,
+        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+            changeCaptureInterval,
             lookBackInterval, httpRequestTimeout, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
@@ -300,7 +304,8 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
-        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart, changeCaptureInterval,
+        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
+            changeCaptureInterval,
             lookBackInterval, httpClient, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
@@ -325,12 +330,12 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         {
             this.source = source;
 
-            httpClient = this.source.httpClient ?? new HttpClient
+            this.httpClient = this.source.httpClient ?? new HttpClient
             {
                 Timeout = this.source.httpRequestTimeout
             };
 
-            decider = Decider.From((ex) => ex.GetType().Name switch
+            this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
                 nameof(ArgumentNullException) => Directive.Stop,
@@ -351,29 +356,35 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         public bool IsRunningInBackfillMode { get; set; }
 
         /// <inheritdoc cref="IStopAfterBackfill.StopAfterBackfill"/>
-        public bool StopAfterBackfill => source.stopAfterFullLoad;
+        public bool StopAfterBackfill => this.source.stopAfterFullLoad;
 
         private void Finish(Exception cause)
         {
             if (cause is not null && cause is not SubscriptionWithCancelException.NonFailureCancellation)
+            {
                 FailStage(cause);
-            httpClient.Dispose();
+            }
+
+            this.httpClient.Dispose();
         }
 
         public override void PreStart()
         {
             base.PreStart();
 
-            responseReceived = GetAsyncCallback<Task<Option<JsonElement>>>(OnRecordReceived);
+            this.responseReceived = GetAsyncCallback<Task<Option<JsonElement>>>(OnRecordReceived);
 
-            if (source.fullLoadOnStart) IsRunningInBackfillMode = true;
+            if (this.source.fullLoadOnStart)
+            {
+                IsRunningInBackfillMode = true;
+            }
         }
 
         private void OnRecordReceived(Task<Option<JsonElement>> readTask)
         {
             if (readTask.IsFaulted || readTask.IsCanceled)
             {
-                switch (decider.Decide(readTask.Exception))
+                switch (this.decider.Decide(readTask.Exception))
                 {
                     case Directive.Stop:
                         Finish(readTask.Exception);
@@ -388,13 +399,14 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
 
             var taskResult = readTask.Result
                 .GetOrElse(JsonSerializer.Deserialize<JsonElement>(
-                    (source.responsePropertyKeyChain ?? Array.Empty<string>()).Any() ? "{}" : "[]"))
-                .ParseResponse(source.responsePropertyKeyChain).ToList();
+                    (this.source.responsePropertyKeyChain ?? Array.Empty<string>()).Any() ? "{}" : "[]"))
+                .ParseResponse(this.source.responsePropertyKeyChain).ToList();
 
             // Current batch has ended, start a new one
             if (!taskResult.Any())
             {
-                if (((source.uriProvider as IPaginatedApiUriProvider)?.HasReadAllPages()).GetValueOrDefault(true) &&
+                if (((this.source.uriProvider as IPaginatedApiUriProvider)?.HasReadAllPages())
+                    .GetValueOrDefault(true) &&
                     this.CompleteStageAfterFullLoad(Finish))
                 {
                     Log.Info("No data returned by latest call and all pages have been downloaded");
@@ -402,28 +414,31 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
                 }
 
                 Log.Info(
-                    $"No data returned by latest call, next check in {source.changeCaptureInterval.TotalSeconds} seconds");
+                    $"No data returned by latest call, next check in {this.source.changeCaptureInterval.TotalSeconds} seconds");
 
-                ScheduleOnce(TimerKey, source.changeCaptureInterval);
+                ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
             }
             else
             {
-                EmitMultiple(source.Out, taskResult);
+                EmitMultiple(this.source.Out, taskResult);
             }
         }
 
         private void PullChanges()
         {
-            source.rateLimitPolicy.ExecuteAsync(() => source._authenticatedMessageProvider.GetAuthenticatedMessage(httpClient)
+            this.source.rateLimitPolicy.ExecuteAsync(() => this.source._authenticatedMessageProvider
+                .GetAuthenticatedMessage(this.httpClient)
                 .Map(msg =>
                 {
                     Log.Debug("Successfully authenticated");
-                    var (maybeNextUri, requestMethod, maybePayload) =
-                        source.uriProvider.GetNextResultUri(currentResponse, IsRunningInBackfillMode,
-                            source.lookBackInterval,
-                            source.changeCaptureInterval);
+                    var (maybeNextUri, requestMethod, maybePayload) = this.source.uriProvider.GetNextResultUri(
+                        this.currentResponse, IsRunningInBackfillMode, this.source.lookBackInterval,
+                        this.source.changeCaptureInterval);
 
-                    if (maybeNextUri.IsEmpty) return Task.FromResult(Option<JsonElement>.None);
+                    if (maybeNextUri.IsEmpty)
+                    {
+                        return Task.FromResult(Option<JsonElement>.None);
+                    }
 
                     msg.RequestUri = maybeNextUri.Value;
                     msg.Method = requestMethod;
@@ -436,12 +451,12 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
 
                     Log.Info($"Requesting next result from {msg.RequestUri}");
 
-                    return httpClient.SendAsync(msg, default(CancellationToken))
+                    return this.httpClient.SendAsync(msg, default(CancellationToken))
                         .Map(response =>
                         {
                             if (response.IsSuccessStatusCode)
                             {
-                                currentResponse = response;
+                                this.currentResponse = response;
                                 return response.Content.ReadAsStringAsync().Map(value =>
                                 {
                                     Log.Debug($"Got response: {value}");
@@ -468,7 +483,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
                     StatusCode: HttpStatusCode.RequestTimeout
                 } => Option<JsonElement>.None, // Potential server-side timeout due to overload
                 _ => throw exception
-            }).ContinueWith(responseReceived);
+            }).ContinueWith(this.responseReceived);
         }
 
         protected override void OnTimer(object timerKey)

@@ -109,13 +109,13 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         {
             this.sink = sink;
             this.taskCompletion = taskCompletion;
-            decider = Decider.From((ex) => ex.GetType().Name switch
+            this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
                 nameof(ArgumentNullException) => Directive.Stop,
                 _ => Directive.Stop
             });
-            writeInProgress = false;
+            this.writeInProgress = false;
 
             SetHandler(sink.In,
                 () => WriteJson(Grab(sink.In)),
@@ -123,8 +123,10 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
                 {
                     // It is most likely that we receive the finish event before the task from the last element has finished
                     // so if the task is still running we need to complete the stage later
-                    if (!writeInProgress)
+                    if (!this.writeInProgress)
+                    {
                         Finish();
+                    }
                 },
                 ex =>
                 {
@@ -140,65 +142,72 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             SetKeepGoing(true);
 
             // dump empty schema file and then pull first element
-            CreateSchemaFile().ContinueWith(_ => GetAsyncCallback(() => Pull(sink.In)).Invoke());
+            CreateSchemaFile().ContinueWith(_ => GetAsyncCallback(() => Pull(this.sink.In)).Invoke());
         }
 
         private Task<UploadedBlob> CreateSchemaFile()
         {
-            var (fullHash, shortHash, schemaBytes) = sink.sinkSchema.GetSchemaHash();
-            schemaHash = shortHash;
+            var (fullHash, shortHash, schemaBytes) = this.sink.sinkSchema.GetSchemaHash();
+            this.schemaHash = shortHash;
             Log.Info("Schema hash length for this source: {schemaByteLength}", schemaBytes.Length);
             Log.Info("Full schema hash for this source: {schemaHash}", fullHash);
 
             var schemaId = Guid.NewGuid();
             // Save empty file to base output location and schema store
-            return sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes),
-                $"{sink.jsonSinkPath}/{sink.schemaPathSegment}",
-                $"schema-{schemaId}-{schemaHash}.parquet");
+            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes),
+                $"{this.sink.jsonSinkPath}/{this.sink.schemaPathSegment}",
+                $"schema-{schemaId}-{this.schemaHash}.parquet");
         }
 
         private Task<UploadedBlob> SavePart()
         {
-            if (memoryStream.ToArray().Length > 0)
-                return sink.storageWriter.SaveBytesAsBlob(new BinaryData(memoryStream.ToArray()),
-                    $"{sink.jsonSinkPath}/{sink.dataPathSegment}",
-                    $"part-{Guid.NewGuid()}-{schemaHash}.json");
+            if (this.memoryStream.ToArray().Length > 0)
+            {
+                return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
+                    $"{this.sink.jsonSinkPath}/{this.sink.dataPathSegment}",
+                    $"part-{Guid.NewGuid()}-{this.schemaHash}.json");
+            }
 
             return Task.FromResult(new UploadedBlob());
         }
 
         private Task<UploadedBlob> SaveCompletionToken()
         {
-            if (sink.dropCompletionToken)
+            if (this.sink.dropCompletionToken)
                 // there seems to be an issue with Moq library and how it serializes BinaryData type
                 // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
-                return sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }),
-                    $"{sink.jsonSinkPath}/{sink.dataPathSegment}",
-                    $"{schemaHash}.COMPLETED");
+            {
+                return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }),
+                    $"{this.sink.jsonSinkPath}/{this.sink.dataPathSegment}",
+                    $"{this.schemaHash}.COMPLETED");
+            }
 
             return Task.FromResult(new UploadedBlob());
         }
 
         private void WriteJson(List<JsonElement> batch)
         {
-            writeInProgress = true;
-            memoryStream = new MemoryStream();
+            this.writeInProgress = true;
+            this.memoryStream = new MemoryStream();
 
             try
             {
-                using (var writer = new StreamWriter(memoryStream))
+                using (var writer = new StreamWriter(this.memoryStream))
                 {
-                    foreach (var element in batch) writer.WriteLine(JsonSerializer.Serialize(element));
+                    foreach (var element in batch)
+                    {
+                        writer.WriteLine(JsonSerializer.Serialize(element));
+                    }
                 }
 
                 SavePart().ContinueWith((_) => GetAsyncCallback(PullOrComplete).Invoke());
             }
             catch (Exception ex)
             {
-                switch (decider.Decide(ex))
+                switch (this.decider.Decide(ex))
                 {
                     case Directive.Stop:
-                        taskCompletion.TrySetException(ex);
+                        this.taskCompletion.TrySetException(ex);
                         FailStage(ex);
                         break;
                     case Directive.Resume:
@@ -215,26 +224,34 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
 
         private void CompleteSink()
         {
-            taskCompletion.TrySetResult(NotUsed.Instance);
+            this.taskCompletion.TrySetResult(NotUsed.Instance);
             CompleteStage();
         }
 
         private void Finish()
         {
-            if (memoryStream is { CanRead: true, Length: > 0 })
+            if (this.memoryStream is { CanRead: true, Length: > 0 })
+            {
                 SavePart().Map(_ => SaveCompletionToken()).Flatten()
                     .ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+            }
             else
+            {
                 SaveCompletionToken().ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+            }
         }
 
         private void PullOrComplete()
         {
-            writeInProgress = false;
-            if (IsClosed(sink.In))
+            this.writeInProgress = false;
+            if (IsClosed(this.sink.In))
+            {
                 Finish();
+            }
             else
-                Pull(sink.In);
+            {
+                Pull(this.sink.In);
+            }
         }
     }
 }

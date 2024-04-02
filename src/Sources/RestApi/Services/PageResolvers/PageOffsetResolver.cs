@@ -29,23 +29,23 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
     {
         if (apiResponse.HasValue)
         {
-            if (!GetResponseContent(apiResponse, responseBodyPropertyKeyChain).Any())
+            if (!GetResponseContent(apiResponse, this.responseBodyPropertyKeyChain).Any())
             {
-                pagePointer = null;
+                this.pagePointer = null;
                 return false;
             }
 
-            pagePointer += responseSize;
+            this.pagePointer += this.responseSize;
             return true;
         }
 
-        if (pagePointer.HasValue)
+        if (this.pagePointer.HasValue)
         {
-            pagePointer = null;
+            this.pagePointer = null;
             return false;
         }
 
-        pagePointer = 0;
+        this.pagePointer = 0;
         return true;
     }
 }

@@ -21,13 +21,17 @@ public static class SqlServerUtils
         SqlConnection sqlConnection)
     {
         var getColumnsSql = File
-            .ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "SqlServer", "SqlSnippets", "GetColumns.sql"))
+            .ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "SqlServer", "SqlSnippets",
+                "GetColumns.sql"))
             .Replace("{dbName}", sqlConnection.Database)
             .Replace("{schema}", schema)
             .Replace("{table}", table);
 
         var command = new SqlCommand(getColumnsSql, sqlConnection);
         using var reader = command.ExecuteReader();
-        while (reader.Read()) yield return (reader.GetString(0), reader.GetInt32(1) == 1);
+        while (reader.Read())
+        {
+            yield return (reader.GetString(0), reader.GetInt32(1) == 1);
+        }
     }
 }
