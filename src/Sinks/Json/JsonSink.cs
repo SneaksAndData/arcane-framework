@@ -34,7 +34,7 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
     }
 
     /// <summary>
-    /// Sink outlet
+    /// Sink inlet
     /// </summary>
     public Inlet<(string, List<(DateTimeOffset, JsonDocument)>)> In { get; } = new($"{nameof(JsonSink)}.In");
 

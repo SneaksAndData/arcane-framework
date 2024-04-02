@@ -51,7 +51,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
     }
 
     /// <summary>
-    /// Sink outlet
+    /// Sink inlet
     /// </summary>
     public Inlet<List<JsonElement>> In { get; } = new($"{nameof(MultilineJsonSink)}.In");
 
