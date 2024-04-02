@@ -30,9 +30,9 @@ public sealed class SourceTags
     {
         return new SortedDictionary<string, string>
         {
-            { "stream_source", StreamKind },
-            { "stream_source_location", SourceLocation },
-            { "stream_source_entity", SourceEntity }
+            { "stream_source", this.StreamKind },
+            { "stream_source_location", this.SourceLocation },
+            { "stream_source_entity", this.SourceEntity }
         };
     }
 }

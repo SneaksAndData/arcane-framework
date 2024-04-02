@@ -69,7 +69,7 @@ public class SimpleCdmEntity
     {
         var dt = new DataTable();
 
-        foreach (var attr in Attributes)
+        foreach (var attr in this.Attributes)
         {
             dt.Columns.Add(new DataColumn(attr.Name, SimpleCdmAttribute.MapCdmType(attr.DataType)));
         }

@@ -28,7 +28,7 @@ public class PageNextTokenResolver : PageResolverBase<string>
         {
             // read next page token from response
             this.pagePointer = this.nextPageTokenPropertyKeyChain
-                .Aggregate(GetResponse(apiResponse), (je, property) => je.GetProperty(property)).GetString();
+                .Aggregate(this.GetResponse(apiResponse), (je, property) => je.GetProperty(property)).GetString();
 
             // check if we are starting to list pages, or are in the process already, or have finished
             return this.pagePointer switch

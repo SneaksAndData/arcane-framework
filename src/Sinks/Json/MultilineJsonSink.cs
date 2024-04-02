@@ -46,7 +46,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         this.sinkSchema = sinkSchema;
         this.schemaPathSegment = schemaPathSegment;
 
-        Shape = new SinkShape<List<JsonElement>>(In);
+        this.Shape = new SinkShape<List<JsonElement>>(this.In);
     }
 
     /// <summary>
@@ -117,21 +117,21 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             });
             this.writeInProgress = false;
 
-            SetHandler(sink.In,
-                () => WriteJson(Grab(sink.In)),
+            this.SetHandler(sink.In,
+                () => this.WriteJson(this.Grab(sink.In)),
                 () =>
                 {
                     // It is most likely that we receive the finish event before the task from the last element has finished
                     // so if the task is still running we need to complete the stage later
                     if (!this.writeInProgress)
                     {
-                        Finish();
+                        this.Finish();
                     }
                 },
                 ex =>
                 {
                     this.taskCompletion.TrySetException(ex);
-                    FailStage(ex);
+                    this.FailStage(ex);
                 }
             );
         }
@@ -139,18 +139,18 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         public override void PreStart()
         {
             // Keep going even if the upstream has finished so that we can process the task from the last element
-            SetKeepGoing(true);
+            this.SetKeepGoing(true);
 
             // dump empty schema file and then pull first element
-            CreateSchemaFile().ContinueWith(_ => GetAsyncCallback(() => Pull(this.sink.In)).Invoke());
+            this.CreateSchemaFile().ContinueWith(_ => this.GetAsyncCallback(() => this.Pull(this.sink.In)).Invoke());
         }
 
         private Task<UploadedBlob> CreateSchemaFile()
         {
             var (fullHash, shortHash, schemaBytes) = this.sink.sinkSchema.GetSchemaHash();
             this.schemaHash = shortHash;
-            Log.Info("Schema hash length for this source: {schemaByteLength}", schemaBytes.Length);
-            Log.Info("Full schema hash for this source: {schemaHash}", fullHash);
+            this.Log.Info("Schema hash length for this source: {schemaByteLength}", schemaBytes.Length);
+            this.Log.Info("Full schema hash for this source: {schemaHash}", fullHash);
 
             var schemaId = Guid.NewGuid();
             // Save empty file to base output location and schema store
@@ -200,7 +200,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
                     }
                 }
 
-                SavePart().ContinueWith((_) => GetAsyncCallback(PullOrComplete).Invoke());
+                this.SavePart().ContinueWith((_) => this.GetAsyncCallback(this.PullOrComplete).Invoke());
             }
             catch (Exception ex)
             {
@@ -208,13 +208,13 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
                 {
                     case Directive.Stop:
                         this.taskCompletion.TrySetException(ex);
-                        FailStage(ex);
+                        this.FailStage(ex);
                         break;
                     case Directive.Resume:
-                        WriteJson(batch);
+                        this.WriteJson(batch);
                         break;
                     case Directive.Restart:
-                        PullOrComplete();
+                        this.PullOrComplete();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -225,32 +225,32 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         private void CompleteSink()
         {
             this.taskCompletion.TrySetResult(NotUsed.Instance);
-            CompleteStage();
+            this.CompleteStage();
         }
 
         private void Finish()
         {
             if (this.memoryStream is { CanRead: true, Length: > 0 })
             {
-                SavePart().Map(_ => SaveCompletionToken()).Flatten()
-                    .ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+                this.SavePart().Map(_ => this.SaveCompletionToken()).Flatten()
+                    .ContinueWith(_ => this.GetAsyncCallback(this.CompleteSink).Invoke());
             }
             else
             {
-                SaveCompletionToken().ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+                this.SaveCompletionToken().ContinueWith(_ => this.GetAsyncCallback(this.CompleteSink).Invoke());
             }
         }
 
         private void PullOrComplete()
         {
             this.writeInProgress = false;
-            if (IsClosed(this.sink.In))
+            if (this.IsClosed(this.sink.In))
             {
-                Finish();
+                this.Finish();
             }
             else
             {
-                Pull(this.sink.In);
+                this.Pull(this.sink.In);
             }
         }
     }

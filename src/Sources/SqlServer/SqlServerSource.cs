@@ -42,7 +42,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
         this.commandTimeout = commandTimeout;
         this.streamKind = streamKind;
 
-        Shape = new SourceShape<List<DataCell>>(Out);
+        this.Shape = new SourceShape<List<DataCell>>(this.Out);
     }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.InitialAttributes"/>
@@ -61,7 +61,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     {
         using var sqlCon = new SqlConnection(this.connectionString);
         sqlCon.Open();
-        var command = new SqlCommand(GetQuery(), sqlCon) { CommandTimeout = this.commandTimeout };
+        var command = new SqlCommand(this.GetQuery(), sqlCon) { CommandTimeout = this.commandTimeout };
         using var schemaReader = command.ExecuteReader(CommandBehavior.SchemaOnly);
 
         return schemaReader.ToParquetSchema();
@@ -131,7 +131,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
                 _ => Directive.Stop
             });
 
-            SetHandler(source.Out, PullReader, Finish);
+            this.SetHandler(source.Out, this.PullReader, this.Finish);
         }
 
         private void Finish(Exception cause)
@@ -141,11 +141,11 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
             this.sqlConnection.Dispose();
             if (cause is not null && cause is not SubscriptionWithCancelException.NonFailureCancellation)
             {
-                FailStage(cause);
+                this.FailStage(cause);
             }
             else
             {
-                CompleteStage();
+                this.CompleteStage();
             }
         }
 
@@ -156,10 +156,10 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
                 switch (this.decider.Decide(readTask.Exception))
                 {
                     case Directive.Stop:
-                        FailStage(readTask.Exception);
+                        this.FailStage(readTask.Exception);
                         break;
                     default:
-                        ScheduleOnce(TimerKey, TimeSpan.FromSeconds(1));
+                        this.ScheduleOnce(TimerKey, TimeSpan.FromSeconds(1));
                         break;
                 }
 
@@ -169,17 +169,17 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
             // No more records from Sql Server
             if (readTask.Result.IsEmpty)
             {
-                Finish(null);
+                this.Finish(null);
             }
             else
             {
-                Emit(this.source.Out, readTask.Result.Value);
+                this.Emit(this.source.Out, readTask.Result.Value);
             }
         }
 
         public override void PreStart()
         {
-            this.recordsReceived = GetAsyncCallback<Task<Option<List<DataCell>>>>(OnRecordReceived);
+            this.recordsReceived = this.GetAsyncCallback<Task<Option<List<DataCell>>>>(this.OnRecordReceived);
             this.sqlConnection.Open();
             var command = new SqlCommand(this.source.GetQuery(), this.sqlConnection)
                 { CommandTimeout = this.source.commandTimeout };
@@ -205,7 +205,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
 
         protected override void OnTimer(object timerKey)
         {
-            PullReader();
+            this.PullReader();
         }
     }
 }

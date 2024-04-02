@@ -13,7 +13,7 @@ namespace Arcane.Framework.Sources.RestApi.Services.UriProviders;
 /// </summary>
 public class SimpleUriProvider : IRestApiUriProvider
 {
-    private readonly List<RestApiTemplatedField> _templatedFields;
+    private readonly List<RestApiTemplatedField> templatedFields;
     private readonly DateTimeOffset backFillStartDate;
     private readonly RestApiTemplate bodyTemplate;
     private readonly HttpMethod requestMethod;
@@ -34,8 +34,8 @@ public class SimpleUriProvider : IRestApiUriProvider
         this.bodyTemplate = !string.IsNullOrEmpty(bodyTemplate)
             ? new RestApiTemplate(bodyTemplate, templatedFields.Select(v => v.FieldName).ToList())
             : RestApiTemplate.Empty();
-        BaseUri = new Uri(urlTemplate);
-        this._templatedFields = templatedFields;
+        this.BaseUri = new Uri(urlTemplate);
+        this.templatedFields = templatedFields;
         this.backFillStartDate = backFillStartDate;
         this.requestMethod = requestMethod;
     }
@@ -60,7 +60,7 @@ public class SimpleUriProvider : IRestApiUriProvider
             (false, false) => DateTimeOffset.UtcNow.Subtract(changeCaptureInterval)
         };
 
-        if (this._templatedFields.FirstOrDefault(field =>
+        if (this.templatedFields.FirstOrDefault(field =>
                 field.FieldType is TemplatedFieldType.FILTER_DATE_FROM or TemplatedFieldType.FILTER_DATE_BETWEEN_FROM)
             is { } dateField)
         {
@@ -79,7 +79,7 @@ public class SimpleUriProvider : IRestApiUriProvider
             }
         }
 
-        if (this._templatedFields.FirstOrDefault(
+        if (this.templatedFields.FirstOrDefault(
                 field => field.FieldType == TemplatedFieldType.FILTER_DATE_BETWEEN_TO) is { } dateFieldTo)
         {
             switch (dateFieldTo.Placement)

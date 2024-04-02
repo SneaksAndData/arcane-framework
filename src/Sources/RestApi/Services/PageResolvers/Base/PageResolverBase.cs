@@ -58,6 +58,6 @@ public abstract class PageResolverBase<TPagePointer> : IPageResolver
     protected IEnumerable<JsonElement> GetResponseContent(Option<HttpResponseMessage> apiResponse,
         string[] responseBodyPropertyKeyChain)
     {
-        return GetResponse(apiResponse).ParseResponse(responseBodyPropertyKeyChain);
+        return this.GetResponse(apiResponse).ParseResponse(responseBodyPropertyKeyChain);
     }
 }

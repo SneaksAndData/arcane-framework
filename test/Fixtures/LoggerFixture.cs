@@ -6,7 +6,7 @@ public class LoggerFixture
 {
     public LoggerFixture()
     {
-        Factory = LoggerFactory.Create(conf => conf.AddConsole());
+        this.Factory = LoggerFactory.Create(conf => conf.AddConsole());
     }
 
     public ILoggerFactory Factory { get; }

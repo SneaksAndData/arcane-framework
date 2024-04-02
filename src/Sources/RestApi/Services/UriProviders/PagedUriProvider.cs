@@ -40,7 +40,7 @@ public class PagedUriProvider : IPaginatedApiUriProvider
         HttpMethod requestMethod,
         string bodyTemplate = null)
     {
-        BaseUri = new Uri(urlTemplate);
+        this.BaseUri = new Uri(urlTemplate);
         this._backFillStartDate = backFillStartDate;
         this.requestMethod = requestMethod;
         this.templatedFields = templatedFields;

@@ -43,7 +43,7 @@ public class StreamRunnerService : IStreamRunnerService
     public Task RunStream(Func<IRunnableGraph<(UniqueKillSwitch, Task)>> streamFactory)
     {
         (this.killSwitch, this.streamTask) = streamFactory().Run(this.materializer);
-        this.applicationLifetime.ApplicationStopped.Register(StopStream);
+        this.applicationLifetime.ApplicationStopped.Register(this.StopStream);
         this.logger.LogInformation("Started stream with id {streamId}", this.streamId);
         return this.streamTask;
     }

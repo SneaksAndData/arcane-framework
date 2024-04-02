@@ -32,7 +32,7 @@ public sealed class RestApiTemplate
     /// </summary>
     public RestApiTemplate CreateResolver()
     {
-        if (IsEmpty)
+        if (this.IsEmpty)
         {
             return this;
         }
@@ -59,7 +59,7 @@ public sealed class RestApiTemplate
     /// <returns></returns>
     public RestApiTemplate ResolveField(string fieldName, string fieldValue)
     {
-        if (IsEmpty)
+        if (this.IsEmpty)
         {
             return this;
         }
@@ -82,7 +82,7 @@ public sealed class RestApiTemplate
     /// <exception cref="ApplicationException">Thrown when there are unresolved fields</exception>
     public string GetResolvedRequestElement()
     {
-        if (IsEmpty)
+        if (this.IsEmpty)
         {
             return string.Empty;
         }

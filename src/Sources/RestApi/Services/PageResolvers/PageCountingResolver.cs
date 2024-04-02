@@ -31,7 +31,7 @@ public sealed class PageCountingResolver : PageResolverBase<int?>
         {
             // read total pages from the first response
             this.totalPages ??= this.totalPagesPropertyKeyChain
-                .Aggregate(GetResponse(apiResponse), (je, property) => je.GetProperty(property)).GetInt32();
+                .Aggregate(this.GetResponse(apiResponse), (je, property) => je.GetProperty(property)).GetInt32();
 
             // check if we are starting to list pages, or are in the process already, or have finished
             switch (this.pagePointer)

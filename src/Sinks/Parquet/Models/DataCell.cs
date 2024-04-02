@@ -15,9 +15,9 @@ public sealed class DataCell
     /// <param name="value">Field value</param>
     public DataCell(string fieldName, Type fieldType, object value)
     {
-        FieldName = fieldName;
-        FieldType = fieldType;
-        Value = value;
+        this.FieldName = fieldName;
+        this.FieldType = fieldType;
+        this.Value = value;
     }
 
     /// <summary>

@@ -15,8 +15,8 @@ public class SchemaMismatchException : Exception
     /// <param name="underlying">Underlying exception</param>
     public SchemaMismatchException(Exception underlying)
     {
-        StackTrace = underlying.StackTrace;
-        Message = string.Join(Environment.NewLine, "Data source schema has been updated", underlying.Message);
+        this.StackTrace = underlying.StackTrace;
+        this.Message = string.Join(Environment.NewLine, "Data source schema has been updated", underlying.Message);
     }
 
     /// <summary>
@@ -24,7 +24,7 @@ public class SchemaMismatchException : Exception
     /// </summary>
     public SchemaMismatchException()
     {
-        Message = "Data source schema has been updated";
+        this.Message = "Data source schema has been updated";
     }
 
     /// <inheritdoc cref="Exception.StackTrace"/>

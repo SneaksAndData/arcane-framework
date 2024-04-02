@@ -59,7 +59,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         this.streamKind = streamKind;
         this.changeCaptureInterval = changeCaptureInterval;
         this.stopAfterFullLoad = stopAfterFullLoad;
-        Shape = new SourceShape<List<DataCell>>(Out);
+        this.Shape = new SourceShape<List<DataCell>>(this.Out);
         this.schemaUpdateInterval = schemaUpdateInterval;
     }
 
@@ -77,7 +77,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     /// <inheritdoc cref="IParquetSource.GetParquetSchema"/>
     public Schema GetParquetSchema()
     {
-        return GetCdmSchema().GetReader(Constants.UPSERT_MERGE_KEY).ToParquetSchema();
+        return this.GetCdmSchema().GetReader(Constants.UPSERT_MERGE_KEY).ToParquetSchema();
     }
 
     /// <inheritdoc cref="ITaggedSource.GetDefaultTags"/>
@@ -175,7 +175,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             });
 
 
-            SetHandler(source.Out, PullChanges);
+            this.SetHandler(source.Out, this.PullChanges);
         }
 
         /// <inheritdoc cref="IStopAfterBackfill.IsRunningInBackfillMode"/>
@@ -186,14 +186,14 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
         public override void PreStart()
         {
-            UpdateSchema(false);
+            this.UpdateSchema(false);
             if (this.source.fullLoadOnStart)
             {
-                PrepareEntityAsChanges();
+                this.PrepareEntityAsChanges();
             }
             else
             {
-                PrepareChanges();
+                this.PrepareChanges();
             }
         }
 
@@ -208,10 +208,10 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                         ex = new SchemaMismatchException(ex);
                     }
 
-                    FailStage(ex);
+                    this.FailStage(ex);
                     break;
                 default:
-                    ScheduleOnce(TimerKey, TimeSpan.FromSeconds(1));
+                    this.ScheduleOnce(TimerKey, TimeSpan.FromSeconds(1));
                     break;
             }
         }
@@ -248,7 +248,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                     .ParseCsvLine(csvLine, blobSchema.Attributes.Length)
                     .Select((v, ix) =>
                     {
-                        var (tp, value) = ConvertToCdmType(blobSchema.Attributes[ix].DataType, v);
+                        var (tp, value) = this.ConvertToCdmType(blobSchema.Attributes[ix].DataType, v);
                         var fieldName = blobSchema.Attributes[ix].Name == "LSN"
                             ? "Start_LSN"
                             : blobSchema.Attributes[ix].Name;
@@ -288,12 +288,12 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                     blob.Name.EndsWith(".csv")).ToList();
                 var sortIndexes = this.changeFeedSchema.Attributes.Select((attr, ix) => (attr.Name, ix))
                     .ToDictionary(v => v.Name, v => v.ix);
-                this.changes = tableBlobs.SelectMany(blob => ProcessEntityBlob(blob, sortIndexes));
-                IsRunningInBackfillMode = true;
+                this.changes = tableBlobs.SelectMany(blob => this.ProcessEntityBlob(blob, sortIndexes));
+                this.IsRunningInBackfillMode = true;
             }
             catch (Exception ex)
             {
-                DecideOnFailure(ex);
+                this.DecideOnFailure(ex);
             }
         }
 
@@ -313,12 +313,12 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                     }
                     catch (OutOfMemoryException exception)
                     {
-                        Log.Error("Failed to read file {cdmFile} due to {exception}", blob.Name, exception);
+                        this.Log.Error("Failed to read file {cdmFile} due to {exception}", blob.Name, exception);
                         throw;
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning(ex, "Failed file read, {cdmFile}", blob.Name);
+                        this.Log.Warning(ex, "Failed file read, {cdmFile}", blob.Name);
                         return Option<string[]>.None;
                     }
                 })
@@ -330,7 +330,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                     var cells = CsvOperations.ParseCsvLine(line, this.changeFeedSchema.Attributes.Length).Select(
                         (v, ix) =>
                         {
-                            var (tp, value) = ConvertToCdmType(this.changeFeedSchema.Attributes[ix].DataType, v);
+                            var (tp, value) = this.ConvertToCdmType(this.changeFeedSchema.Attributes[ix].DataType, v);
                             return new DataCell(this.changeFeedSchema.Attributes[ix].Name, tp,
                                 value);
                         }).ToList();
@@ -351,20 +351,20 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         {
             if (DateTimeOffset.Now > this.nextSchemaUpdateTimestamp)
             {
-                UpdateSchema(true);
+                this.UpdateSchema(true);
             }
 
             if (!this.changes.Any())
             {
                 if (!this.CompleteStageAfterFullLoad())
                 {
-                    ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
+                    this.ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
                 }
             }
             else
             {
                 this.lastProcessedTimestamp = this.maxAvailableTimestamp.GetValueOrDefault(DateTimeOffset.MinValue);
-                EmitMultiple(this.source.Out, this.changes);
+                this.EmitMultiple(this.source.Out, this.changes);
 
                 this.changes = Enumerable.Empty<List<DataCell>>();
             }
@@ -385,7 +385,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                 );
             if (schemaContent == null)
             {
-                Log.Warning("Could not update schema");
+                this.Log.Warning("Could not update schema");
             }
             else
             {
@@ -406,12 +406,12 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         {
             try
             {
-                PrepareChanges();
-                PullChanges();
+                this.PrepareChanges();
+                this.PullChanges();
             }
             catch (Exception ex)
             {
-                DecideOnFailure(ex);
+                this.DecideOnFailure(ex);
             }
         }
     }

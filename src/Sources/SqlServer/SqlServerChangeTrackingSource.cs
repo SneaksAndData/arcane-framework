@@ -54,7 +54,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         this.fullLoadOnstart = fullLoadOnstart;
         this.stopAfterFullLoad = stopAfterFullLoad;
         this.streamKind = streamKind;
-        Shape = new SourceShape<List<DataCell>>(Out);
+        this.Shape = new SourceShape<List<DataCell>>(this.Out);
     }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.InitialAttributes"/>
@@ -81,7 +81,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         var columnExpression = SourceLogic.GetChangeTrackingColumns(columnSummaries,
             tableAlias: "tq", changesAlias: "ct");
 
-        var command = new SqlCommand(GetChangesQuery(
+        var command = new SqlCommand(this.GetChangesQuery(
             mergeExpression,
             columnExpression,
             matchExpression,
@@ -209,7 +209,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             });
 
 
-            SetHandler(source.Out, PullReader, Finish);
+            this.SetHandler(source.Out, this.PullReader, this.Finish);
         }
 
         /// <inheritdoc cref="IStopAfterBackfill.IsRunningInBackfillMode"/>
@@ -222,7 +222,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         {
             if (cause is not null && cause is not SubscriptionWithCancelException.NonFailureCancellation)
             {
-                FailSource(cause);
+                this.FailSource(cause);
             }
 
             try
@@ -232,7 +232,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "Couldn't complete transaction - probably done already.");
+                this.Log.Warning(ex, "Couldn't complete transaction - probably done already.");
             }
 
             try
@@ -243,7 +243,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             }
             catch (Exception ex)
             {
-                Log.Warning(ex,
+                this.Log.Warning(ex,
                     "Failed to dispose sqlConnection and sqlTransaction objects - application might be leaking memory if this occurs again.");
             }
         }
@@ -261,7 +261,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                     this.sqlConnection, changeTrackingTran)
             };
 
-            Log.Debug("Executing {command}", command.CommandText);
+            this.Log.Debug("Executing {command}", command.CommandText);
 
             var value = command.ExecuteScalar();
 
@@ -343,16 +343,16 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             {
                 if (rootCause.Number is 4998 or 22105)
                 {
-                    FailStage(new SchemaMismatchException(rootCause));
+                    this.FailStage(new SchemaMismatchException(rootCause));
                 }
                 else
                 {
-                    FailStage(rootCause);
+                    this.FailStage(rootCause);
                 }
             }
             else
             {
-                FailStage(ex);
+                this.FailStage(ex);
             }
         }
 
@@ -364,22 +364,22 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             }
             catch (Exception ex)
             {
-                FailSource(ex);
+                this.FailSource(ex);
             }
         }
 
         private void GetChanges()
         {
-            var newVersion = GetChangeTrackingVersion(this.currentVersion);
+            var newVersion = this.GetChangeTrackingVersion(this.currentVersion);
 
             if (newVersion.HasValue)
             {
-                Log.Info("Fetching rows for version {version}, entity {database}.{schema}.{table}",
+                this.Log.Info("Fetching rows for version {version}, entity {database}.{schema}.{table}",
                     newVersion.Value - 1, this.sqlConnection.Database, this.source.schemaName, this.source.tableName);
             }
             else
             {
-                Log.Info("No updates for entity {database}.{schema}.{table} since version {currentVersion}.",
+                this.Log.Info("No updates for entity {database}.{schema}.{table} since version {currentVersion}.",
                     this.sqlConnection.Database, this.source.schemaName, this.source.tableName, this.currentVersion);
             }
 
@@ -390,7 +390,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                         this.matchExpression,
                         newVersion.GetValueOrDefault(long.MaxValue) - 1), this.sqlConnection)
                     { CommandTimeout = this.source.commandTimeout, Transaction = this.readTran };
-            TryExecuteReader(command);
+            this.TryExecuteReader(command);
 
             if (this.reader.HasRows)
                 // reset current version so it can be updated from the source
@@ -406,10 +406,10 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                 switch (this.decider.Decide(readTask.Exception))
                 {
                     case Directive.Stop:
-                        Finish(readTask.Exception);
+                        this.Finish(readTask.Exception);
                         break;
                     default:
-                        ScheduleOnce(TimerKey, TimeSpan.FromSeconds(1));
+                        this.ScheduleOnce(TimerKey, TimeSpan.FromSeconds(1));
                         break;
                 }
 
@@ -421,13 +421,13 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             {
                 this.reader.Close();
                 this.readTran.Commit();
-                if (this.CompleteStageAfterFullLoad(Finish))
+                if (this.CompleteStageAfterFullLoad(this.Finish))
                 {
                     return;
                 }
 
-                GetChanges();
-                ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
+                this.GetChanges();
+                this.ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
             }
             else
             {
@@ -437,14 +437,14 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                         .Find(v => v.FieldName == "ChangeTrackingVersion").Value;
                 }
 
-                Emit(this.source.Out, readTask.Result.Value);
+                this.Emit(this.source.Out, readTask.Result.Value);
             }
         }
 
         public override void PreStart()
         {
             this.currentVersion = 0;
-            this.recordsReceived = GetAsyncCallback<Task<Option<List<DataCell>>>>(OnRecordReceived);
+            this.recordsReceived = this.GetAsyncCallback<Task<Option<List<DataCell>>>>(this.OnRecordReceived);
             this.sqlConnection.Open();
             this.tableColumns = SqlServerUtils
                 .GetColumns(this.source.schemaName, this.source.tableName, this.sqlConnection).ToList();
@@ -457,21 +457,21 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
 
             if (this.source.fullLoadOnstart)
             {
-                Log.Info("Fetching all rows for the latest version of an entity {database}.{schema}.{table}",
+                this.Log.Info("Fetching all rows for the latest version of an entity {database}.{schema}.{table}",
                     this.sqlConnection.Database, this.source.schemaName, this.source.tableName);
                 this.readTran = this.sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted);
 
                 var command =
-                    new SqlCommand(this.source.GetAllQuery(this.mergeExpression, GetChangeTrackingColumns("tq")),
+                    new SqlCommand(this.source.GetAllQuery(this.mergeExpression, this.GetChangeTrackingColumns("tq")),
                             this.sqlConnection)
                         { CommandTimeout = this.source.commandTimeout, Transaction = this.readTran };
 
-                IsRunningInBackfillMode = true;
-                TryExecuteReader(command);
+                this.IsRunningInBackfillMode = true;
+                this.TryExecuteReader(command);
             }
             else
             {
-                GetChanges();
+                this.GetChanges();
             }
         }
 
@@ -494,7 +494,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
 
         protected override void OnTimer(object timerKey)
         {
-            PullReader();
+            this.PullReader();
         }
     }
 }

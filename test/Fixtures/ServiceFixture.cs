@@ -16,17 +16,17 @@ public class ServiceFixture
 {
     public ServiceFixture()
     {
-        MockBlobStorageService = new Mock<IBlobStorageService>();
-        MockMetricsService = new Mock<MetricsService>();
-        MockHttpClient = new Mock<HttpClient>();
-        MockKubeCluster = new Mock<IKubeCluster>();
-        MockStreamConfigurationProvider = new Mock<IStreamConfigurationProvider>();
+        this.MockBlobStorageService = new Mock<IBlobStorageService>();
+        this.MockMetricsService = new Mock<MetricsService>();
+        this.MockHttpClient = new Mock<HttpClient>();
+        this.MockKubeCluster = new Mock<IKubeCluster>();
+        this.MockStreamConfigurationProvider = new Mock<IStreamConfigurationProvider>();
 
-        TestDbConnectionString = OperatingSystem.IsWindows()
+        this.TestDbConnectionString = OperatingSystem.IsWindows()
             ? @"Server=(localdb)\MSSQLLocalDB;Integrated Security=true;Trust Server Certificate=true"
             : "Server=.,1433;UID=sa;PWD=tMIxN11yGZgMC;TrustServerCertificate=true";
 
-        using (var sqlCon = new SqlConnection(TestDbConnectionString))
+        using (var sqlCon = new SqlConnection(this.TestDbConnectionString))
         {
             sqlCon.Open();
             var createDbCmd =
@@ -50,7 +50,7 @@ public class ServiceFixture
 
     public string PrepareSqlServerDatabase(string tableName)
     {
-        using (var sqlCon = new SqlConnection(TestDbConnectionString))
+        using (var sqlCon = new SqlConnection(this.TestDbConnectionString))
         {
             sqlCon.Open();
             var createTableCmd =
@@ -79,13 +79,13 @@ public class ServiceFixture
             var changeRowCmd = new SqlCommand($"use arcane; insert into dbo.{tableName} values (9999, 9999)", sqlCon);
             changeRowCmd.ExecuteNonQuery();
 
-            return $"{TestDbConnectionString};Initial Catalog=arcane;";
+            return $"{this.TestDbConnectionString};Initial Catalog=arcane;";
         }
     }
 
     public void InsertChanges(string tableName)
     {
-        using var sqlCon = new SqlConnection(TestDbConnectionString);
+        using var sqlCon = new SqlConnection(this.TestDbConnectionString);
         sqlCon.Open();
         var changeRowCmd =
             new SqlCommand($"use arcane; insert into dbo.{tableName} values (99999, 99999)", sqlCon);
@@ -94,7 +94,7 @@ public class ServiceFixture
 
     public void DeleteChanges(string tableName)
     {
-        using var sqlCon = new SqlConnection(TestDbConnectionString);
+        using var sqlCon = new SqlConnection(this.TestDbConnectionString);
         sqlCon.Open();
         var changeRowCmd =
             new SqlCommand($"use arcane; insert into dbo.{tableName} values (88888, 88888)", sqlCon);

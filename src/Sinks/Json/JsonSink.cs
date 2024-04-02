@@ -30,7 +30,7 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
         this.jsonSinkPath = jsonSinkPath;
         this.jsonFileName = jsonFileName;
 
-        Shape = new SinkShape<(string, List<(DateTimeOffset, JsonDocument)>)>(In);
+        this.Shape = new SinkShape<(string, List<(DateTimeOffset, JsonDocument)>)>(this.In);
     }
 
     /// <summary>
@@ -87,21 +87,21 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
             });
             this.writeInProgress = false;
 
-            SetHandler(sink.In,
-                () => WriteJson(Grab(sink.In)),
+            this.SetHandler(sink.In,
+                () => this.WriteJson(this.Grab(sink.In)),
                 () =>
                 {
                     // It is most likely that we receive the finish event before the task from the last element has finished
                     // so if the task is still running we need to complete the stage later
                     if (!this.writeInProgress)
                     {
-                        Finish();
+                        this.Finish();
                     }
                 },
                 ex =>
                 {
                     this.taskCompletion.TrySetException(ex);
-                    FailStage(ex);
+                    this.FailStage(ex);
                 }
             );
         }
@@ -109,9 +109,9 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
         public override void PreStart()
         {
             // Keep going even if the upstream has finished so that we can process the task from the last element
-            SetKeepGoing(true);
+            this.SetKeepGoing(true);
             // Request the first element
-            Pull(this.sink.In);
+            this.Pull(this.sink.In);
         }
 
         private Task<UploadedBlob> SavePart()
@@ -144,7 +144,7 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
                     }
                 }
 
-                SavePart().ContinueWith(_ => GetAsyncCallback(PullOrComplete).Invoke());
+                this.SavePart().ContinueWith(_ => this.GetAsyncCallback(this.PullOrComplete).Invoke());
             }
             catch (Exception ex)
             {
@@ -152,13 +152,13 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
                 {
                     case Directive.Stop:
                         this.taskCompletion.TrySetException(ex);
-                        FailStage(ex);
+                        this.FailStage(ex);
                         break;
                     case Directive.Resume:
-                        WriteJson(batch);
+                        this.WriteJson(batch);
                         break;
                     case Directive.Restart:
-                        PullOrComplete();
+                        this.PullOrComplete();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -169,31 +169,31 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
         private void CompleteSink()
         {
             this.taskCompletion.TrySetResult(NotUsed.Instance);
-            CompleteStage();
+            this.CompleteStage();
         }
 
         private void Finish()
         {
             if (this.memoryStream != null && this.memoryStream.CanRead && this.memoryStream.Length > 0)
             {
-                SavePart().ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+                this.SavePart().ContinueWith(_ => this.GetAsyncCallback(this.CompleteSink).Invoke());
             }
             else
             {
-                CompleteSink();
+                this.CompleteSink();
             }
         }
 
         private void PullOrComplete()
         {
             this.writeInProgress = false;
-            if (IsClosed(this.sink.In))
+            if (this.IsClosed(this.sink.In))
             {
-                Finish();
+                this.Finish();
             }
             else
             {
-                Pull(this.sink.In);
+                this.Pull(this.sink.In);
             }
         }
     }

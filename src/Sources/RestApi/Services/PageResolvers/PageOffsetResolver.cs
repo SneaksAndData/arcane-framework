@@ -29,7 +29,7 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
     {
         if (apiResponse.HasValue)
         {
-            if (!GetResponseContent(apiResponse, this.responseBodyPropertyKeyChain).Any())
+            if (!this.GetResponseContent(apiResponse, this.responseBodyPropertyKeyChain).Any())
             {
                 this.pagePointer = null;
                 return false;

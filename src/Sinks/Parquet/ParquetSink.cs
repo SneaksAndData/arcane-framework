@@ -52,7 +52,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         this.schemaSinkPathSegment = schemaSinkPathSegment;
         this.dropCompletionToken = dropCompletionToken;
 
-        Shape = new SinkShape<List<ParquetColumn>>(In);
+        this.Shape = new SinkShape<List<ParquetColumn>>(this.In);
     }
 
     /// <summary>
@@ -119,21 +119,21 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
             });
             this.writeInProgress = false;
 
-            SetHandler(sink.In,
-                () => WriteRowGroup(Grab(sink.In)),
+            this.SetHandler(sink.In,
+                () => this.WriteRowGroup(this.Grab(sink.In)),
                 () =>
                 {
                     // It is most likely that we receive the finish event before the task from the last element has finished
                     // so if the task is still running we need to complete the stage later
                     if (!this.writeInProgress)
                     {
-                        Finish();
+                        this.Finish();
                     }
                 },
                 ex =>
                 {
                     this.taskCompletion.TrySetException(ex);
-                    FailStage(ex);
+                    this.FailStage(ex);
                 }
             );
         }
@@ -141,17 +141,18 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         public override void PreStart()
         {
             // Keep going even if the upstream has finished so that we can process the task from the last element
-            SetKeepGoing(true);
+            this.SetKeepGoing(true);
 
             if (this.sink.createSchemaFile)
                 // dump empty schema file and then pull first element
             {
-                CreateSchemaFile().ContinueWith(_ => GetAsyncCallback(() => Pull(this.sink.In)).Invoke());
+                this.CreateSchemaFile()
+                    .ContinueWith(_ => this.GetAsyncCallback(() => this.Pull(this.sink.In)).Invoke());
             }
             else
                 // request the first element
             {
-                Pull(this.sink.In);
+                this.Pull(this.sink.In);
             }
         }
 
@@ -172,21 +173,22 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         {
             var (fullHash, shortHash, schemaBytes) = this.sink.parquetSchema.GetSchemaHash();
             this.schemaHash = shortHash;
-            Log.Info("Schema hash length for this source: {schemaByteLength}", schemaBytes.Length);
-            Log.Info("Full schema hash for this source: {schemaHash}", fullHash);
+            this.Log.Info("Schema hash length for this source: {schemaByteLength}", schemaBytes.Length);
+            this.Log.Info("Full schema hash for this source: {schemaHash}", fullHash);
 
             var schemaId = Guid.NewGuid();
             // Save empty file to base output location and schema store
-            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), GetSavePath(),
+            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), this.GetSavePath(),
                     $"part-{schemaId}-{this.schemaHash}-chunk.parquet")
-                .Map(_ => this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), GetSchemaPath(),
+                .Map(_ => this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), this.GetSchemaPath(),
                     $"schema-{schemaId}-{this.schemaHash}.parquet"))
                 .Flatten();
         }
 
         private Task<UploadedBlob> SavePart()
         {
-            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()), GetSavePath(),
+            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
+                this.GetSavePath(),
                 string.IsNullOrEmpty(this.schemaHash)
                     ? $"part-{Guid.NewGuid()}-chunk.parquet"
                     : $"part-{Guid.NewGuid()}-{this.schemaHash}-chunk.parquet");
@@ -198,7 +200,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
                 // there seems to be an issue with Moq library and how it serializes BinaryData type
                 // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
             {
-                return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }), GetSavePath(),
+                return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }), this.GetSavePath(),
                     $"{this.schemaHash}.COMPLETED");
             }
 
@@ -209,7 +211,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         {
             if (parquetColumns.Count == 0)
             {
-                Log.Info("Received and empty chunk for {sinkPath}", this.sink.path);
+                this.Log.Info("Received and empty chunk for {sinkPath}", this.sink.path);
                 return;
             }
 
@@ -220,7 +222,8 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
 
             this.writeInProgress = true;
             this.blockCount += 1;
-            Log.Info("Processing inlet {blockCount} for {sinkPath}, size {dataLength}", this.blockCount, this.sink.path,
+            this.Log.Info("Processing inlet {blockCount} for {sinkPath}, size {dataLength}", this.blockCount,
+                this.sink.path,
                 parquetColumns[0].Data.Length);
             try
             {
@@ -236,14 +239,14 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
                     }
                 }
 
-                if (this.blockCount % this.sink.rowGroupsPerFile == 0 || IsClosed(this.sink.In))
+                if (this.blockCount % this.sink.rowGroupsPerFile == 0 || this.IsClosed(this.sink.In))
                 {
-                    SavePart().ContinueWith(_ => GetAsyncCallback(PullOrComplete).Invoke());
+                    this.SavePart().ContinueWith(_ => this.GetAsyncCallback(this.PullOrComplete).Invoke());
                     this.blockCount = 0;
                 }
                 else
                 {
-                    PullOrComplete();
+                    this.PullOrComplete();
                 }
             }
             catch (Exception ex)
@@ -252,13 +255,13 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
                 {
                     case Directive.Stop:
                         this.taskCompletion.TrySetException(ex);
-                        FailStage(ex);
+                        this.FailStage(ex);
                         break;
                     case Directive.Resume:
-                        WriteRowGroup(parquetColumns);
+                        this.WriteRowGroup(parquetColumns);
                         break;
                     case Directive.Restart:
-                        PullOrComplete();
+                        this.PullOrComplete();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -269,32 +272,32 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         private void CompleteSink()
         {
             this.taskCompletion.TrySetResult(NotUsed.Instance);
-            CompleteStage();
+            this.CompleteStage();
         }
 
         private void Finish()
         {
             if (this.memoryStream is { Length: > 0 })
             {
-                SavePart().Map(_ => SaveCompletionToken()).Flatten()
-                    .ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+                this.SavePart().Map(_ => this.SaveCompletionToken()).Flatten()
+                    .ContinueWith(_ => this.GetAsyncCallback(this.CompleteSink).Invoke());
             }
             else
             {
-                SaveCompletionToken().ContinueWith(_ => GetAsyncCallback(CompleteSink).Invoke());
+                this.SaveCompletionToken().ContinueWith(_ => this.GetAsyncCallback(this.CompleteSink).Invoke());
             }
         }
 
         private void PullOrComplete()
         {
             this.writeInProgress = false;
-            if (IsClosed(this.sink.In))
+            if (this.IsClosed(this.sink.In))
             {
-                Finish();
+                this.Finish();
             }
             else
             {
-                Pull(this.sink.In);
+                this.Pull(this.sink.In);
             }
         }
     }

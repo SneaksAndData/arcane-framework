@@ -134,12 +134,12 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
             { "SYS_CHANGE_VERSION", "int" },
             { "colC", "bigint" }
         };
-        this.serviceFixture.CreateTable(this.connectionString, nameof(GetColumns), inputCols, "colA");
+        this.serviceFixture.CreateTable(this.connectionString, nameof(this.GetColumns), inputCols, "colA");
 
         using var sqlCon = new SqlConnection(this.connectionString);
         sqlCon.Open();
 
-        var result = SqlServerUtils.GetColumns("dbo", nameof(GetColumns), sqlCon)
+        var result = SqlServerUtils.GetColumns("dbo", nameof(this.GetColumns), sqlCon)
             .ToDictionary(c => c.columnName, c => c.isPrimaryKey);
 
         sqlCon.Close();
