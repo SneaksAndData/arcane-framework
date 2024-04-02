@@ -56,7 +56,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     }
 
     /// <summary>
-    /// Sink outlet
+    /// Sink inlet
     /// </summary>
     public Inlet<List<ParquetColumn>> In { get; } = new($"{nameof(ParquetSink)}.In");
 

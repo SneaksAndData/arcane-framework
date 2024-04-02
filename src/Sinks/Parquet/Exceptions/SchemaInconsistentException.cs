@@ -4,13 +4,14 @@ using System.Diagnostics.CodeAnalysis;
 namespace Arcane.Framework.Sinks.Parquet.Exceptions;
 
 /// <summary>
-/// Thrown if the schema of the source is inconsistent with the schema of the sink
+/// Thrown if the schema of the source is inconsistent with the schema of the sink.
+/// This can occur if the source updates the schema after the stream has been launched.
 /// </summary>
 [ExcludeFromCodeCoverage]
 public class SchemaInconsistentException : Exception
 {
     /// <summary>
-    /// Thrown if the schema of the source is inconsistent with the schema of the sink
+    /// Thrown if the schema of the source is inconsistent with the schema of the sink.
     /// </summary>
     /// <param name="sourceFields">Number of source fields</param>
     /// <param name="sinkFields">Number of sink fields</param>
@@ -21,7 +22,7 @@ public class SchemaInconsistentException : Exception
     }
 
     /// <summary>
-    /// Exception message
+    /// Exception message.
     /// </summary>
     public override string Message { get; }
 }

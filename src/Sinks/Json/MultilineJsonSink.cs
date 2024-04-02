@@ -17,7 +17,8 @@ using Snd.Sdk.Tasks;
 namespace Arcane.Framework.Sinks.Json;
 
 /// <summary>
-/// Sink that writes a list of JSON objects to a file divided by new lines.
+/// Sink that writes incoming lists of elements into a file per list, each element as a JSON-serialised
+/// line in the file, on a BLOB storage. Also optionally drops a schema for the output in a form of an empty PARQUET file.
 /// </summary>
 public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<JsonElement>>, Task>
 {

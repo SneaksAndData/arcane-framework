@@ -13,7 +13,7 @@ using Snd.Sdk.Storage.Models;
 namespace Arcane.Framework.Sinks.Json;
 
 /// <summary>
-/// Sink that produces a list of JSON files.
+/// Sink that writes incoming elements as JSON files to a BLOB storage
 /// </summary>
 public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<(DateTimeOffset, JsonDocument)>)>, Task>
 {
