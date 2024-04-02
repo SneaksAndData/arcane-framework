@@ -1,7 +1,7 @@
 ﻿namespace Arcane.Framework.Sources.Base;
 
 /// <summary>
-/// An interface for a stage that can stop after a full load
+/// An interface for a graph that can stop after a backfill
 /// </summary>
 public interface IStopAfterBackfill
 {
