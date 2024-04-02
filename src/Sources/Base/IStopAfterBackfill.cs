@@ -11,7 +11,7 @@ public interface IStopAfterBackfill
     bool StopAfterBackfill { get; }
 
     /// <summary>
-    /// True if source logic works in full load mode.
+    /// True if source logic works in backfill mode.
     /// When full load is finished and source started stream updates, this should be set ta false
     /// </summary>
     bool IsRunningInBackfillMode { get; set; }
