@@ -1,7 +1,7 @@
 ﻿namespace Arcane.Framework.Sources.Base;
 
 /// <summary>
-/// An interface for a stage that can stop after a full load
+/// An interface for a graph that can stop after a backfill
 /// </summary>
 public interface IStopAfterBackfill
 {
@@ -11,7 +11,7 @@ public interface IStopAfterBackfill
     bool StopAfterBackfill { get; }
 
     /// <summary>
-    /// True if source logic works in full load mode.
+    /// True if source logic works in backfill mode.
     /// When full load is finished and source started stream updates, this should be set ta false
     /// </summary>
     bool IsRunningInBackfillMode { get; set; }

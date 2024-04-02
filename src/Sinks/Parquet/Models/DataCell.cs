@@ -3,7 +3,7 @@
 namespace Arcane.Framework.Sinks.Parquet.Models;
 
 /// <summary>
-/// Represents a Parquet data cell
+/// Represents a single value in a Parquet Column
 /// </summary>
 public sealed class DataCell
 {
