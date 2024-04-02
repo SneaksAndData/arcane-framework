@@ -51,7 +51,7 @@ public static class ParquetOperations
     }
 
     /// <summary>
-    /// Converts a list of data cells to a Parquet row group
+    /// Converts a list of DataCell objects to a Parquet row group
     /// </summary>
     /// <param name="cellGroups">List of data cells</param>
     /// <param name="parquetSchema">Parquet Schema for a column</param>
