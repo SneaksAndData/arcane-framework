@@ -13,7 +13,7 @@ public enum TemplatedFieldType
     FILTER_DATE_FROM,
 
     /// <summary>
-    /// Templated field is a date diapason start.
+    /// Templated field is a date range start.
     /// </summary>
     FILTER_DATE_BETWEEN_FROM,
 
