@@ -12,14 +12,21 @@ namespace Arcane.Framework.Services;
 public class StreamRunnerService : IStreamRunnerService
 
 {
-    private readonly IMaterializer materializer;
-    private readonly ILogger<StreamRunnerService> logger;
     private readonly IHostApplicationLifetime applicationLifetime;
+    private readonly ILogger<StreamRunnerService> logger;
+    private readonly IMaterializer materializer;
+    private readonly string streamId;
 
     private UniqueKillSwitch killSwitch;
     private Task streamTask;
-    private readonly string streamId;
 
+    /// <summary>
+    /// Creates new instance of <see cref="StreamRunnerService"/>
+    /// </summary>
+    /// <param name="materializer">Akka stream materializer</param>
+    /// <param name="logger">Logger instance</param>
+    /// <param name="applicationLifetime">Application lifetime service</param>
+    /// <param name="streamConfigurationProvider">Stream configuration provider service</param>
     public StreamRunnerService(
         IMaterializer materializer,
         ILogger<StreamRunnerService> logger,
@@ -35,7 +42,7 @@ public class StreamRunnerService : IStreamRunnerService
     /// <inheritdoc/>
     public Task RunStream(Func<IRunnableGraph<(UniqueKillSwitch, Task)>> streamFactory)
     {
-        (this.killSwitch, this.streamTask) = streamFactory().Run(materializer);
+        (this.killSwitch, this.streamTask) = streamFactory().Run(this.materializer);
         this.applicationLifetime.ApplicationStopped.Register(this.StopStream);
         this.logger.LogInformation("Started stream with id {streamId}", this.streamId);
         return this.streamTask;
@@ -48,6 +55,7 @@ public class StreamRunnerService : IStreamRunnerService
         {
             throw new InvalidOperationException("Requested to stop a stream that didn't start correctly.");
         }
+
         this.logger.LogInformation("Requested shutdown of a stream with id {streamId}", this.streamId);
         this.killSwitch.Shutdown();
     }
