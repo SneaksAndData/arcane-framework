@@ -1,0 +1,32 @@
+﻿{
+  "type": "object",
+  "properties": {
+    "page": {
+      "pattern": "\\d+",
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+    },
+    "limit": {
+      "type": "object",
+      "properties": {
+        "max_pages": {
+          "pattern": "\\d+",
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "min_pages": {
+          "pattern": "\\d+",
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        }
+      }
+    },
+    "desc": {
+      "type": "string",
+      "example": 1
+    }
+  }
+}  
