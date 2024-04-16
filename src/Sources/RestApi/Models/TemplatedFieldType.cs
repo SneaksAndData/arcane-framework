@@ -18,7 +18,7 @@ public enum TemplatedFieldType
     FILTER_DATE_BETWEEN_FROM,
 
     /// <summary>
-    /// Templated field is a date diapason end.
+    /// Templated field is a date range end.
     /// </summary>
     FILTER_DATE_BETWEEN_TO
 }
