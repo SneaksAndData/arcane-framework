@@ -3,7 +3,7 @@
 /// <summary>
 /// Provides common streaming job configuration properties
 /// </summary>
-public class IStreamConfigurationProvider
+public interface IStreamConfigurationProvider
 {
     /// <summary>
     /// Id of the stream
@@ -14,4 +14,6 @@ public class IStreamConfigurationProvider
     /// True if stream is running in backfill (full reload) mode
     /// </summary>
     public bool IsRunningInBackfillMode { get; }
+
+    public string GetStreamKind();
 }
