@@ -1,4 +1,7 @@
-﻿namespace Arcane.Framework.Services.Base;
+﻿using System;
+using Newtonsoft.Json;
+
+namespace Arcane.Framework.Services.Base;
 
 /// <summary>
 /// Provides common streaming job configuration properties
@@ -16,4 +19,7 @@ public interface IStreamConfigurationReader
     public bool IsRunningInBackfillMode { get; }
 
     public string StreamKind { get; }
+
+    public TConfiguration Read<TConfiguration>(Action<TConfiguration> configureStreamConfiguration = null)
+        where TConfiguration : class, new();
 }
