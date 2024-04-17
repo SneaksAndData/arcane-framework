@@ -3,7 +3,7 @@
 /// <summary>
 /// Provides common streaming job configuration properties
 /// </summary>
-public interface IStreamConfigurationProvider
+public interface IStreamConfigurationManager
 {
     /// <summary>
     /// Id of the stream
@@ -15,5 +15,5 @@ public interface IStreamConfigurationProvider
     /// </summary>
     public bool IsRunningInBackfillMode { get; }
 
-    public string GetStreamKind();
+    public string StreamKind { get; }
 }
