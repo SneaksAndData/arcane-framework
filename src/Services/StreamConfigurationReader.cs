@@ -7,7 +7,7 @@ namespace Arcane.Framework.Services;
 /// <summary>
 /// Provides access to a streaming job configuration
 /// </summary>
-public class StreamConfigurationManager: IStreamConfigurationManager
+public class StreamConfigurationReader: IStreamConfigurationReader
 {
     private const string STREAM_KIND = nameof(STREAM_KIND);
     private const string STREAM_ID = nameof(STREAM_ID);

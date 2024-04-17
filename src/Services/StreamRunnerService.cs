@@ -26,17 +26,17 @@ public class StreamRunnerService : IStreamRunnerService
     /// <param name="materializer">Akka stream materializer</param>
     /// <param name="logger">Logger instance</param>
     /// <param name="applicationLifetime">Application lifetime service</param>
-    /// <param name="streamConfigurationManager">Stream configuration provider service</param>
+    /// <param name="streamConfigurationReader">Stream configuration provider service</param>
     public StreamRunnerService(
         IMaterializer materializer,
         ILogger<StreamRunnerService> logger,
         IHostApplicationLifetime applicationLifetime,
-        IStreamConfigurationManager streamConfigurationManager)
+        IStreamConfigurationReader streamConfigurationReader)
     {
         this.materializer = materializer;
         this.logger = logger;
         this.applicationLifetime = applicationLifetime;
-        this.streamId = streamConfigurationManager.StreamId;
+        this.streamId = streamConfigurationReader.StreamId;
     }
 
     /// <inheritdoc/>
