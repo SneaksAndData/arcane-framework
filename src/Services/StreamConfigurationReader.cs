@@ -1,6 +1,7 @@
 ﻿using System;
 using Arcane.Framework.Services.Base;
 using Arcane.Framework.Services.Extensions;
+using Arcane.Stream.RestApi.Models;
 using Newtonsoft.Json;
 
 namespace Arcane.Framework.Services;
@@ -21,7 +22,7 @@ public class StreamConfigurationReader: IStreamConfigurationReader
     public bool IsRunningInBackfillMode  => FULL_LOAD.GetEnvironmentVariable().Equals("true", StringComparison.OrdinalIgnoreCase);
 
     public TConfiguration Read<TConfiguration>(Action<TConfiguration> configureStreamConfiguration = null)
-        where TConfiguration : class, new()
+        where TConfiguration : ISourceConfiguration, ISinkConfiguration
     {
         var configuration = JsonConvert.DeserializeObject<TConfiguration>(SPEC.GetEnvironmentVariable());
         configureStreamConfiguration?.Invoke(configuration);

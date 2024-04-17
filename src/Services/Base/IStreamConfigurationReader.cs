@@ -1,4 +1,5 @@
 ﻿using System;
+using Arcane.Stream.RestApi.Models;
 using Newtonsoft.Json;
 
 namespace Arcane.Framework.Services.Base;
@@ -21,5 +22,5 @@ public interface IStreamConfigurationReader
     public string StreamKind { get; }
 
     public TConfiguration Read<TConfiguration>(Action<TConfiguration> configureStreamConfiguration = null)
-        where TConfiguration : class, new();
+        where TConfiguration : ISourceConfiguration, ISinkConfiguration;
 }
