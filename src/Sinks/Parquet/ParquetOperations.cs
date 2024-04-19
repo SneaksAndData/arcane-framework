@@ -68,6 +68,17 @@ public static class ParquetOperations
             }
         }
 
+        return cellGroups.ToRowGroup(parquetSchema);
+    }
+
+    /// <summary>
+    /// Converts a list of DataCell objects to a Parquet row group
+    /// </summary>
+    /// <param name="cellGroups">List of data cells</param>
+    /// <param name="parquetSchema">Parquet Schema for a column</param>
+    /// <returns>List of the Parquet columns</returns>
+    public static List<ParquetColumn> ToRowGroup(this List<List<DataCell>> cellGroups, Schema parquetSchema)
+    {
         var columns = parquetSchema.GetDataFields().Select((field, _) =>
                 new ParquetColumn(field, Array.CreateInstance(field.ClrType.GetNullableClrType(), cellGroups.Count)))
             .ToList();
