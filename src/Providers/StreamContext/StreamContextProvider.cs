@@ -21,7 +21,7 @@ public static class StreamContextProvider
     /// <typeparam name="TStreamContext"></typeparam>
     /// <returns></returns>
     public static IServiceCollection AddStreamContext<TStreamContext>(this IServiceCollection services, Func<TStreamContext> provider = null)
-        where TStreamContext : class, IStreamOptions, new()
+        where TStreamContext : class, IStreamContextWriter, IStreamContext, new()
     {
         var context = provider?.Invoke() ?? ProvideFromEnvironment<TStreamContext>();
         services.AddSingleton<IStreamContext>(context);
@@ -33,13 +33,13 @@ public static class StreamContextProvider
     /// </summary>
     /// <typeparam name="TStreamContext">Stream context type</typeparam>
     /// <returns>Stream context instance</returns>
-    public static TStreamContext ProvideFromEnvironment<TStreamContext>() where TStreamContext : class, IStreamOptions
+    public static TStreamContext ProvideFromEnvironment<TStreamContext>() where TStreamContext : class, IStreamContextWriter, IStreamContext
     {
         var context = JsonSerializer.Deserialize<TStreamContext>(EnvironmentExtensions.GetAssemblyEnvironmentVariable("SPEC"));
-        context.IsRunningInBackfillMode = EnvironmentExtensions.GetAssemblyEnvironmentVariable("FULL_LOAD")
-            .Equals("true", System.StringComparison.InvariantCultureIgnoreCase);;
-        context.StreamId = EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_ID");
-        context.StreamKind = EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_KIND");
+        context.SetIsRunningInBackfillMode(EnvironmentExtensions.GetAssemblyEnvironmentVariable("FULL_LOAD")
+            .Equals("true", System.StringComparison.InvariantCultureIgnoreCase));
+        context.SetStreamId(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_ID"));
+        context.SetStreamKind(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_KIND"));
         return context;
     }
 }

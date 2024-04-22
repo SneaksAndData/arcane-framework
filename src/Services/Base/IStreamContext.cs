@@ -8,15 +8,15 @@ public interface IStreamContext
     /// <summary>
     /// Id of the stream
     /// </summary>
-    public string StreamId { get; }
+    string StreamId { get; }
 
     /// <summary>
     /// True if stream is running in backfill (full reload) mode
     /// </summary>
-    public bool IsRunningInBackfillMode { get; }
+    bool IsRunningInBackfillMode { get; }
 
     /// <summary>
     /// Kind of the custom resource that manages the stream
     /// </summary>
-    public string StreamKind { get; }
+    string StreamKind { get; }
 }

@@ -4,20 +4,20 @@
 /// Read-write stream context options used by the application configuration pipeline
 /// This interface should be implemented by the streaming plugin.
 /// </summary>
-public interface IStreamOptions: IStreamContext
+public interface IStreamContextWriter
 {
     /// <summary>
     /// Id of the stream
     /// </summary>
-    public string StreamId { get; set; }
+    void SetStreamId(string streamId);
 
     /// <summary>
     /// True if stream is running in backfill (full reload) mode
     /// </summary>
-    public bool IsRunningInBackfillMode { get; set; }
+    void SetIsRunningInBackfillMode(bool isRunningInBackfillMode);
 
     /// <summary>
     /// Kind of the custom resource that manages the stream
     /// </summary>
-    public string StreamKind{ get; set;  }
+    void SetStreamKind(bool isRunningInBackfillMode);
 }
