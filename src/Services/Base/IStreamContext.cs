@@ -3,7 +3,7 @@
 /// <summary>
 /// Provides common streaming job configuration properties
 /// </summary>
-public class IStreamConfigurationProvider
+public interface IStreamContext
 {
     /// <summary>
     /// Id of the stream
