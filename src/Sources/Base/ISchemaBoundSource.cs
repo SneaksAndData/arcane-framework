@@ -25,7 +25,7 @@ public interface ISchemaBoundSource<TOut, TMat, TSchema> : ISchemaFreeSource<TOu
     /// Connects the source to a sink
     /// </summary>
     /// <param name="sink">Sink to connect to</param>
-    /// <typeparam name="TIn">Sink input type</typeparam>
+    /// <typeparam name="TMat2">Materialized value of the sink</typeparam>
     /// <returns>Runnable graph</returns>
     IRunnableGraph<TMat2> To<TMat2>(ISchemaBoundSink<TOut, TMat2, TSchema> sink);
 
