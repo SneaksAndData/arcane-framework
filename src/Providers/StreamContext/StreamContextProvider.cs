@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
-using Arcane.Framework.Extensions;
 using Arcane.Framework.Services.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Snd.Sdk.Hosting;
