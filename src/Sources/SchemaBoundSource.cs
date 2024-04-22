@@ -49,5 +49,5 @@ public class SchemaBoundSource<TOut, TMat, TSchema>: ISchemaBoundSource<TOut, TM
         this.source.Map(mapper).WithSchema(newSchema);
 
     /// <inheritdoc />
-    public IRunnableGraph<TMat> To<TIn>(ISchemaBoundSink<TOut, TMat, TSchema> sink) => sink.GraphBuilder(this);
+    public IRunnableGraph<TMat2> To<TMat2>(ISchemaBoundSink<TOut, TMat2, TSchema> sink) => sink.GraphBuilder(this);
 }

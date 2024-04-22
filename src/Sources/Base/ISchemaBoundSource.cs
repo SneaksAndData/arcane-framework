@@ -27,7 +27,7 @@ public interface ISchemaBoundSource<TOut, TMat, TSchema> : ISchemaFreeSource<TOu
     /// <param name="sink">Sink to connect to</param>
     /// <typeparam name="TIn">Sink input type</typeparam>
     /// <returns>Runnable graph</returns>
-    IRunnableGraph<TMat> To<TIn>(ISchemaBoundSink<TOut, TMat, TSchema> sink);
+    IRunnableGraph<TMat2> To<TMat2>(ISchemaBoundSink<TOut, TMat2, TSchema> sink);
 
     /// <summary>
     /// Returns the schema validator

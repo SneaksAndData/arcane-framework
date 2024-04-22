@@ -10,8 +10,8 @@ namespace Arcane.Framework.Sources.Base;
 public interface ISchemaValidator<TIn>
 {
     /// <summary>
-    /// Returns a flow that validates data against a schema and throws the <see cref="SchemaMismatchException"/>
-    /// if validation failed
+    /// Returns a flow that validates data against a schema and throws one of the
+    /// <see cref="SchemaException"/> inherited exceptions if validation failed
     /// </summary>
     /// <typeparam name="TMat">Type of materialized value</typeparam>
     /// <returns>Akka stream flow</returns>

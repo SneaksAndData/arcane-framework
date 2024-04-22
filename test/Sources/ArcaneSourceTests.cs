@@ -4,10 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Akka.Streams;
 using Akka.Streams.Dsl;
+using Arcane.Framework.Sinks.Extensions;
 using Arcane.Framework.Sinks.Parquet;
-using Arcane.Framework.Sinks.Parquet.Exceptions;
 using Arcane.Framework.Sinks.Parquet.Models;
 using Arcane.Framework.Sources.Base;
+using Arcane.Framework.Sources.Exceptions;
 using Arcane.Framework.Sources.Extensions;
 using Arcane.Framework.Sources.SqlServer;
 using Arcane.Framework.Tests.Fixtures;
@@ -67,25 +68,32 @@ public class ArcaneSourceTests: IClassFixture<AkkaFixture>
             new DataCell("familyName", typeof(string), "Doe"),
             new DataCell("birthday", typeof(DateTimeOffset), DateTimeOffset.Now)
         };
+        var parquetSchema = new Schema(rows.Select(df => new DataField(df.FieldName, df.FieldType)).ToList());
 
         var brokenRows = new[]
         {
             new DataCell("familyName", typeof(string), "Doe"),
-            new DataCell("birthday", typeof(DateTimeOffset), DateTimeOffset.Now)
+            new DataCell("familyName", typeof(string), "Doe"),
         };
+        var brokenSchema = new Schema(rows.Take(2).Select(df => new DataField(df.FieldName, df.FieldType)).ToList());
 
-        var parquetSchema = new Schema(rows.Select(df => new DataField(df.FieldName, df.FieldType)).ToList());
-        var mockSource = Source.From(Enumerable.Range(0, 100).Select(idx => idx % 10 == 0 ? brokenRows.ToList() : rows.ToList()));
+        var mockSource = Source.From(Enumerable.Range(0, 100).Select(idx => idx > 9 ? brokenRows.ToList() : rows.ToList()));
         var sink = Sink.Aggregate<List<ParquetColumn>, int>(0, (acc, _) => acc + 1);
         var validator = new FastParquetSchemaValidator(parquetSchema);
 
+        var callCount = 0;
         // Act
         var sfs = mockSource
             .ToArcaneSource()
-            .WithSchema(validator)
             .MapSource(s => s.GroupedWithin(10, TimeSpan.FromSeconds(10)))
-            .Map(grp => grp.ToList().AsRowGroup(parquetSchema))
-            .To(sink.ToArcaneSink());
+            .Map(grp =>
+            {
+                var schema = callCount < 1 ? parquetSchema : brokenSchema;
+                callCount++;
+                return grp.ToList().ToRowGroup(schema);
+            })
+            .WithSchema(validator)
+            .To(sink.ToArcaneSink().WithSchema(validator));
 
         var ex = await Assert.ThrowsAsync<SchemaInconsistentException>( async () => await sfs.Run(this.materializer));
 

@@ -6,8 +6,8 @@ namespace Arcane.Framework.Sources.Exceptions;
 /// <summary>
 /// Thrown if the schema of the source changed
 /// </summary>
-[ExcludeFromCodeCoverage]
-public class SchemaMismatchException : Exception
+[ExcludeFromCodeCoverage(Justification = "Trivial")]
+public class SchemaMismatchException : SchemaException
 {
     /// <summary>
     /// Thrown if the schema of the source changed
