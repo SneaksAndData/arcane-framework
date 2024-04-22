@@ -14,7 +14,7 @@ public interface IStreamContextWriter
     /// <summary>
     /// True if stream is running in backfill (full reload) mode
     /// </summary>
-    void SetIsRunningInBackfillMode(bool isRunningInBackfillMode);
+    void SetBackfilling(bool isRunningInBackfillMode);
 
     /// <summary>
     /// Kind of the custom resource that manages the stream

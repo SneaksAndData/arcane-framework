@@ -36,7 +36,7 @@ public static class StreamContextProvider
     public static TStreamContext ProvideFromEnvironment<TStreamContext>() where TStreamContext : class, IStreamContextWriter, IStreamContext
     {
         var context = JsonSerializer.Deserialize<TStreamContext>(EnvironmentExtensions.GetAssemblyEnvironmentVariable("SPEC"));
-        context.SetIsRunningInBackfillMode(EnvironmentExtensions.GetAssemblyEnvironmentVariable("FULL_LOAD")
+        context.SetBackfilling(EnvironmentExtensions.GetAssemblyEnvironmentVariable("BACKFILL")
             .Equals("true", System.StringComparison.InvariantCultureIgnoreCase));
         context.SetStreamId(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_ID"));
         context.SetStreamKind(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_KIND"));
