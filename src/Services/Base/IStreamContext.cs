@@ -13,7 +13,7 @@ public interface IStreamContext
     /// <summary>
     /// True if stream is running in backfill (full reload) mode
     /// </summary>
-    bool IsRunningInBackfillMode { get; }
+    bool IsBackfilling { get; }
 
     /// <summary>
     /// Kind of the custom resource that manages the stream
