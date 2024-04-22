@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Arcane.Framework.Sinks.Parquet.Exceptions;
+namespace Arcane.Framework.Sources.Exceptions;
 
 /// <summary>
 /// Thrown if the schema of the source is inconsistent with the schema of the sink.
 /// This can occur if the source updates the schema after the stream has been launched.
 /// </summary>
-[ExcludeFromCodeCoverage]
-public class SchemaInconsistentException : Exception
+[ExcludeFromCodeCoverage(Justification = "Trivial")]
+public class SchemaInconsistentException : SchemaException
 {
     /// <summary>
     /// Thrown if the schema of the source is inconsistent with the schema of the sink.

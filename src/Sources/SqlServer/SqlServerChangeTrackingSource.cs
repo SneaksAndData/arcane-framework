@@ -5,6 +5,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Akka;
 using Akka.Actor;
 using Akka.Event;
 using Akka.Streams;
@@ -28,7 +29,7 @@ namespace Arcane.Framework.Sources.SqlServer;
 /// Akka Source for SQL Server table with change tracking enabled.
 /// Supports max 600 columns if Azure Table Storage is used.
 /// </summary>
-public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCell>>>, IParquetSource, ITaggedSource
+public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCell>>>, ITaggedSource, IParquetSource
 {
     private readonly TimeSpan changeCaptureInterval;
     private readonly int commandTimeout;
