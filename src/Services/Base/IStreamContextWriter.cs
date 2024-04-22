@@ -19,5 +19,5 @@ public interface IStreamContextWriter
     /// <summary>
     /// Kind of the custom resource that manages the stream
     /// </summary>
-    void SetStreamKind(bool isRunningInBackfillMode);
+    void SetStreamKind(string streamKind);
 }
