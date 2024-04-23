@@ -13,6 +13,8 @@ namespace Arcane.Framework.Providers.StreamContext;
 [ExcludeFromCodeCoverage(Justification = "Trivial")]
 public static class StreamContextProvider
 {
+    private static JsonSerializerOptions DeFaultOptions => new() { PropertyNameCaseInsensitive = true };
+
     /// <summary>
     /// Adds a stream context instance to DI container as a singleton
     /// </summary>
@@ -20,7 +22,8 @@ public static class StreamContextProvider
     /// <param name="provider"></param>
     /// <typeparam name="TStreamContext"></typeparam>
     /// <returns></returns>
-    public static IServiceCollection AddStreamContext<TStreamContext>(this IServiceCollection services, Func<TStreamContext> provider = null)
+    public static IServiceCollection AddStreamContext<TStreamContext>(this IServiceCollection services,
+        Func<TStreamContext> provider = null)
         where TStreamContext : class, IStreamContextWriter, IStreamContext, new()
     {
         var context = provider?.Invoke() ?? ProvideFromEnvironment<TStreamContext>();
@@ -33,9 +36,11 @@ public static class StreamContextProvider
     /// </summary>
     /// <typeparam name="TStreamContext">Stream context type</typeparam>
     /// <returns>Stream context instance</returns>
-    public static TStreamContext ProvideFromEnvironment<TStreamContext>() where TStreamContext : class, IStreamContextWriter, IStreamContext
+    public static TStreamContext ProvideFromEnvironment<TStreamContext>()
+        where TStreamContext : class, IStreamContextWriter, IStreamContext
     {
-        var context = JsonSerializer.Deserialize<TStreamContext>(EnvironmentExtensions.GetAssemblyEnvironmentVariable("SPEC"));
+        var streamSpec = EnvironmentExtensions.GetAssemblyEnvironmentVariable("SPEC");
+        var context = JsonSerializer.Deserialize<TStreamContext>(streamSpec, DeFaultOptions);
         context.SetBackfilling(EnvironmentExtensions.GetAssemblyEnvironmentVariable("BACKFILL")
             .Equals("true", System.StringComparison.InvariantCultureIgnoreCase));
         context.SetStreamId(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_ID"));
