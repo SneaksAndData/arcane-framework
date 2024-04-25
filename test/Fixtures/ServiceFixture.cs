@@ -20,7 +20,7 @@ public class ServiceFixture
         this.MockMetricsService = new Mock<MetricsService>();
         this.MockHttpClient = new Mock<HttpClient>();
         this.MockKubeCluster = new Mock<IKubeCluster>();
-        this.MockStreamConfigurationProvider = new Mock<IStreamConfigurationProvider>();
+        this.MockStreamConfigurationProvider = new Mock<IStreamContext>();
 
         this.TestDbConnectionString = OperatingSystem.IsWindows()
             ? @"Server=(localdb)\MSSQLLocalDB;Integrated Security=true;Trust Server Certificate=true"
@@ -43,7 +43,7 @@ public class ServiceFixture
     public Mock<HttpClient> MockHttpClient { get; }
     public Mock<IKubeCluster> MockKubeCluster { get; }
 
-    public Mock<IStreamConfigurationProvider> MockStreamConfigurationProvider { get; }
+    public Mock<IStreamContext> MockStreamConfigurationProvider { get; }
 
     public string TestDbConnectionString { get; }
 
