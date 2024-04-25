@@ -8,6 +8,7 @@ using Arcane.Framework.Metrics.Models;
 using Arcane.Framework.Sinks;
 using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Sinks.Parquet.Models;
+using Arcane.Framework.Sources.Base;
 using Parquet.Data;
 using Snd.Sdk.Metrics.Base;
 using Snd.Sdk.Storage.Base;
@@ -59,4 +60,14 @@ public static class SourceExtensions
             .ViaMaterialized(KillSwitches.Single<List<DataColumn>>(), Keep.Right)
             .ToMaterialized(parquetSink, Keep.Both);
     }
+
+    /// <summary>
+    /// Converts Akka source to schema-free Arcane source
+    /// </summary>
+    /// <param name="source"></param>
+    /// <typeparam name="TOut"></typeparam>
+    /// <typeparam name="TMat"></typeparam>
+    /// <returns></returns>
+    public static ISchemaFreeSource<TOut, TMat> ToArcaneSource<TOut, TMat>(this Source<TOut, TMat> source)
+        => new SchemaFreeSource<TOut, TMat>(source);
 }
