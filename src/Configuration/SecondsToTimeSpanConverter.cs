@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,6 +8,7 @@ namespace Arcane.Framework.Configuration;
 /// <summary>
 /// Converts Seconds to/from TimeSpan for StreamContext properties serialization/deserialization
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Trivial")]
 public class SecondsToTimeSpanConverter: JsonConverter<TimeSpan>
 {
     /// <inheritdoc cref="JsonConverter{T}.Read"/>>

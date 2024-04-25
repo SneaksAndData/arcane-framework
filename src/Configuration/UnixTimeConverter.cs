@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,6 +8,7 @@ namespace Arcane.Framework.Configuration;
 /// <summary>
 /// Converts Unix time to/from DateTimeOffset for StreamContext properties serialization/deserialization
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Trivial")]
 public class UnixTimeConverter: JsonConverter<DateTimeOffset>
 {
 
