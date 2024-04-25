@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Arcane.Framework.Services.Base;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,7 @@ namespace Arcane.Framework.Services;
 /// The default implementation of the <see cref="IStreamLifetimeService"/> interface.
 /// Creates a service that terminates the stream in response to the SIGTERM signal.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Implementation is platform-specific")]
 public class StreamLifetimeService: IStreamLifetimeService
 {
     private readonly IStreamRunnerService streamRunnerService;
