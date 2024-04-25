@@ -1,10 +1,12 @@
-﻿using Snd.Sdk.Hosting;
+﻿using System.Diagnostics.CodeAnalysis;
+using Snd.Sdk.Hosting;
 
 namespace Arcane.Framework.Providers.Hosting;
 
 /// <summary>
 /// Class that provides context for the stream host builder and data for the stream context
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Model")]
 public class StreamingHostBuilderContext
 {
     /// <summary>

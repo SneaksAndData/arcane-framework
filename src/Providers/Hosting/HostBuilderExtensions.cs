@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Akka.Hosting;
 using Arcane.Framework.Services;
 using Arcane.Framework.Services.Base;
@@ -32,6 +33,7 @@ public static class HostBuilderExtensions
     /// This parameter is optional. If omitted, the actor system will be configured with default settings provided by the SnD.Sdk library.
     /// </param>
     /// <returns>Configured IHostBuilder instance</returns>
+    [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IHostBuilder ConfigureRequiredServices(this IHostBuilder builder,
         Func<IServiceCollection, IServiceCollection> addStreamGraphBuilder,
         Func<IServiceProvider, IStreamRunnerService> addStreamRunnerService = null,
@@ -55,6 +57,7 @@ public static class HostBuilderExtensions
     /// <param name="builder">IHostBuilder instance</param>
     /// <param name="configureAdditionalServices">The function that adds services to the services collection.</param>
     /// <returns>Configured IHostBuilder instance</returns>
+    [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IHostBuilder ConfigureAdditionalServices(this IHostBuilder builder,
         Action<IServiceCollection, StreamingHostBuilderContext> configureAdditionalServices)
     {
@@ -73,6 +76,7 @@ public static class HostBuilderExtensions
     /// <param name="provideStreamContext">The factory function that provides the stream context instance.</param>
     /// <typeparam name="TStreamGraphBuilder">The stream graph builder type.</typeparam>
     /// <returns>Services collection</returns>
+    [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IServiceCollection AddStreamGraphBuilder<TStreamGraphBuilder>(this IServiceCollection services,
         Func<StreamingHostBuilderContext, IStreamContext> provideStreamContext)
         where  TStreamGraphBuilder : class, IStreamGraphBuilder<IStreamContext>
@@ -93,6 +97,7 @@ public static class HostBuilderExtensions
     /// <typeparam name="TStreamContext">The stream context type</typeparam>
     /// <typeparam name="TStreamGraphBuilder">The stream graph builder type.</typeparam>
     /// <returns></returns>
+    [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IServiceCollection AddStreamGraphBuilder<TStreamGraphBuilder, TStreamContext>(this IServiceCollection services)
         where TStreamContext : class, IStreamContext, IStreamContextWriter, new() where TStreamGraphBuilder : class, IStreamGraphBuilder<TStreamContext>
         {
@@ -102,6 +107,7 @@ public static class HostBuilderExtensions
             return services;
         }
 
+    [ExcludeFromCodeCoverage(Justification = "Trivial")]
     private static IServiceCollection AddServiceWithOptionalFactory<TService, TImplementation>(this IServiceCollection services, Func<IServiceProvider, TService> factory = null)
         where TService : class where TImplementation : class, TService
     {
