@@ -5,13 +5,13 @@ using Arcane.Framework.Services.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Snd.Sdk.Hosting;
 
-namespace Arcane.Framework.Providers.StreamContext;
+namespace Arcane.Framework.Providers;
 
 /// <summary>
 /// Provider for the stream context
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Trivial")]
-public static class StreamContextProvider
+public static class StreamContext
 {
     private static JsonSerializerOptions DeFaultOptions => new() { PropertyNameCaseInsensitive = true };
 
