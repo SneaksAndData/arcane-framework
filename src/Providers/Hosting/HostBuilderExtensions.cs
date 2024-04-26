@@ -12,6 +12,8 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Snd.Sdk.ActorProviders;
 using Snd.Sdk.Kubernetes.Providers;
+using Snd.Sdk.Logs.Providers;
+using Snd.Sdk.Logs.Providers.Configurations;
 
 namespace Arcane.Framework.Providers.Hosting;
 
@@ -20,6 +22,21 @@ namespace Arcane.Framework.Providers.Hosting;
 /// </summary>
 public static class HostBuilderExtensions
 {
+
+    /// <summary>
+    /// Add the default logging configuration to the streaming host builder.
+    /// </summary>
+    /// <param name="builder">IHostBuilder instance</param>
+    /// <returns>Configured IHostBuilder instance</returns>
+    [ExcludeFromCodeCoverage(Justification = "Trivial")]
+    public static IHostBuilder AddDatadogLogging(this IHostBuilder builder)
+    {
+        var context = StreamingHostBuilderContext.FromEnvironment();
+        return builder.AddSerilogLogger(context.ApplicationName, (_, _, loggerConfiguration) =>
+            loggerConfiguration.Enrich.WithProperty("streamId", context.StreamId).AddDatadog()
+        );
+    }
+
     /// <summary>
     /// Adds the required services for the streaming host.
     /// </summary>
