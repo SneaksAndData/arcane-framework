@@ -32,11 +32,11 @@
 
     <PropertyGroup>
         <PackageId>Arcane.Framework</PackageId>
-        <Authors>Sneaks&amp;Data</Authors>
         <Version>0.0.0</Version>
+        <Authors>@SneaksAndData/platform-engineering</Authors>
         <Company>Sneaks&amp;Data</Company>
+        <PackageDescription>Akka.NET-based framework for building data streaming applications.</PackageDescription>
         <RepositoryUrl>https://github.com/SneaksAndData/arcane-framework</RepositoryUrl>
-        <PackageDescription>Streaming Framework for Arcane streaming service</PackageDescription>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
