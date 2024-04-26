@@ -10,13 +10,13 @@ using Snd.Sdk.Tasks;
 
 namespace Arcane.Framework.Services;
 
-internal class StreamExceptionHandler: IArcaneExceptionHandler
+internal class ArcaneExceptionHandler: IArcaneExceptionHandler
 {
-    private readonly ILogger<StreamExceptionHandler> logger;
+    private readonly ILogger<ArcaneExceptionHandler> logger;
     private readonly IStreamStatusService streamStatusService;
     private readonly IStreamContext streamContext;
 
-    public StreamExceptionHandler(ILogger<StreamExceptionHandler> logger,
+    public ArcaneExceptionHandler(ILogger<ArcaneExceptionHandler> logger,
         IStreamStatusService streamStatusService, IStreamContext streamContext)
     {
         this.logger = logger;

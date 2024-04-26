@@ -123,7 +123,7 @@ public static class HostBuilderExtensions
     /// <returns></returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IServiceCollection AddDefaultExceptionHandler(this IServiceCollection services) =>
-        services.AddSingleton<IArcaneExceptionHandler, StreamExceptionHandler>();
+        services.AddSingleton<IArcaneExceptionHandler, ArcaneExceptionHandler>();
 
     /// <summary>
     /// Runs the stream using the provided stream runner service.
