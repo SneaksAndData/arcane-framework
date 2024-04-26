@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using Akka.Hosting;
+using Akka.Util;
+using Arcane.Framework.Contracts;
 using Arcane.Framework.Services;
 using Arcane.Framework.Services.Base;
+using Arcane.Framework.Sources.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog;
 using Snd.Sdk.ActorProviders;
 using Snd.Sdk.Kubernetes.Providers;
 
@@ -106,6 +111,75 @@ public static class HostBuilderExtensions
             services.AddStreamContext<TStreamContext>();
             return services;
         }
+
+    /// <summary>
+    /// Adds the default exception handler that handles exceptions thrown by the stream runner.
+    /// Handlers handles the following exceptions:
+    /// * <see cref="SchemaMismatchException"/> In this case stream runner will request data backfill.
+    /// * <see cref="SchemaInconsistentException"/> In this case stream runner will request restart without
+    ///     incrementing the retry counter of the Kubernetes Job that controls the stream runner.
+    /// </summary>
+    /// <param name="services">Services collection.</param>
+    /// <returns></returns>
+    [ExcludeFromCodeCoverage(Justification = "Trivial")]
+    public static IServiceCollection AddDefaultExceptionHandler(this IServiceCollection services) =>
+        services.AddSingleton<IArcaneExceptionHandler, ArcaneExceptionHandler>();
+
+    /// <summary>
+    /// Runs the stream using the provided stream runner service.
+    /// </summary>
+    /// <param name="host">Streaming application host</param>
+    /// <param name="logger">Static bootstrap logger</param>
+    /// <param name="handleUnknownException">
+    /// Exception handler for unhandled exceptions.
+    /// If omitted, the default handler will be used.
+    /// If provided, this handler will be invoked after the default handler.
+    /// The handler should return the application exit code.
+    /// </param>
+    /// <returns>Application exit code</returns>
+    public static async Task<int> RunStream(this IHost host, ILogger logger, Func<Exception, Task<Option<int>>> handleUnknownException = null)
+    {
+        var runner = host.Services.GetRequiredService<IStreamRunnerService>();
+        var exceptionHandler = host.Services.GetService<IArcaneExceptionHandler>();
+        var context = host.Services.GetRequiredService<IStreamContext>();
+        var graphBuilder = host.Services.GetRequiredService<IStreamGraphBuilder<IStreamContext>>();
+        try
+        {
+            var completeTask = runner.RunStream(() => graphBuilder.BuildGraph(context));
+            await completeTask;
+        }
+        catch (Exception e)
+        {
+            if (exceptionHandler is null)
+            {
+                if(handleUnknownException is null)
+                {
+                    return FatalExit(e, logger);
+                }
+                return await handleUnknownException(e) switch
+                {
+                    {HasValue: true, Value: var exitCode} => exitCode,
+                    _ => FatalExit(e, logger),
+                };
+            }
+            var handled = await exceptionHandler?.HandleException(e);
+            return handled switch
+            {
+
+                { HasValue: true, Value: var exitCode } => exitCode,
+                { HasValue: false } => FatalExit(e, logger),
+            };
+        }
+
+        logger.Information("Streaming job is completed successfully, exiting");
+        return ExitCodes.SUCCESS;
+    }
+
+    private static int FatalExit(Exception e, ILogger logger)
+    {
+        logger.Error(e, "Unhandled exception occurred");
+        return ExitCodes.FATAL;
+    }
 
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     private static IServiceCollection AddServiceWithOptionalFactory<TService, TImplementation>(this IServiceCollection services, Func<IServiceProvider, TService> factory = null)

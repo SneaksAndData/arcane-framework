@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Arcane.Framework.Metrics.Models;
+namespace Arcane.Framework.Contracts;
 
 /// <summary>
 /// Source tags for a stream metrics.
