@@ -1,5 +1,4 @@
 name: Publish to Nuget.org package feed
-
 run-name: Publish ${{github.ref_name}} by @${{ github.actor }}
 
 on: workflow_dispatch
@@ -8,7 +7,7 @@ jobs:
   release_to_nuget:
     name: Release distribution to Nuget (public feed)
     runs-on: ubuntu-latest
-
+    
     permissions:
       contents: read
       id-token: write
@@ -17,19 +16,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v3.0.3
         with:
           dotnet-version: 6.0.x
-          
       - name: Set Package Version
         run: |
           set -e
           version=$(git describe --tags --abbrev=7 | tr -d "v")
           sed -i "s/<Version>0.0.0/<Version>$version/" src/Arcane.Framework.csproj
       - name: Import Secrets
-        uses: hashicorp/vault-action@v3.0.0
+        uses: hashicorp/vault-action@v2.7.3
         with:
           url: https://hashicorp-vault.production.sneaksanddata.com/
           role: github
@@ -37,23 +34,22 @@ jobs:
           secrets: |
             /secret/data/common/code_signing_certificates certificate_p12 | CERT ;
             /secret/data/common/nuget_publish api_key | API_KEY ;
-
-      - name: Build NuGet
+      - name: Build NuGet for Arcane.Framework
+        working-directory: ./src
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euxo pipefail
           version=$(git describe --tags --abbrev=7 | tr -d "v")
-          cd src/
           dotnet pack --configuration Release Arcane.Framework.csproj
-
+          
           echo "$CERT" | base64 --decode > cert.p12
-
-          dotnet sign "bin/Release/Arcane.Framework.$version.nupkg"  \
-            --certificate-path --certificate-path cert.p12 \
+          
+          dotnet nuget sign "bin/Release/Arcane.Framework.$version.nupkg"  \
+            --certificate-path cert.p12 \
             --timestamper http://timestamp.digicert.com
-
+          
           dotnet nuget push "bin/Release/Arcane.Framework.$version.nupkg" --api-key "$API_KEY" \
             --source  https://api.nuget.org/v3/index.json
-
+          
           rm cert.p12
