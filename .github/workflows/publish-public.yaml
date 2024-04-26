@@ -30,7 +30,7 @@ jobs:
           role: github
           method: jwt
           secrets: |
-            /secret/data/common/code_signing_certificates certificate.p12 | CERT ;
+            /secret/data/common/code_signing_certificates certificate_p12 | CERT ;
             /secret/data/common/nuget_publish api_key | API_KEY ;
 
       - name: Build NuGet
