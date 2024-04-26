@@ -7,7 +7,7 @@ jobs:
   release_to_nuget:
     name: Release distribution to Nuget (public feed)
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: read
       id-token: write
@@ -33,7 +33,7 @@ jobs:
           method: jwt
           secrets: |
             /secret/data/common/code_signing_certificates certificate_p12 | CERT ;
-            /secret/data/common/nuget_publish api_key | API_KEY ;
+            /secret/data/common/nuget/oss/arcane api_key | API_KEY ;
       - name: Build NuGet for Arcane.Framework
         working-directory: ./src
         env:
@@ -42,14 +42,14 @@ jobs:
           set -euxo pipefail
           version=$(git describe --tags --abbrev=7 | tr -d "v")
           dotnet pack --configuration Release Arcane.Framework.csproj
-          
+
           echo "$CERT" | base64 --decode > cert.p12
-          
+
           dotnet nuget sign "bin/Release/Arcane.Framework.$version.nupkg"  \
             --certificate-path cert.p12 \
             --timestamper http://timestamp.digicert.com
-          
+
           dotnet nuget push "bin/Release/Arcane.Framework.$version.nupkg" --api-key "$API_KEY" \
             --source  https://api.nuget.org/v3/index.json
-          
+
           rm cert.p12
