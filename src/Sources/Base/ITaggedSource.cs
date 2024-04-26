@@ -1,4 +1,4 @@
-﻿using Arcane.Framework.Metrics.Models;
+﻿using Arcane.Framework.Contracts;
 
 namespace Arcane.Framework.Sources.Base;
 

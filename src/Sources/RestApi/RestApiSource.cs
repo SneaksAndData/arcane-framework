@@ -13,7 +13,7 @@ using Akka.Streams;
 using Akka.Streams.Stage;
 using Akka.Util;
 using Akka.Util.Extensions;
-using Arcane.Framework.Metrics.Models;
+using Arcane.Framework.Contracts;
 using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Sources.Base;
 using Arcane.Framework.Sources.Extensions;
