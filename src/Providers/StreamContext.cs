@@ -41,11 +41,41 @@ public static class StreamContext
     {
         var streamSpec = EnvironmentExtensions.GetAssemblyEnvironmentVariable("SPEC");
         var context = JsonSerializer.Deserialize<TStreamContext>(streamSpec, DeFaultOptions);
-        context.SetBackfilling(EnvironmentExtensions.GetAssemblyEnvironmentVariable("BACKFILL")
-            .Equals("true", System.StringComparison.InvariantCultureIgnoreCase));
-        context.SetStreamId(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_ID"));
-        context.SetStreamKind(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_KIND"));
+        PopulateStreamContext(context);
         return context;
+    }
+
+    /// <summary>
+    /// Stream context provider that uses the Environment variables for populating IStreamContext properties.
+    /// </summary>
+    /// <param name="targetType">
+    /// Target type to deserialize. The type must
+    /// implement <see cref="IStreamContext"/> and <see cref="IStreamContextWriter"/> interfaces.
+    /// </param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public static IStreamContext ProvideFromEnvironment(Type targetType)
+    {
+        var streamSpec = EnvironmentExtensions.GetAssemblyEnvironmentVariable("SPEC");
+        var context = JsonSerializer.Deserialize(streamSpec, targetType, DeFaultOptions);
+        if (context is IStreamContextWriter contextWriter)
+        {
+            PopulateStreamContext(contextWriter);
+            if (context is IStreamContext streamContext)
+            {
+                return streamContext;
+            }
+        }
+        throw new InvalidOperationException(
+            $"Stream context type {targetType} should implement {nameof(IStreamContextWriter)}, {nameof(IStreamContext)}");
+    }
+
+    private static void PopulateStreamContext(IStreamContextWriter contextWriter)
+    {
+        contextWriter.SetBackfilling(EnvironmentExtensions.GetAssemblyEnvironmentVariable("BACKFILL")
+            .Equals("true", System.StringComparison.InvariantCultureIgnoreCase));
+        contextWriter.SetStreamId(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_ID"));
+        contextWriter.SetStreamKind(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_KIND"));
     }
 }
 
