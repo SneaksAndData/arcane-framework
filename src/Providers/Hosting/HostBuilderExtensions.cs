@@ -29,11 +29,15 @@ public static class HostBuilderExtensions
     /// <param name="builder">IHostBuilder instance</param>
     /// <returns>Configured IHostBuilder instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
-    public static IHostBuilder AddDatadogLogging(this IHostBuilder builder)
+    public static IHostBuilder AddDatadogLogging(this IHostBuilder builder, Action<HostBuilderContext, IServiceProvider, LoggerConfiguration> configureLogger = null)
     {
         var context = StreamingHostBuilderContext.FromEnvironment();
-        return builder.AddSerilogLogger(context.ApplicationName, (_, _, loggerConfiguration) =>
-            loggerConfiguration.Enrich.WithProperty("streamId", context.StreamId).AddDatadog()
+        return builder.AddSerilogLogger(context.ApplicationName,
+            (hostBuilderContext, applicationName, loggerConfiguration) =>
+            {
+                configureLogger?.Invoke(hostBuilderContext, applicationName, loggerConfiguration);
+                loggerConfiguration.Enrich.WithProperty("streamId", context.StreamId).AddDatadog();
+            }
         );
     }
 
