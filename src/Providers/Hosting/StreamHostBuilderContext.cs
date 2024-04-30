@@ -9,22 +9,32 @@ namespace Arcane.Framework.Providers.Hosting;
 [ExcludeFromCodeCoverage(Justification = "Model")]
 public class StreamingHostBuilderContext
 {
+    private StreamingHostBuilderContext(string prefix)
+    {
+        var environmentPrefix = prefix ?? EnvironmentExtensions.GetAssemblyVariablePrefix();
+        this.StreamId = EnvironmentExtensions.GetAssemblyEnvironmentVariable($"{environmentPrefix}STREAM_ID");
+
+        this.IsBackfilling = EnvironmentExtensions.GetAssemblyEnvironmentVariable($"{environmentPrefix}BACKFILL")
+            .Equals("true", System.StringComparison.InvariantCultureIgnoreCase);
+
+        this.StreamKind = EnvironmentExtensions.GetAssemblyEnvironmentVariable($"{environmentPrefix}STREAM_KIND");
+    }
+
+
     /// <summary>
     /// Id of the stream
     /// </summary>
-    public string StreamId { get; } = EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_ID");
+    public string StreamId { get; }
 
     /// <summary>
     /// True if stream is running in backfill (full reload) mode
     /// </summary>
-    public bool IsBackfilling { get; } = EnvironmentExtensions
-        .GetAssemblyEnvironmentVariable("BACKFILL")
-        .Equals("true", System.StringComparison.InvariantCultureIgnoreCase);
+    public bool IsBackfilling { get;  }
 
     /// <summary>
     /// Kind of the custom resource that manages the stream
     /// </summary>
-    public string StreamKind { get; } = (EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_KIND"));
+    public string StreamKind { get; }
 
     /// <summary>
     /// Application name for the stream for observability services
@@ -34,5 +44,5 @@ public class StreamingHostBuilderContext
     /// <summary>
     /// Creates a new instance of the StreamingHostBuilderContext with values from the environment variables
     /// </summary>
-    public static StreamingHostBuilderContext FromEnvironment() => new();
+    public static StreamingHostBuilderContext FromEnvironment(string prefix) => new(prefix);
 }
