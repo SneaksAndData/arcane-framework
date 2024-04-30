@@ -22,16 +22,19 @@ namespace Arcane.Framework.Providers.Hosting;
 /// </summary>
 public static class HostBuilderExtensions
 {
+    private const string ENV_PREFIX = "STREAMCONTEXT__";
+
     /// <summary>
     /// Add the default logging configuration to the streaming host builder.
     /// </summary>
     /// <param name="builder">IHostBuilder instance</param>
     /// <param name="configureLogger">Optional logger configuration callback.</param>
+    /// <param name="envPrefix">StreamingHostBuilderContext environment variables prefix</param>
     /// <returns>Configured IHostBuilder instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
-    public static IHostBuilder AddDatadogLogging(this IHostBuilder builder, Action<HostBuilderContext, IServiceProvider, LoggerConfiguration> configureLogger = null)
+    public static IHostBuilder AddDatadogLogging(this IHostBuilder builder, Action<HostBuilderContext, IServiceProvider, LoggerConfiguration> configureLogger = null, string envPrefix = null)
     {
-        var context = StreamingHostBuilderContext.FromEnvironment();
+        var context = StreamingHostBuilderContext.FromEnvironment(envPrefix ?? ENV_PREFIX);
         return builder.AddSerilogLogger(context.ApplicationName,
             (hostBuilderContext, applicationName, loggerConfiguration) =>
             {
@@ -58,13 +61,15 @@ public static class HostBuilderExtensions
     /// The function that provides the custom configuration for the actor system.
     /// This parameter is optional. If omitted, the actor system will be configured with default settings provided by the SnD.Sdk library.
     /// </param>
+    /// <param name="envPrefix">StreamingHostBuilderContext environment variables prefix</param>
     /// <returns>Configured IHostBuilder instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IHostBuilder ConfigureRequiredServices(this IHostBuilder builder,
         Func<IServiceCollection, IServiceCollection> addStreamGraphBuilder,
         Func<IServiceProvider, IStreamRunnerService> addStreamRunnerService = null,
         Func<IServiceProvider, IStreamLifetimeService> addStreamLifetimeService = null,
-        Func<HostBuilderContext, StreamingHostBuilderContext, Action<AkkaConfigurationBuilder>> configureActorSystem = null
+        Func<HostBuilderContext, StreamingHostBuilderContext, Action<AkkaConfigurationBuilder>> configureActorSystem = null,
+        string envPrefix = null
     )
     {
         return builder.ConfigureServices((HostBuilderContext, services) =>
@@ -73,7 +78,7 @@ public static class HostBuilderExtensions
             services.AddKubernetes()
                 .AddServiceWithOptionalFactory<IStreamRunnerService, StreamRunnerService>(addStreamRunnerService)
                 .AddServiceWithOptionalFactory<IStreamLifetimeService, StreamLifetimeService>(addStreamLifetimeService)
-                .AddLocalActorSystem(configureActorSystem?.Invoke(HostBuilderContext, StreamingHostBuilderContext.FromEnvironment()));
+                .AddLocalActorSystem(configureActorSystem?.Invoke(HostBuilderContext, StreamingHostBuilderContext.FromEnvironment(envPrefix ?? ENV_PREFIX)));
         });
     }
 
@@ -82,14 +87,15 @@ public static class HostBuilderExtensions
     /// </summary>
     /// <param name="builder">IHostBuilder instance</param>
     /// <param name="configureAdditionalServices">The function that adds services to the services collection.</param>
+    /// <param name="envPrefix">StreamingHostBuilderContext environment variables prefix</param>
     /// <returns>Configured IHostBuilder instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IHostBuilder ConfigureAdditionalServices(this IHostBuilder builder,
-        Action<IServiceCollection, StreamingHostBuilderContext> configureAdditionalServices)
+        Action<IServiceCollection, StreamingHostBuilderContext> configureAdditionalServices, string envPrefix = null)
     {
         return builder.ConfigureServices((_, services) =>
         {
-            configureAdditionalServices.Invoke(services, StreamingHostBuilderContext.FromEnvironment());
+            configureAdditionalServices.Invoke(services, StreamingHostBuilderContext.FromEnvironment(envPrefix ?? ENV_PREFIX));
         });
     }
 
@@ -100,14 +106,15 @@ public static class HostBuilderExtensions
     /// </summary>
     /// <param name="services">Services collection.</param>
     /// <param name="provideStreamContext">The factory function that provides the stream context instance.</param>
+    /// <param name="envPrefix">StreamingHostBuilderContext environment variables prefix</param>
     /// <typeparam name="TStreamGraphBuilder">The stream graph builder type.</typeparam>
     /// <returns>Services collection</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IServiceCollection AddStreamGraphBuilder<TStreamGraphBuilder>(this IServiceCollection services,
-        Func<StreamingHostBuilderContext, IStreamContext> provideStreamContext)
+        Func<StreamingHostBuilderContext, IStreamContext> provideStreamContext, string envPrefix = null)
         where  TStreamGraphBuilder : class, IStreamGraphBuilder<IStreamContext>
-        {
-            var context = new StreamingHostBuilderContext();
+    {
+        var context = StreamingHostBuilderContext.FromEnvironment(envPrefix ?? ENV_PREFIX);
             services.AddSingleton<IStreamGraphBuilder<IStreamContext>, TStreamGraphBuilder>();
             services.AddSingleton<IStreamStatusService, StreamStatusService>();
             services.AddSingleton(_ => provideStreamContext(context));
