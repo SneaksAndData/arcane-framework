@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Snd.Sdk.Hosting;
 
 namespace Arcane.Framework.Providers.Hosting;
@@ -7,17 +8,16 @@ namespace Arcane.Framework.Providers.Hosting;
 /// Class that provides context for the stream host builder and data for the stream context
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Model")]
-public class StreamingHostBuilderContext
-{
+public class StreamingHostBuilderContext {
     private StreamingHostBuilderContext(string prefix)
     {
         var environmentPrefix = prefix ?? EnvironmentExtensions.GetAssemblyVariablePrefix();
-        this.StreamId = EnvironmentExtensions.GetAssemblyEnvironmentVariable($"{environmentPrefix}STREAM_ID");
+        this.StreamId = Environment.GetEnvironmentVariable($"{environmentPrefix}STREAM_ID");
 
-        this.IsBackfilling = EnvironmentExtensions.GetAssemblyEnvironmentVariable($"{environmentPrefix}BACKFILL")
+        this.IsBackfilling = Environment.GetEnvironmentVariable($"{environmentPrefix}BACKFILL")
             .Equals("true", System.StringComparison.InvariantCultureIgnoreCase);
 
-        this.StreamKind = EnvironmentExtensions.GetAssemblyEnvironmentVariable($"{environmentPrefix}STREAM_KIND");
+        this.StreamKind = Environment.GetEnvironmentVariable($"{environmentPrefix}STREAM_KIND");
     }
 
 

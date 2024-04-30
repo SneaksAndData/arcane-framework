@@ -22,7 +22,7 @@ namespace Arcane.Framework.Providers.Hosting;
 /// </summary>
 public static class HostBuilderExtensions
 {
-    private static string EnvPrefix => "SND.SDK__";
+    private const string ENV_PREFIX = "STREAMCONTEXT__";
 
     /// <summary>
     /// Add the default logging configuration to the streaming host builder.
@@ -34,7 +34,7 @@ public static class HostBuilderExtensions
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IHostBuilder AddDatadogLogging(this IHostBuilder builder, Action<HostBuilderContext, IServiceProvider, LoggerConfiguration> configureLogger = null, string envPrefix = null)
     {
-        var context = StreamingHostBuilderContext.FromEnvironment(envPrefix ?? EnvPrefix);
+        var context = StreamingHostBuilderContext.FromEnvironment(envPrefix ?? ENV_PREFIX);
         return builder.AddSerilogLogger(context.ApplicationName,
             (hostBuilderContext, applicationName, loggerConfiguration) =>
             {
@@ -78,7 +78,7 @@ public static class HostBuilderExtensions
             services.AddKubernetes()
                 .AddServiceWithOptionalFactory<IStreamRunnerService, StreamRunnerService>(addStreamRunnerService)
                 .AddServiceWithOptionalFactory<IStreamLifetimeService, StreamLifetimeService>(addStreamLifetimeService)
-                .AddLocalActorSystem(configureActorSystem?.Invoke(HostBuilderContext, StreamingHostBuilderContext.FromEnvironment(envPrefix ?? EnvPrefix)));
+                .AddLocalActorSystem(configureActorSystem?.Invoke(HostBuilderContext, StreamingHostBuilderContext.FromEnvironment(envPrefix ?? ENV_PREFIX)));
         });
     }
 
@@ -95,7 +95,7 @@ public static class HostBuilderExtensions
     {
         return builder.ConfigureServices((_, services) =>
         {
-            configureAdditionalServices.Invoke(services, StreamingHostBuilderContext.FromEnvironment(envPrefix ?? EnvPrefix));
+            configureAdditionalServices.Invoke(services, StreamingHostBuilderContext.FromEnvironment(envPrefix ?? ENV_PREFIX));
         });
     }
 
@@ -114,7 +114,7 @@ public static class HostBuilderExtensions
         Func<StreamingHostBuilderContext, IStreamContext> provideStreamContext, string envPrefix = null)
         where  TStreamGraphBuilder : class, IStreamGraphBuilder<IStreamContext>
     {
-        var context = StreamingHostBuilderContext.FromEnvironment(envPrefix ?? EnvPrefix);
+        var context = StreamingHostBuilderContext.FromEnvironment(envPrefix ?? ENV_PREFIX);
             services.AddSingleton<IStreamGraphBuilder<IStreamContext>, TStreamGraphBuilder>();
             services.AddSingleton<IStreamStatusService, StreamStatusService>();
             services.AddSingleton(_ => provideStreamContext(context));
