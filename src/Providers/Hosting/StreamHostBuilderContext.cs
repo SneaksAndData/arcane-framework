@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Snd.Sdk.Hosting;
 
 namespace Arcane.Framework.Providers.Hosting;
 
@@ -11,7 +10,7 @@ namespace Arcane.Framework.Providers.Hosting;
 public class StreamingHostBuilderContext {
     private StreamingHostBuilderContext(string prefix)
     {
-        var environmentPrefix = prefix ?? EnvironmentExtensions.GetAssemblyVariablePrefix();
+        var environmentPrefix = prefix ?? throw new ArgumentNullException(nameof(prefix));
         this.StreamId = Environment.GetEnvironmentVariable($"{environmentPrefix}STREAM_ID");
 
         var isBackfilling = Environment.GetEnvironmentVariable($"{environmentPrefix}BACKFILL") ??
