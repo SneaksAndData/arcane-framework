@@ -14,9 +14,10 @@ public class StreamingHostBuilderContext {
         var environmentPrefix = prefix ?? EnvironmentExtensions.GetAssemblyVariablePrefix();
         this.StreamId = Environment.GetEnvironmentVariable($"{environmentPrefix}STREAM_ID");
 
-        this.IsBackfilling = Environment.GetEnvironmentVariable($"{environmentPrefix}BACKFILL")
-            .Equals("true", System.StringComparison.InvariantCultureIgnoreCase);
+        var isBackfilling = Environment.GetEnvironmentVariable($"{environmentPrefix}BACKFILL") ??
+                             throw new ArgumentNullException($"{environmentPrefix}BACKFILL");
 
+        this.IsBackfilling = isBackfilling.Equals("true", StringComparison.InvariantCultureIgnoreCase);
         this.StreamKind = Environment.GetEnvironmentVariable($"{environmentPrefix}STREAM_KIND");
     }
 
