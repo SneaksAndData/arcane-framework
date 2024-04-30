@@ -22,18 +22,22 @@ namespace Arcane.Framework.Providers.Hosting;
 /// </summary>
 public static class HostBuilderExtensions
 {
-
     /// <summary>
     /// Add the default logging configuration to the streaming host builder.
     /// </summary>
     /// <param name="builder">IHostBuilder instance</param>
+    /// <param name="configureLogger">Optional logger configuration callback.</param>
     /// <returns>Configured IHostBuilder instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
-    public static IHostBuilder AddDatadogLogging(this IHostBuilder builder)
+    public static IHostBuilder AddDatadogLogging(this IHostBuilder builder, Action<HostBuilderContext, IServiceProvider, LoggerConfiguration> configureLogger = null)
     {
         var context = StreamingHostBuilderContext.FromEnvironment();
-        return builder.AddSerilogLogger(context.ApplicationName, (_, _, loggerConfiguration) =>
-            loggerConfiguration.Enrich.WithProperty("streamId", context.StreamId).AddDatadog()
+        return builder.AddSerilogLogger(context.ApplicationName,
+            (hostBuilderContext, applicationName, loggerConfiguration) =>
+            {
+                configureLogger?.Invoke(hostBuilderContext, applicationName, loggerConfiguration);
+                loggerConfiguration.Enrich.WithProperty("streamId", context.StreamId).AddDatadog();
+            }
         );
     }
 
