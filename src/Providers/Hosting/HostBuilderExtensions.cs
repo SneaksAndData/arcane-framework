@@ -22,7 +22,7 @@ namespace Arcane.Framework.Providers.Hosting;
 /// </summary>
 public static class HostBuilderExtensions
 {
-    private static string EnvPrefix => "SND_SDK__";
+    private static string EnvPrefix => "SND.SDK__";
 
     /// <summary>
     /// Add the default logging configuration to the streaming host builder.
