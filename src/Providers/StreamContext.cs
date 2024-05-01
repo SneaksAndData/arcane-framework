@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using Arcane.Framework.Providers.Hosting;
 using Arcane.Framework.Services.Base;
 using Microsoft.Extensions.DependencyInjection;
-using Snd.Sdk.Hosting;
 
 namespace Arcane.Framework.Providers;
 
@@ -13,6 +13,7 @@ namespace Arcane.Framework.Providers;
 [ExcludeFromCodeCoverage(Justification = "Trivial")]
 public static class StreamContext
 {
+    private const string ENV_PREFIX = "STREAMCONTEXT__";
     private static JsonSerializerOptions DeFaultOptions => new() { PropertyNameCaseInsensitive = true };
 
     /// <summary>
@@ -39,7 +40,8 @@ public static class StreamContext
     public static TStreamContext ProvideFromEnvironment<TStreamContext>()
         where TStreamContext : class, IStreamContextWriter, IStreamContext
     {
-        var streamSpec = EnvironmentExtensions.GetAssemblyEnvironmentVariable("SPEC");
+        var streamSpec = Environment.GetEnvironmentVariable($"{ENV_PREFIX}SPEC") ??
+                        throw new ArgumentNullException($"{ENV_PREFIX}SPEC");
         var context = JsonSerializer.Deserialize<TStreamContext>(streamSpec, DeFaultOptions);
         PopulateStreamContext(context);
         return context;
@@ -56,7 +58,8 @@ public static class StreamContext
     /// <exception cref="InvalidOperationException"></exception>
     public static IStreamContext ProvideFromEnvironment(Type targetType)
     {
-        var streamSpec = EnvironmentExtensions.GetAssemblyEnvironmentVariable("SPEC");
+        var streamSpec = Environment.GetEnvironmentVariable($"{ENV_PREFIX}SPEC") ??
+                        throw new ArgumentNullException($"{ENV_PREFIX}SPEC");
         var context = JsonSerializer.Deserialize(streamSpec, targetType, DeFaultOptions);
         if (context is IStreamContextWriter contextWriter)
         {
@@ -72,10 +75,10 @@ public static class StreamContext
 
     private static void PopulateStreamContext(IStreamContextWriter contextWriter)
     {
-        contextWriter.SetBackfilling(EnvironmentExtensions.GetAssemblyEnvironmentVariable("BACKFILL")
-            .Equals("true", System.StringComparison.InvariantCultureIgnoreCase));
-        contextWriter.SetStreamId(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_ID"));
-        contextWriter.SetStreamKind(EnvironmentExtensions.GetAssemblyEnvironmentVariable("STREAM_KIND"));
+        var streamBuilderContext = StreamingHostBuilderContext.FromEnvironment(ENV_PREFIX);
+        contextWriter.SetBackfilling(streamBuilderContext.IsBackfilling);
+        contextWriter.SetStreamId(streamBuilderContext.StreamId);
+        contextWriter.SetStreamKind(streamBuilderContext.StreamKind);
     }
 }
 
