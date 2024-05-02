@@ -12,6 +12,7 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
 {
     private readonly string[] responseBodyPropertyKeyChain;
     private readonly int responseSize;
+    private readonly int? startOffset;
 
     /// <summary>
     /// Page offset resolver for numeric page pointers.
@@ -23,7 +24,8 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
     {
         this.responseSize = responseSize;
         this.responseBodyPropertyKeyChain = responseBodyPropertyKeyChain;
-        this.pagePointer = startOffset ?? 0;
+        this.startOffset = startOffset;
+        this.pagePointer = this.startOffset ?? 0;
     }
 
     /// <inheritdoc cref="PageResolverBase{TPagePointer}.Next"/>
@@ -47,7 +49,7 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
             return false;
         }
 
-        this.pagePointer = 0;
+        this.pagePointer = this.startOffset ?? 0;
         return true;
     }
 }
