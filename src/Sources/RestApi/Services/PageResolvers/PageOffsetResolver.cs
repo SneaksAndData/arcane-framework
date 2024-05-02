@@ -18,10 +18,12 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
     /// </summary>
     /// <param name="responseSize">Total pages in response</param>
     /// <param name="responseBodyPropertyKeyChain">Optional property key chain for resolver property value like total pages or token value.</param>
-    public PageOffsetResolver(int responseSize, string[] responseBodyPropertyKeyChain)
+    /// <param name="startOffset">First page offset</param>
+    public PageOffsetResolver(int responseSize, string[] responseBodyPropertyKeyChain, int? startOffset)
     {
         this.responseSize = responseSize;
         this.responseBodyPropertyKeyChain = responseBodyPropertyKeyChain;
+        this.pagePointer = startOffset ?? 0;
     }
 
     /// <inheritdoc cref="PageResolverBase{TPagePointer}.Next"/>
