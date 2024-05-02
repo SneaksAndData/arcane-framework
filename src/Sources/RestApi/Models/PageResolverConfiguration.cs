@@ -25,4 +25,10 @@ public sealed class PageResolverConfiguration
     /// </summary>
     [JsonPropertyName("responseSize")]
     public int? ResponseSize { get; init; }
+
+    /// <summary>
+    /// Optional expected response size in number elements.
+    /// </summary>
+    [JsonPropertyName("startOffset")]
+    public int? StartOffset { get; init; }
 }
