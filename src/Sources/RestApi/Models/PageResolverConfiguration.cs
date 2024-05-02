@@ -27,7 +27,7 @@ public sealed class PageResolverConfiguration
     public int? ResponseSize { get; init; }
 
     /// <summary>
-    /// Optional expected response size in number elements.
+    /// Optional start offset of the first page
     /// </summary>
     [JsonPropertyName("startOffset")]
     public int? StartOffset { get; init; }
