@@ -25,7 +25,6 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
         this.responseSize = responseSize;
         this.responseBodyPropertyKeyChain = responseBodyPropertyKeyChain;
         this.startOffset = startOffset;
-        this.pagePointer = this.startOffset ?? 0;
     }
 
     /// <inheritdoc cref="PageResolverBase{TPagePointer}.Next"/>
