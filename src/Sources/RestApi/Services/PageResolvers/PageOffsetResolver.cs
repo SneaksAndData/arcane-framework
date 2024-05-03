@@ -35,6 +35,12 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
         {
             if (!this.GetResponseContent(apiResponse, this.responseBodyPropertyKeyChain).Any())
             {
+                if (this.pagePointer == null)
+                {
+                    this.pagePointer = this.startOffset ?? 0;
+                    return true;
+                }
+
                 this.pagePointer = null;
                 return false;
             }
