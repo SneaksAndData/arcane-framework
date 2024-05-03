@@ -437,6 +437,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
 
                     if (maybeNextUri.IsEmpty)
                     {
+                        this.currentResponse = null;
                         return Task.FromResult(Option<JsonElement>.None);
                     }
 
