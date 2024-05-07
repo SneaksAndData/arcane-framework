@@ -39,7 +39,7 @@ public class StreamingHostBuilderContext {
     /// <summary>
     /// Application name for the stream for observability services
     /// </summary>
-    public string ApplicationName => $"Arcane.Stream.{this.StreamKind}";
+    public string ApplicationName => "Arcane.Stream";
 
     /// <summary>
     /// Creates a new instance of the StreamingHostBuilderContext with values from the environment variables

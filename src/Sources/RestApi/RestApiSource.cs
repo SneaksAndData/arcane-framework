@@ -446,7 +446,10 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
                     if (maybePayload.HasValue)
                     {
                         msg.Content = new StringContent(maybePayload.Value);
-                        this.Log.Info($"Request payload for next result: {maybePayload.Value}");
+                        if (!string.IsNullOrEmpty(maybePayload.Value))
+                        {
+                            this.Log.Info($"Request payload for next result: {maybePayload.Value}");
+                        }
                     }
 
                     this.Log.Info($"Requesting next result from {msg.RequestUri}");
