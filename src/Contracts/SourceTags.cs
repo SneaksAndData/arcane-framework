@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using Arcane.Framework.Services.Base;
+using Snd.Sdk.Helpers;
 
 namespace Arcane.Framework.Contracts;
 
@@ -7,11 +9,6 @@ namespace Arcane.Framework.Contracts;
 /// </summary>
 public sealed class SourceTags
 {
-    /// <summary>
-    /// The Kubernetes object kind of the stream.
-    /// </summary>
-    public string StreamKind { get; set; }
-
     /// <summary>
     /// Source location in human readable format.
     /// </summary>
@@ -26,13 +23,15 @@ public sealed class SourceTags
     /// Converts to dictionary.
     /// </summary>
     /// <returns></returns>
-    public SortedDictionary<string, string> GetAsDictionary()
+    public SortedDictionary<string, string> GetAsDictionary(IStreamContext streamContext, string streamId)
     {
         return new SortedDictionary<string, string>
         {
-            { "stream_source", this.StreamKind },
-            { "stream_source_location", this.SourceLocation },
-            { "stream_source_entity", this.SourceEntity }
+            { "arcane.sneaksanddata.com/kind", CodeExtensions.CamelCaseToSnakeCase(streamContext.StreamKind) },
+            { "arcane.sneaksanddata.com/mode", streamContext.IsBackfilling ? "backfill" : "stream" },
+            { "arcane.sneaksanddata.com/stream_source_location", this.SourceLocation },
+            { "arcane.sneaksanddata.com/stream_source_entity", this.SourceEntity },
+            { "arcane.sneaksanddata.com/stream_id", streamId}
         };
     }
 }

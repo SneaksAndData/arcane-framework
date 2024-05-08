@@ -44,7 +44,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     private readonly AsyncRateLimitPolicy rateLimitPolicy;
     private readonly string[] responsePropertyKeyChain;
     private readonly bool stopAfterFullLoad;
-    private readonly string streamKind;
     private readonly IRestApiUriProvider uriProvider;
 
     private RestApiSource(
@@ -54,7 +53,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
         bool stopAfterFullLoad,
-        string streamKind,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
@@ -65,7 +63,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         this.fullLoadOnStart = fullLoadOnStart;
         this._authenticatedMessageProvider = authenticatedMessageProvider;
         this.lookBackInterval = lookBackInterval;
-        this.streamKind = streamKind;
         this.rateLimitPolicy = rateLimitPolicy;
         this.responsePropertyKeyChain = responsePropertyKeyChain;
         this.apiSchema = apiSchema;
@@ -81,11 +78,10 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         TimeSpan lookBackInterval,
         TimeSpan httpRequestTimeout,
         bool stopAfterFullLoad,
-        string streamKind,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null) : this(uriProvider, authenticatedMessageProvider, fullLoadOnStart,
-        changeCaptureInterval, lookBackInterval, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema,
+        changeCaptureInterval, lookBackInterval, stopAfterFullLoad, rateLimitPolicy, apiSchema,
         responsePropertyKeyChain)
     {
         this.httpRequestTimeout = httpRequestTimeout;
@@ -99,7 +95,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="lookBackInterval">Look back interval</param>
     /// <param name="httpClient">Http client for making requests</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
@@ -113,11 +108,10 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         TimeSpan lookBackInterval,
         HttpClient httpClient,
         bool stopAfterFullLoad,
-        string streamKind,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null) : this(uriProvider, authenticatedMessageProvider, fullLoadOnStart,
-        changeCaptureInterval, lookBackInterval, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema,
+        changeCaptureInterval, lookBackInterval, stopAfterFullLoad, rateLimitPolicy, apiSchema,
         responsePropertyKeyChain)
     {
         this.httpClient = httpClient;
@@ -147,7 +141,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         {
             SourceEntity = this.uriProvider.BaseUri.AbsolutePath,
             SourceLocation = this.uriProvider.BaseUri.Host,
-            StreamKind = this.streamKind
         };
     }
 
@@ -178,7 +171,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     {
         return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
-            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema);
+            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema);
     }
 
     /// <summary>
@@ -187,7 +180,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="uriProvider">URI provider</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="lookBackInterval">Look back interval</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="httpClient">Http Client</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
@@ -202,13 +194,12 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         TimeSpan lookBackInterval,
         HttpClient httpClient,
         bool stopAfterFullLoad,
-        string streamKind,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema)
     {
         return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
-            lookBackInterval, httpClient, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema);
+            lookBackInterval, httpClient, stopAfterFullLoad, rateLimitPolicy, apiSchema);
     }
 
     /// <summary>
@@ -217,7 +208,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="uriProvider">URI provider</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="lookBackInterval">Look back interval</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="httpRequestTimeout">Http request timeout</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
@@ -233,14 +223,13 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         TimeSpan lookBackInterval,
         TimeSpan httpRequestTimeout,
         bool stopAfterFullLoad,
-        string streamKind,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
         return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
-            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema,
+            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
 
@@ -250,7 +239,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="uriProvider">URI provider</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="lookBackInterval">Look back interval</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="httpRequestTimeout">Http request timeout</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
@@ -266,14 +254,13 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         TimeSpan lookBackInterval,
         TimeSpan httpRequestTimeout,
         bool stopAfterFullLoad,
-        string streamKind,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
         return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
-            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema,
+            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
 
@@ -283,7 +270,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="uriProvider">URI provider</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="lookBackInterval">Look back interval</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="httpClient">Http request timeout</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
@@ -299,14 +285,13 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         TimeSpan lookBackInterval,
         HttpClient httpClient,
         bool stopAfterFullLoad,
-        string streamKind,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
         return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
-            lookBackInterval, httpClient, stopAfterFullLoad, streamKind, rateLimitPolicy, apiSchema,
+            lookBackInterval, httpClient, stopAfterFullLoad, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
 

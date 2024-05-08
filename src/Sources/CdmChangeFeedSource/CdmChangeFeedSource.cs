@@ -41,13 +41,11 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     private readonly string rootPath;
     private readonly TimeSpan schemaUpdateInterval;
     private readonly bool stopAfterFullLoad;
-    private readonly string streamKind;
 
     private CdmChangeFeedSource(string rootPath,
         string entityName,
         IBlobStorageService blobStorage,
         bool fullLoadOnStart,
-        string streamKind,
         TimeSpan changeCaptureInterval,
         bool stopAfterFullLoad,
         TimeSpan schemaUpdateInterval)
@@ -56,7 +54,6 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         this.entityName = entityName;
         this.blobStorage = blobStorage;
         this.fullLoadOnStart = fullLoadOnStart;
-        this.streamKind = streamKind;
         this.changeCaptureInterval = changeCaptureInterval;
         this.stopAfterFullLoad = stopAfterFullLoad;
         this.Shape = new SourceShape<List<DataCell>>(this.Out);
@@ -87,7 +84,6 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         {
             SourceEntity = this.entityName,
             SourceLocation = this.rootPath,
-            StreamKind = this.streamKind
         };
     }
 
@@ -97,7 +93,6 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     /// <param name="rootPath">The root path of the CDM entities locations</param>
     /// <param name="entityName">Name of the entity being streamed.</param>
     /// <param name="blobStorage">Blob storage service</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="schemaUpdateInterval">Interval to refresh schema.</param>
     /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
@@ -106,7 +101,6 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     public static CdmChangeFeedSource Create(string rootPath,
         string entityName,
         IBlobStorageService blobStorage,
-        string streamKind,
         bool fullLoadOnStart = true,
         TimeSpan? changeCaptureInterval = null,
         bool stopAfterFullLoad = false,
@@ -122,7 +116,6 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             entityName,
             blobStorage,
             fullLoadOnStart,
-            streamKind,
             changeCaptureInterval ?? TimeSpan.FromSeconds(15),
             stopAfterFullLoad,
             schemaUpdateInterval ?? TimeSpan.FromSeconds(60));
