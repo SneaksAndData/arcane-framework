@@ -91,7 +91,6 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
             TimeSpan.FromDays(30),
             this.mockHttp.Object,
             true,
-            "test",
             Policy.RateLimitAsync(1, TimeSpan.FromSeconds(60)),
             new OpenApiSchema());
 
@@ -127,7 +126,6 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
             TimeSpan.FromDays(30),
             this.mockHttp.Object,
             false,
-            "test",
             Policy.RateLimitAsync(1, TimeSpan.FromSeconds(60)),
             new OpenApiSchema());
 
@@ -202,7 +200,7 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
             });
 
         var src = RestApiSource.Create(this.pdb, this.dynamicAuth, true, TimeSpan.FromSeconds(5), TimeSpan.FromDays(1),
-            this.mockHttp.Object, true, "test", Policy.RateLimitAsync(1, TimeSpan.FromSeconds(5)),
+            this.mockHttp.Object, true, Policy.RateLimitAsync(1, TimeSpan.FromSeconds(5)),
             new OpenApiSchema(),
             new[] { "MockRootValue", "MockEntryValue" });
 
