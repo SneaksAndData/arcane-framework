@@ -73,7 +73,6 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
         var sqlConBuilder = new SqlConnectionStringBuilder(this.connectionString);
         return new SourceTags
         {
-            StreamKind = this.streamKind,
             SourceLocation = sqlConBuilder.InitialCatalog,
             SourceEntity = $"{sqlConBuilder.InitialCatalog}.{this.schemaName}.{this.tableName}"
         };

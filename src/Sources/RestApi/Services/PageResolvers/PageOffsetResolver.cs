@@ -12,16 +12,19 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
 {
     private readonly string[] responseBodyPropertyKeyChain;
     private readonly int responseSize;
+    private readonly int? startOffset;
 
     /// <summary>
     /// Page offset resolver for numeric page pointers.
     /// </summary>
     /// <param name="responseSize">Total pages in response</param>
     /// <param name="responseBodyPropertyKeyChain">Optional property key chain for resolver property value like total pages or token value.</param>
-    public PageOffsetResolver(int responseSize, string[] responseBodyPropertyKeyChain)
+    /// <param name="startOffset">First page offset</param>
+    public PageOffsetResolver(int responseSize, string[] responseBodyPropertyKeyChain, int? startOffset)
     {
         this.responseSize = responseSize;
         this.responseBodyPropertyKeyChain = responseBodyPropertyKeyChain;
+        this.startOffset = startOffset;
     }
 
     /// <inheritdoc cref="PageResolverBase{TPagePointer}.Next"/>
@@ -31,6 +34,12 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
         {
             if (!this.GetResponseContent(apiResponse, this.responseBodyPropertyKeyChain).Any())
             {
+                if (this.pagePointer == null)
+                {
+                    this.pagePointer = this.startOffset ?? 0;
+                    return true;
+                }
+
                 this.pagePointer = null;
                 return false;
             }
@@ -45,7 +54,7 @@ public sealed class PageOffsetResolver : PageResolverBase<int?>
             return false;
         }
 
-        this.pagePointer = 0;
+        this.pagePointer = this.startOffset ?? 0;
         return true;
     }
 }

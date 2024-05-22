@@ -39,7 +39,10 @@ public static class HostBuilderExtensions
             (hostBuilderContext, applicationName, loggerConfiguration) =>
             {
                 configureLogger?.Invoke(hostBuilderContext, applicationName, loggerConfiguration);
-                loggerConfiguration.Enrich.WithProperty("streamId", context.StreamId).AddDatadog();
+                loggerConfiguration
+                    .Enrich.WithProperty("streamId", context.StreamId)
+                    .Enrich.WithProperty("streamKind", context.StreamKind)
+                    .AddDatadog();
             }
         );
     }
@@ -170,6 +173,7 @@ public static class HostBuilderExtensions
         var runner = host.Services.GetRequiredService<IStreamRunnerService>();
         var exceptionHandler = host.Services.GetService<IArcaneExceptionHandler>();
         var context = host.Services.GetRequiredService<IStreamContext>();
+        using var lifetimeService = host.Services.GetRequiredService<IStreamLifetimeService>();
         var graphBuilder = host.Services.GetRequiredService<IStreamGraphBuilder<IStreamContext>>();
         try
         {

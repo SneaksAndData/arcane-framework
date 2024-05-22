@@ -5,7 +5,6 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Akka;
 using Akka.Actor;
 using Akka.Event;
 using Akka.Streams;
@@ -38,13 +37,12 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
     private readonly int lookBackRange;
     private readonly string schemaName;
     private readonly bool stopAfterFullLoad;
-    private readonly string streamKind;
     private readonly string tableName;
 
 
     private SqlServerChangeTrackingSource(string connectionString, string schemaName, string tableName,
         TimeSpan changeCaptureInterval, int commandTimeout, int lookBackRange, bool fullLoadOnstart,
-        bool stopAfterFullLoad, string streamKind)
+        bool stopAfterFullLoad)
     {
         this.connectionString = connectionString;
         this.schemaName = schemaName;
@@ -54,7 +52,6 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         this.lookBackRange = lookBackRange;
         this.fullLoadOnstart = fullLoadOnstart;
         this.stopAfterFullLoad = stopAfterFullLoad;
-        this.streamKind = streamKind;
         this.Shape = new SourceShape<List<DataCell>>(this.Out);
     }
 
@@ -99,7 +96,6 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         var sqlConBuilder = new SqlConnectionStringBuilder(this.connectionString);
         return new SourceTags
         {
-            StreamKind = this.streamKind,
             SourceLocation = sqlConBuilder.InitialCatalog,
             SourceEntity = $"{sqlConBuilder.InitialCatalog}.{this.schemaName}.{this.tableName}"
         };
@@ -137,7 +133,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
 
         return new SqlServerChangeTrackingSource(connectionString, schemaName, tableName,
             changeCaptureInterval.GetValueOrDefault(TimeSpan.FromSeconds(15)), commandTimeout, lookBackRange,
-            fullLoadOnStart, stopAfterFullLoad, streamKind);
+            fullLoadOnStart, stopAfterFullLoad);
     }
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>

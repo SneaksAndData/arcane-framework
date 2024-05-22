@@ -166,7 +166,8 @@ public class PagedUriProvider : IPaginatedApiUriProvider
                 }
 
                 this.pageResolver = new PageOffsetResolver(resolverConfiguration.ResponseSize.Value,
-                    resolverConfiguration.ResolverPropertyKeyChain);
+                    resolverConfiguration.ResolverPropertyKeyChain,
+                    resolverConfiguration.StartOffset);
                 break;
             case PageResolverType.TOKEN:
                 this.pageResolver = new PageNextTokenResolver(resolverConfiguration.ResolverPropertyKeyChain);
