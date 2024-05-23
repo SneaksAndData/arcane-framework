@@ -53,7 +53,7 @@
         },
         {
           "name": "RECID",
-          "dataFormat": "Int64"
+          "dataFormat": "UnknownType"
         },
         {
           "name": "CustomField",
