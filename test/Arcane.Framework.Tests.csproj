@@ -40,32 +40,8 @@
         <None Update="Operations\RestApiTestData\open_api_schema_nested_two_levels.yaml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Sources\SampleData\CdmChangeFeed\Location\ValidEntity.cdm.json">
+        <None Update="Sources\SampleData\**">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SampleData\BaseEntity\Location\ValidEntity.cdm.json">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SampleData\BaseEntity\InvalidBinaryType\InvalidBinaryType.cdm.json">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SampleData\CdmChangeFeed\InvalidBinaryType\InvalidBinaryType.cdm.json">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SampleData\BaseEntity\SchemaChangeTests\SchemaChangeTests.cdm.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SampleData\CdmChangeFeed\SchemaChangeTests\SchemaChangeTests.cdm.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SampleData\CdmChangeFeed\SchemaChangeTests\SchemaChangeTests.cdm.unchanged.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SampleData\CdmChangeFeed\ValidEntity\ValidEntity.cdm.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SampleData\BaseEntity\ValidEntity\ValidEntity.cdm.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 

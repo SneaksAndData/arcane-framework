@@ -216,8 +216,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             return (tp, value == null ? null : converter.ConvertFromInvariantString(value));
         }
 
-        private IEnumerable<List<DataCell>> ProcessEntityBlob(StoredBlob blob,
-            Dictionary<string, int> fieldSortIndexes)
+        private IEnumerable<List<DataCell>> ProcessEntityBlob(StoredBlob blob, Dictionary<string, int> fieldSortIndexes)
         {
             var blobSchemaPath = string.Join("/",
                 blob.Name.Split("/")[1..^2].Append($"{this.source.entityName}.cdm.json"));
@@ -242,21 +241,14 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                     .Select((v, ix) =>
                     {
                         var (tp, value) = this.ConvertToCdmType(blobSchema.Attributes[ix].DataType, v);
-                        var fieldName = blobSchema.Attributes[ix].Name == "LSN"
-                            ? "Start_LSN"
-                            : blobSchema.Attributes[ix].Name;
+                        var fieldName = blobSchema.Attributes[ix].Name == "LSN" ? "Start_LSN" : blobSchema.Attributes[ix].Name;
                         return new DataCell(fieldName, tp, value);
                     })
-                    .Where(dc =>
-                        dc.FieldName !=
-                        "_SysRowId") // exclude system field as it is not present in the change feed
-                    // append fields from the change feed schema with default values
+                    .Where(dc => dc.FieldName != "_SysRowId") // exclude system field as it is not present in the change feed // append fields from the change feed schema with default values
                     .Append(new DataCell("End_LSN", typeof(string), null))
                     .Append(new DataCell("DML_Action", typeof(string), "INSERT"))
-                    .Append(new DataCell("Seq_Val", typeof(string),
-                        "0x00000000000000000000"))
-                    .Append(new DataCell("Update_Mask", typeof(string),
-                        "0x00000000000000000000"))
+                    .Append(new DataCell("Seq_Val", typeof(string), "0x00000000000000000000"))
+                    .Append(new DataCell("Update_Mask", typeof(string), "0x00000000000000000000"))
                     .OrderBy(cell => fieldSortIndexes[cell.FieldName])
                     .ToList();
 

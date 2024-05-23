@@ -61,7 +61,8 @@
         }
       ],
       "displayName": "Test CDM entity",
-      "description": "The test CDM entity for testing purposes."
+      "description": "The test CDM entity for testing purposes.",
+      "version": "1.0.0"
     },
     {
       "explanation": "Extends nestedCustomDataTypeNumber data type",

@@ -30,6 +30,9 @@ namespace Arcane.Framework.Tests.Sources
             this.akkaFixture = akkaFixture;
         }
 
+        [Theory]
+        [InlineData(true, 11, "ValidEntity")]
+        [InlineData(false, 8, "ValidEntity")]
         public async Task GetChanges(bool fullLoadOnStart, int expectedRows, string entityName)
         {
             this.SetupTableMocks(entityName);
@@ -292,7 +295,7 @@ namespace Arcane.Framework.Tests.Sources
         {
             this.SetupTableMocks("ValidEntity");
             var schema = CdmChangeFeedSource.Create(rootPath: "test",
-                entityName: "InventTrans",
+                entityName: "ValidEntity",
                 blobStorage: this.serviceFixture.MockBlobStorageService.Object,
                 fullLoadOnStart: true,
                 changeCaptureInterval: TimeSpan.FromSeconds(15)).GetParquetSchema();
@@ -303,7 +306,7 @@ namespace Arcane.Framework.Tests.Sources
 
         private void SetupTableMocks(string entityName)
         {
-            this.serviceFixture.MockBlobStorageService.Setup(mbs => mbs.ListBlobsAsEnumerable("test/Tables")).Returns(
+            this.serviceFixture.MockBlobStorageService.Setup(mbs => mbs.ListBlobsAsEnumerable(It.IsAny<string>())).Returns(
                 new[]
                 {
                     new StoredBlob
@@ -329,12 +332,12 @@ namespace Arcane.Framework.Tests.Sources
 
             this.serviceFixture
                 .MockBlobStorageService
-                .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(),It.IsAny<string>(), It.IsAny<Func<BinaryData, JsonDocument>>()))
+                .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(),It.Is<string>(s => s.Contains("ChangeFeed")), It.IsAny<Func<BinaryData, JsonDocument>>()))
                 .Returns(changeFeedSchema);
 
             this.serviceFixture
                 .MockBlobStorageService
-                .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Func<BinaryData, JsonDocument>>()))
+                .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(),It.Is<string>(s => !s.Contains("ChangeFeed")),  It.IsAny<Func<BinaryData, JsonDocument>>()))
                 .Returns(tableSchema);
 
             this.serviceFixture.MockBlobStorageService
@@ -352,7 +355,7 @@ namespace Arcane.Framework.Tests.Sources
         {
             var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory,
                 "Sources",
-                "TestData",
+                "SampleData",
                 "CdmChangeFeed",
                 entityName,
                 "changefeed_entry.csv");
@@ -363,8 +366,8 @@ namespace Arcane.Framework.Tests.Sources
         {
             var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory,
                         "Sources",
-                        "TestData",
-                        "CdmBaseEntity",
+                        "SampleData",
+                        "BaseEntity",
                         entityName,
                         $"{entityName.ToUpper()}_00001.csv");
 
