@@ -1,0 +1,93 @@
+{
+  "jsonSchemaSemanticVersion": "1.4.0",
+  "imports": [],
+  "definitions": [
+    {
+      "entityName": "Entity",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.CDM.entityVersion",
+          "arguments": [
+            {
+              "name": "versionNumber",
+              "value": "1.0.0"
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "name": "LastProcessedChange_DateTime",
+          "dataFormat": "DateTime",
+          "description": "The DateTime timestamp for the last CDC change on this record."
+        },
+        {
+          "name": "DataLakeModified_DateTime",
+          "dataFormat": "DateTime",
+          "description": "The DateTime timestamp for the last modification on the Lake (write) for this record."
+        },
+        {
+          "name": "Start_LSN",
+          "dataFormat": "String",
+          "description": "The Start Log Sequence Number for the corresponding change."
+        },
+        {
+          "name": "End_LSN",
+          "dataFormat": "String",
+          "description": "The End Log Sequence Number for the corresponding change. It is trivially String.Empty."
+        },
+        {
+          "name": "DML_Action",
+          "dataFormat": "String",
+          "description": "The DML Action type."
+        },
+        {
+          "name": "Seq_Val",
+          "dataFormat": "String",
+          "description": "The Sequence Value within the LSN transaction for the corresponding change."
+        },
+        {
+          "name": "Update_Mask",
+          "dataFormat": "String",
+          "description": "The Update Mask identifying the modified column values for the corresponding change."
+        },
+        {
+          "name": "RECID",
+          "dataFormat": "Int64"
+        },
+        {
+          "name": "CustomField",
+          "dataType": "customDataTypeNumber",
+          "isNullable": true,
+          "displayName": "Activity number",
+          "maximumLength": 50
+        },
+        {
+          "name": "PARTITION",
+          "dataFormat": "Int64"
+        },
+        {
+          "name": "RECVERSION",
+          "dataFormat": "Int32"
+        },
+        {
+          "name": "MODIFIEDDATETIME",
+          "dataFormat": "DateTime"
+        }
+      ],
+      "displayName": "Test CDM entity",
+      "description": "The test CDM entity for testing purposes.",
+      "version": "1.0.0"
+    },
+    {
+      "explanation": "Extends nestedCustomDataTypeNumber data type",
+      "dataTypeName": "customDataTypeNumber",
+      "extendsDataType": "nestedCustomDataTypeNumber"
+    },
+    {
+      "explanation": "Extends string data type",
+      "dataTypeName": "nestedCustomDataTypeNumber",
+      "extendsDataType": "string"
+    }
+  ]
+}
