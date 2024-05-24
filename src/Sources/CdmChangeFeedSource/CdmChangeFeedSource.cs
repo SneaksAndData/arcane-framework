@@ -159,12 +159,6 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
-                nameof(ArgumentException) => Directive.Stop,
-                nameof(ArgumentNullException) => Directive.Stop,
-                nameof(InvalidOperationException) => Directive.Stop,
-                nameof(ConfigurationErrorsException) => Directive.Stop,
-                nameof(ObjectDisposedException) => Directive.Stop,
-                nameof(IOException) => Directive.Stop,
                 nameof(TimeoutException) => Directive.Restart,
                 _ => Directive.Stop
             });

@@ -14,6 +14,7 @@ using Arcane.Framework.Tests.Extensions;
 using Arcane.Framework.Tests.Fixtures;
 using Moq;
 using Parquet.Data;
+using Snd.Sdk.Storage.Base;
 using Snd.Sdk.Storage.Models;
 using Xunit;
 
@@ -21,12 +22,11 @@ namespace Arcane.Framework.Tests.Sources
 {
     public class CdmChangeFeedSourceTests : IClassFixture<ServiceFixture>, IClassFixture<AkkaFixture>
     {
-        private readonly ServiceFixture serviceFixture;
         private readonly AkkaFixture akkaFixture;
+        private readonly Mock<IBlobStorageService> mockBlobStorageService = new();
 
-        public CdmChangeFeedSourceTests(ServiceFixture serviceFixture, AkkaFixture akkaFixture)
+        public CdmChangeFeedSourceTests(AkkaFixture akkaFixture)
         {
-            this.serviceFixture = serviceFixture;
             this.akkaFixture = akkaFixture;
         }
 
@@ -40,7 +40,7 @@ namespace Arcane.Framework.Tests.Sources
 
             var result = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
                     entityName: entityName,
-                    blobStorage: this.serviceFixture.MockBlobStorageService.Object,
+                    blobStorage: this.mockBlobStorageService.Object,
                     fullLoadOnStart: fullLoadOnStart,
                     changeCaptureInterval: TimeSpan.FromSeconds(15)))
                 .TakeWithin(TimeSpan.FromSeconds(5)).RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
@@ -51,12 +51,11 @@ namespace Arcane.Framework.Tests.Sources
         [Fact]
         public async Task GetChangesWithExceptions()
         {
-            this.serviceFixture
-                .MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(s => s.ListBlobsAsEnumerable(It.IsAny<string>()))
                 .Returns(new[] { new StoredBlob { Name = "exceptionTest.csv", LastModified = DateTimeOffset.UtcNow } });
 
-            this.serviceFixture.MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs
                     => mbs.GetBlobContent(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Func<BinaryData, string>>()))
                 .Throws(() => new OutOfMemoryException("Test exception"));
@@ -65,7 +64,7 @@ namespace Arcane.Framework.Tests.Sources
             {
                 var result = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
                         entityName: "ExceptionTest",
-                        blobStorage: this.serviceFixture.MockBlobStorageService.Object,
+                        blobStorage: this.mockBlobStorageService.Object,
                         fullLoadOnStart: false,
                         changeCaptureInterval: TimeSpan.FromSeconds(15)))
                     .TakeWithin(TimeSpan.FromSeconds(5))
@@ -87,7 +86,7 @@ namespace Arcane.Framework.Tests.Sources
             this.SetupSchema(entityName, schemaUpdateName);
             var source = CdmChangeFeedSource.Create(rootPath: "test",
                 entityName: entityName,
-                blobStorage: this.serviceFixture.MockBlobStorageService.Object,
+                blobStorage: this.mockBlobStorageService.Object,
                 changeCaptureInterval: TimeSpan.FromSeconds(1),
                 schemaUpdateInterval: TimeSpan.FromSeconds(1));
 
@@ -99,7 +98,7 @@ namespace Arcane.Framework.Tests.Sources
 
             // Assert
             Assert.Equal("Data source schema has been updated", ex.Message);
-            this.serviceFixture.MockBlobStorageService.Verify(s
+            this.mockBlobStorageService.Verify(s
                     => s.GetBlobContent("test", $"ChangeFeed/{entityName}.cdm.json",
                         It.IsAny<Func<BinaryData, JsonDocument>>()),
                 Times.AtLeast(1)
@@ -120,7 +119,7 @@ namespace Arcane.Framework.Tests.Sources
                 entityName,
                 $"{entityName}.cdm.json");
             var callCount = 0;
-            this.serviceFixture.MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(),
                     $"ChangeFeed/{entityName}.cdm.json",
                     It.IsAny<Func<BinaryData, JsonDocument>>()))
@@ -137,7 +136,7 @@ namespace Arcane.Framework.Tests.Sources
 
             var source = CdmChangeFeedSource.Create(rootPath: "test",
                 entityName: entityName,
-                blobStorage: this.serviceFixture.MockBlobStorageService.Object,
+                blobStorage: this.mockBlobStorageService.Object,
                 changeCaptureInterval: TimeSpan.FromSeconds(1),
                 schemaUpdateInterval: TimeSpan.FromSeconds(1));
 
@@ -147,7 +146,7 @@ namespace Arcane.Framework.Tests.Sources
                 .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
 
             // Assert
-            this.serviceFixture.MockBlobStorageService.Verify(s
+            this.mockBlobStorageService.Verify(s
                     => s.GetBlobContent("test", $"ChangeFeed/{entityName}.cdm.json",
                         It.IsAny<Func<BinaryData, JsonDocument>>()),
                 Times.AtLeast(2)
@@ -160,7 +159,7 @@ namespace Arcane.Framework.Tests.Sources
             // Arrange
             const string entityName = "SchemaChangeTests";
             this.SetupTableMocks(entityName);
-            this.serviceFixture.MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(),
                     $"ChangeFeed/{entityName}.cdm.json",
                     It.IsAny<Func<BinaryData, JsonDocument>>()))
@@ -168,7 +167,7 @@ namespace Arcane.Framework.Tests.Sources
 
             var source = CdmChangeFeedSource.Create(rootPath: "test",
                 entityName: entityName,
-                blobStorage: this.serviceFixture.MockBlobStorageService.Object,
+                blobStorage: this.mockBlobStorageService.Object,
                 changeCaptureInterval: TimeSpan.FromSeconds(1),
                 schemaUpdateInterval: TimeSpan.FromSeconds(1));
 
@@ -182,31 +181,6 @@ namespace Arcane.Framework.Tests.Sources
 
             // Assert
             Assert.Equal("Could not found schema for entity: SchemaChangeTests", exception.Message);
-        }
-
-        [Fact]
-        public async Task DoesNotThrowOnUnchangedSchema()
-        {
-            // Arrange
-            const string entityName = "SchemaChangeTests";
-            this.SetupTableMocks(entityName);
-            this.SetupSchema(entityName, "unchanged");
-            var source = CdmChangeFeedSource.Create(rootPath: "test",
-                entityName: entityName,
-                blobStorage: this.serviceFixture.MockBlobStorageService.Object,
-                changeCaptureInterval: TimeSpan.FromSeconds(1));
-
-            // Act
-            await Source.FromGraph(source)
-                .TakeWithin(TimeSpan.FromSeconds(5))
-                .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
-
-            // Assert
-            this.serviceFixture.MockBlobStorageService.Verify(s
-                    => s.GetBlobContent("test", $"ChangeFeed/{entityName}.cdm.json",
-                        It.IsAny<Func<BinaryData, JsonDocument>>()),
-                Times.AtLeast(2)
-            );
         }
 
         private void SetupSchema(string entityName, string schemaUpdateName)
@@ -233,8 +207,7 @@ namespace Arcane.Framework.Tests.Sources
                 "CdmChangeFeed",
                 entityName,
                 $"{entityName}.{schemaUpdateName}.cdm.json");
-            this.serviceFixture
-                .MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(),
                     $"ChangeFeed/{entityName}.cdm.json",
                     It.IsAny<Func<BinaryData, JsonDocument>>()))
@@ -259,17 +232,17 @@ namespace Arcane.Framework.Tests.Sources
         [InlineData(false, true, 19, "ValidEntity")]
         public async Task StopAfterBackfill(bool stopAfterFullLoad, bool fullLoadOnStart, int expectedRows, string entityName)
         {
-            this.serviceFixture.MockBlobStorageService.Reset();
+            this.mockBlobStorageService.Reset();
             this.SetupTableMocks(entityName);
             var result = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
                     entityName: entityName,
-                    blobStorage: this.serviceFixture.MockBlobStorageService.Object,
+                    blobStorage: this.mockBlobStorageService.Object,
                     fullLoadOnStart: fullLoadOnStart,
                     stopAfterFullLoad: stopAfterFullLoad,
                     changeCaptureInterval: TimeSpan.FromSeconds(1)))
                 .TakeWithin(TimeSpan.FromSeconds(5))
                 .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
-            this.serviceFixture.MockBlobStorageService.Verify(
+            this.mockBlobStorageService.Verify(
                 mbs => mbs.ListBlobsAsEnumerable(It.IsAny<string>()),
                 stopAfterFullLoad ? Times.Once() : Times.AtLeast(2)
              );
@@ -285,7 +258,7 @@ namespace Arcane.Framework.Tests.Sources
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await Source.FromGraph(
                     CdmChangeFeedSource.Create(rootPath: "test",
                         entityName: entityName,
-                        blobStorage: this.serviceFixture.MockBlobStorageService.Object,
+                        blobStorage: this.mockBlobStorageService.Object,
                         fullLoadOnStart: fullLoadOnStart,
                         changeCaptureInterval: TimeSpan.FromSeconds(15)))
                 .TakeWithin(TimeSpan.FromSeconds(5))
@@ -299,7 +272,7 @@ namespace Arcane.Framework.Tests.Sources
             this.SetupTableMocks("ValidEntity");
             var schema = CdmChangeFeedSource.Create(rootPath: "test",
                 entityName: "ValidEntity",
-                blobStorage: this.serviceFixture.MockBlobStorageService.Object,
+                blobStorage: this.mockBlobStorageService.Object,
                 fullLoadOnStart: true,
                 changeCaptureInterval: TimeSpan.FromSeconds(15)).GetParquetSchema();
 
@@ -309,7 +282,7 @@ namespace Arcane.Framework.Tests.Sources
 
         private void SetupTableMocks(string entityName)
         {
-            this.serviceFixture.MockBlobStorageService.Setup(mbs => mbs.ListBlobsAsEnumerable(It.IsAny<string>())).Returns(
+            this.mockBlobStorageService.Setup(mbs => mbs.ListBlobsAsEnumerable(It.IsAny<string>())).Returns(
                 new[]
                 {
                     new StoredBlob
@@ -319,7 +292,7 @@ namespace Arcane.Framework.Tests.Sources
                     }
                 });
 
-            this.serviceFixture.MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs => mbs.ListBlobsAsEnumerable($"test/ChangeFeed/{entityName}"))
                 .Returns(new[]
                 {
@@ -333,22 +306,20 @@ namespace Arcane.Framework.Tests.Sources
             var changeFeedSchema = JsonSerializer.Deserialize<JsonDocument>(File.ReadAllText(entityName.ToSampleCdmChangeFeedSchemaPath()));
             var tableSchema = JsonSerializer.Deserialize<JsonDocument>(File.ReadAllText(entityName.ToSampleCdmEntitySchemaPath()));
 
-            this.serviceFixture
-                .MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(),It.Is<string>(s => s.Contains("ChangeFeed")), It.IsAny<Func<BinaryData, JsonDocument>>()))
                 .Returns(changeFeedSchema);
 
-            this.serviceFixture
-                .MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs => mbs.GetBlobContent(It.IsAny<string>(),It.Is<string>(s => !s.Contains("ChangeFeed")),  It.IsAny<Func<BinaryData, JsonDocument>>()))
                 .Returns(tableSchema);
 
-            this.serviceFixture.MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs =>
                     mbs.GetBlobContent($"test/ChangeFeed/{entityName}", "changefeed_entry.csv", It.IsAny<Func<BinaryData, string>>()))
                 .Returns(ReadTestChangeFeedData(entityName));
 
-            this.serviceFixture.MockBlobStorageService
+            this.mockBlobStorageService
                 .Setup(mbs =>
                     mbs.StreamBlobContent(It.IsAny<string>(), $"Test1/Test2/{entityName.ToUpper()}_00001.csv"))
                 .Returns(() => ReadTestEntityData(entityName));

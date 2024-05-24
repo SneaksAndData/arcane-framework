@@ -196,13 +196,6 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             this.sqlConnection = new SqlConnection(this.source.connectionString);
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
-                nameof(ArgumentException) => Directive.Stop,
-                nameof(ArgumentNullException) => Directive.Stop,
-                nameof(InvalidOperationException) => Directive.Stop,
-                nameof(SqlException) => Directive.Stop,
-                nameof(ConfigurationErrorsException) => Directive.Stop,
-                nameof(ObjectDisposedException) => Directive.Stop,
-                nameof(IOException) => Directive.Stop,
                 nameof(TimeoutException) => Directive.Restart,
                 _ => Directive.Stop
             });

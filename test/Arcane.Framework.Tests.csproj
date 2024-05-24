@@ -47,9 +47,4 @@
         <None Remove="Sources\SampleData\BaseEntity\DataToSchemaMismatchTests\DataToSchemaMismatchTests.cdm.json" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Sources\SampleData\BaseEntity\DataToSchemaMismatchTests\" />
-      <Folder Include="Sources\SampleData\CdmChangeFeed\DataToSchemaMismatchTests\" />
-    </ItemGroup>
-
 </Project>
