@@ -49,6 +49,7 @@ public class PageResolverTests
             Content = new StringContent(JsonSerializer.Serialize(filledContent))
         };
 
+        yield return (emptyMessage,  true);
         yield return (Option<HttpResponseMessage>.None, true);
         yield return (filledMessage, true);
         yield return (filledMessage, true);
