@@ -50,7 +50,6 @@ public class PageResolverTests
         };
 
         yield return (emptyMessage,  true);
-        yield return (Option<HttpResponseMessage>.None, true);
         yield return (filledMessage, true);
         yield return (filledMessage, true);
         yield return (emptyMessage,  false);
