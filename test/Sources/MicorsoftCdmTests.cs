@@ -254,6 +254,9 @@ namespace Arcane.Framework.Tests.Sources
                 });
         }
 
+        [Theory]
+        [InlineData(true, true, 11, "ValidEntity")]
+        [InlineData(false, true, 19, "ValidEntity")]
         public async Task StopAfterBackfill(bool stopAfterFullLoad, bool fullLoadOnStart, int expectedRows, string entityName)
         {
             this.serviceFixture.MockBlobStorageService.Reset();
