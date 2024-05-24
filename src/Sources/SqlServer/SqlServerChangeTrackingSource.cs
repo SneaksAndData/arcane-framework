@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -114,6 +115,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
     /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
     /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
     /// <returns></returns>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static SqlServerChangeTrackingSource Create(
         string connectionString,
         string schemaName,

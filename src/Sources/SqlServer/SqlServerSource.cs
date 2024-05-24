@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -86,6 +87,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     /// <param name="tableName">Table name</param>
     /// <param name="streamKind">Stream kind</param>
     /// <param name="commandTimeout">Sql server command execution timeout</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static SqlServerSource Create(string connectionString, string schemaName, string tableName,
         string streamKind, int commandTimeout = 3600)
     {

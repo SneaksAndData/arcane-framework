@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -157,6 +158,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
     /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
     /// <param name="headerAuthenticatedMessageProvider">Authenticated message provider</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         SimpleUriProvider uriProvider,
         FixedHeaderAuthenticatedMessageProvider headerAuthenticatedMessageProvider,
@@ -186,6 +188,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
     /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
     /// <param name="headerAuthenticatedMessageProvider">Authenticated message provider</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         SimpleUriProvider uriProvider,
         FixedHeaderAuthenticatedMessageProvider headerAuthenticatedMessageProvider,
@@ -215,6 +218,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
     /// <param name="authHeaderAuthenticatedMessageProvider">Authenticated message provider</param>
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         PagedUriProvider uriProvider,
         DynamicBearerAuthenticatedMessageProvider authHeaderAuthenticatedMessageProvider,
@@ -246,6 +250,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
     /// <param name="headerAuthenticatedMessageProvider">Authenticated message provider</param>
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         PagedUriProvider uriProvider,
         FixedHeaderAuthenticatedMessageProvider headerAuthenticatedMessageProvider,
@@ -277,6 +282,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
     /// <param name="authHeaderAuthenticatedMessageProvider">Authenticated message provider</param>
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         PagedUriProvider uriProvider,
         DynamicBearerAuthenticatedMessageProvider authHeaderAuthenticatedMessageProvider,
