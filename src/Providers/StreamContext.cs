@@ -20,15 +20,15 @@ public static class StreamContext
     /// Adds a stream context instance to DI container as a singleton
     /// </summary>
     /// <param name="services">Service collection</param>
-    /// <param name="provider"></param>
-    /// <typeparam name="TStreamContext"></typeparam>
+    /// <param name="provider">Crates a new StreamContext instance (defaults to <see cref="ProvideFromEnvironment"/></param>
+    /// <typeparam name="TStreamContext">Type of the StreamContext</typeparam>
     /// <returns></returns>
     public static IServiceCollection AddStreamContext<TStreamContext>(this IServiceCollection services,
         Func<TStreamContext> provider = null)
         where TStreamContext : class, IStreamContextWriter, IStreamContext, new()
     {
         var context = provider?.Invoke() ?? ProvideFromEnvironment<TStreamContext>();
-        services.AddSingleton<IStreamContext>(context);
+        services.AddSingleton(context);
         return services;
     }
 
