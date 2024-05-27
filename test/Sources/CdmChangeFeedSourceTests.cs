@@ -20,7 +20,7 @@ using Xunit;
 
 namespace Arcane.Framework.Tests.Sources
 {
-    public class CdmChangeFeedSourceTests : IClassFixture<ServiceFixture>, IClassFixture<AkkaFixture>
+    public class CdmChangeFeedSourceTests : IClassFixture<AkkaFixture>
     {
         private readonly AkkaFixture akkaFixture;
         private readonly Mock<IBlobStorageService> mockBlobStorageService = new();
@@ -62,7 +62,7 @@ namespace Arcane.Framework.Tests.Sources
 
             var ex = await Assert.ThrowsAsync<OutOfMemoryException>(async () =>
             {
-                var result = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
+                _ = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
                         entityName: "ExceptionTest",
                         blobStorage: this.mockBlobStorageService.Object,
                         fullLoadOnStart: false,

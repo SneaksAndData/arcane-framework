@@ -43,8 +43,6 @@
         <None Update="Sources\SampleData\**">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Remove="Sources\SampleData\CdmChangeFeed\DataToSchemaMismatchTests\changefeed_entry.csv" />
-        <None Remove="Sources\SampleData\BaseEntity\DataToSchemaMismatchTests\DataToSchemaMismatchTests.cdm.json" />
     </ItemGroup>
 
 </Project>
