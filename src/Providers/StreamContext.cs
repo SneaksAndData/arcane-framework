@@ -28,7 +28,12 @@ public static class StreamContext
         where TStreamContext : class, IStreamContextWriter, IStreamContext, new()
     {
         var context = provider?.Invoke() ?? ProvideFromEnvironment<TStreamContext>();
+
+        // injection for IStreamGraphBuilder
         services.AddSingleton(context);
+
+        // injection for other services that can use IStreamContext
+        services.AddSingleton<IStreamContext>(context);
         return services;
     }
 

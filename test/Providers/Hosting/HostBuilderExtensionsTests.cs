@@ -1,6 +1,13 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Akka.Util.Extensions;
+using Arcane.Framework.Contracts;
 using Arcane.Framework.Providers.Hosting;
+using Arcane.Framework.Services.Base;
+using Arcane.Framework.Sources.Exceptions;
 using Arcane.Framework.Tests.Providers.TestCases;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Moq;
 using Xunit;
@@ -10,6 +17,8 @@ namespace Arcane.Framework.Tests.Providers.Hosting;
 
 public class HostBuilderExtensionsTests
 {
+    private readonly Mock<IStreamStatusService> streamStatusServiceMock = new ();
+
     [Fact]
     public async Task ShouldHandleTypedHostedService()
     {
@@ -17,7 +26,8 @@ public class HostBuilderExtensionsTests
         var host = new HostBuilder().ConfigureRequiredServices(
                 services =>
                     services.AddStreamGraphBuilder<TestGraphBuilder, TestStreamContext>(
-                        contextProvider: () => new TestStreamContext()),
+                        contextProvider: () => new TestStreamContext(),
+                        addStreamStatusService: _ => this.streamStatusServiceMock.Object),
                 contextBuilder: CreateContext)
             .Build();
 
@@ -25,7 +35,7 @@ public class HostBuilderExtensionsTests
         var exitCode = await host.RunStream<TestStreamContext>(Mock.Of<Serilog.ILogger>());
 
         // Assert
-        Assert.Equal(0, exitCode);
+        Assert.Equal(ExitCodes.SUCCESS, exitCode);
     }
 
     [Fact]
@@ -33,15 +43,67 @@ public class HostBuilderExtensionsTests
     {
         // Arrange
         var host = new HostBuilder()
-            .ConfigureRequiredServices(
-                services => services.AddStreamGraphBuilder<TestGraphBuilder>(_ => new TestStreamContext(),
-                    contextBuilder: CreateContext), contextBuilder: CreateContext).Build();
+            .ConfigureRequiredServices(services => services.AddStreamGraphBuilder<TestGraphBuilder>(
+                    _ => new TestStreamContext(),
+                    addStreamStatusService: _ => this.streamStatusServiceMock.Object,
+                    contextBuilder: CreateContext),
+                contextBuilder: CreateContext)
+            .Build();
 
         // Act
         var exitCode = await host.RunStream(Mock.Of<Serilog.ILogger>());
 
         // Assert
-        Assert.Equal(0, exitCode);
+        Assert.Equal(ExitCodes.SUCCESS, exitCode);
+    }
+
+    [Theory]
+    [MemberData(nameof(GenerateExceptionTestCases))]
+    public async Task TestArcaneExceptionHandler(Exception exception, int expectedExitCode)
+    {
+        // Arrange
+        var host = new HostBuilder()
+            .ConfigureRequiredServices(services => services.AddStreamGraphBuilder<TestFailedGraphBuilder>(
+                    _ => new TestStreamContext(),
+                    addStreamStatusService: _ => this.streamStatusServiceMock.Object,
+                    contextBuilder: CreateContext),
+                contextBuilder: CreateContext)
+            .ConfigureServices(s => s.AddSingleton(exception))
+            .Build();
+
+        // Act
+        var exitCode = await host.RunStream(Mock.Of<Serilog.ILogger>());
+
+        // Assert
+        Assert.Equal(expectedExitCode, exitCode);
+    }
+
+    [Fact]
+    public async Task TestCustomExceptionHandler()
+    {
+        // Arrange
+        var host = new HostBuilder()
+            .ConfigureRequiredServices(services => services.AddStreamGraphBuilder<TestFailedGraphBuilder>(
+                    _ => new TestStreamContext(),
+                    addStreamStatusService: _ => this.streamStatusServiceMock.Object,
+                    contextBuilder: CreateContext),
+                contextBuilder: CreateContext)
+            .ConfigureServices(s => s.AddSingleton(new Exception()))
+            .Build();
+
+        // Act
+        var exitCode = await host.RunStream(
+            Mock.Of<Serilog.ILogger>(), handleUnknownException: (_, _) => Task.FromResult(35.AsOption()));
+
+        // Assert
+        Assert.Equal(35, exitCode);
+    }
+
+    public static IEnumerable<object[]> GenerateExceptionTestCases()
+    {
+        yield return new object[] { new SchemaInconsistentException(1, 2), ExitCodes.RESTART };
+        yield return new object[] { new SchemaMismatchException(), ExitCodes.SUCCESS };
+        yield return new object[] { new Exception(), ExitCodes.FATAL };
     }
 
     private static StreamingHostBuilderContext CreateContext()
