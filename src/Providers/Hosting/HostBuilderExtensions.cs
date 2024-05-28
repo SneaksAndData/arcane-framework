@@ -52,37 +52,37 @@ public static class HostBuilderExtensions
     /// Adds the required services for the streaming host.
     /// </summary>
     /// <param name="builder">IHostBuilder instance</param>
-    /// <param name="provideStreamGraphBuilder">The function that adds the stream graph builder to the services collection.</param>
-    /// <param name="provideStreamRunnerService">
+    /// <param name="getStreamGraphBuilder">The function that adds the stream graph builder to the services collection.</param>
+    /// <param name="getStreamRunnerService">
     /// The function that adds the stream runner service to the services collection.
     /// This parameter is optional. If omitted, the default implementation will be used.
     /// </param>
-    /// <param name="provideStreamLifetimeService">
+    /// <param name="getStreamLifetimeService">
     /// The function that adds the stream lifetime service to the services collection.
     /// This parameter is optional. If omitted, the default implementation will be used.
     /// </param>
     /// <param name="configureActorSystem">
-    /// The function that provides the custom configuration for the actor system.
-    /// This parameter is optional. If omitted, the actor system will be configured with default settings provided by the SnD.Sdk library.
+    /// The function that gets the custom configuration for the actor system.
+    /// This parameter is optional. If omitted, the actor system will be configured with default settings getd by the SnD.Sdk library.
     /// </param>
-    /// <param name="provideStreamHostContextBuilder">StreamingHostBuilderContext builder function</param>
+    /// <param name="getStreamHostContextBuilder">StreamingHostBuilderContext builder function</param>
     /// <returns>Configured IHostBuilder instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IHostBuilder ConfigureRequiredServices(this IHostBuilder builder,
-        Func<IServiceCollection, IServiceCollection> provideStreamGraphBuilder,
-        Func<IServiceProvider, IStreamRunnerService> provideStreamRunnerService = null,
-        Func<IServiceProvider, IStreamLifetimeService> provideStreamLifetimeService = null,
+        Func<IServiceCollection, IServiceCollection> getStreamGraphBuilder,
+        Func<IServiceProvider, IStreamRunnerService> getStreamRunnerService = null,
+        Func<IServiceProvider, IStreamLifetimeService> getStreamLifetimeService = null,
         Func<HostBuilderContext, StreamingHostBuilderContext, Action<AkkaConfigurationBuilder>> configureActorSystem = null,
-        Func<StreamingHostBuilderContext> provideStreamHostContextBuilder = null
+        Func<StreamingHostBuilderContext> getStreamHostContextBuilder = null
     )
     {
-        var context = provideStreamHostContextBuilder?.Invoke() ?? StreamingHostBuilderContext.FromEnvironment(ENV_PREFIX);
+        var context = getStreamHostContextBuilder?.Invoke() ?? StreamingHostBuilderContext.FromEnvironment(ENV_PREFIX);
         return builder.ConfigureServices((HostBuilderContext, services) =>
         {
-            provideStreamGraphBuilder(services);
+            getStreamGraphBuilder(services);
             services.AddKubernetes()
-                .AddServiceWithOptionalFactory<IStreamRunnerService, StreamRunnerService>(provideStreamRunnerService)
-                .AddServiceWithOptionalFactory<IStreamLifetimeService, StreamLifetimeService>(provideStreamLifetimeService)
+                .AddServiceWithOptionalFactory<IStreamRunnerService, StreamRunnerService>(getStreamRunnerService)
+                .AddServiceWithOptionalFactory<IStreamLifetimeService, StreamLifetimeService>(getStreamLifetimeService)
                 .AddLocalActorSystem(configureActorSystem?.Invoke(HostBuilderContext, context))
                 .AddSingleton<IArcaneExceptionHandler, ArcaneExceptionHandler>();
         });
@@ -93,14 +93,14 @@ public static class HostBuilderExtensions
     /// </summary>
     /// <param name="builder">IHostBuilder instance</param>
     /// <param name="configureAdditionalServices">The function that adds services to the services collection.</param>
-    /// <param name="provideStreamHostContextBuilder">StreamingHostBuilderContext builder function</param>
+    /// <param name="getStreamHostContextBuilder">StreamingHostBuilderContext builder function</param>
     /// <returns>Configured IHostBuilder instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IHostBuilder ConfigureAdditionalServices(this IHostBuilder builder,
         Action<IServiceCollection, StreamingHostBuilderContext> configureAdditionalServices,
-        Func<StreamingHostBuilderContext> provideStreamHostContextBuilder = null)
+        Func<StreamingHostBuilderContext> getStreamHostContextBuilder = null)
     {
-        var context = provideStreamHostContextBuilder?.Invoke() ?? StreamingHostBuilderContext.FromEnvironment(ENV_PREFIX);
+        var context = getStreamHostContextBuilder?.Invoke() ?? StreamingHostBuilderContext.FromEnvironment(ENV_PREFIX);
         return builder.ConfigureServices((_, services) =>
         {
             configureAdditionalServices.Invoke(services, context);
@@ -113,22 +113,22 @@ public static class HostBuilderExtensions
     /// In this case the implementation of the stream graph builder should contain the logic for determining the stream context type.
     /// </summary>
     /// <param name="services">Services collection.</param>
-    /// <param name="provideStreamContext">The factory function that provides the stream context instance.</param>
-    /// <param name="provideStreamHostContextBuilder">StreamingHostBuilderContext builder function</param>
-    /// <param name="provideStreamStatusService">StreamingHostBuilderContext builder function</param>
+    /// <param name="getStreamContext">The factory function that provides the stream context instance.</param>
+    /// <param name="getStreamHostContextBuilder">StreamingHostBuilderContext builder function</param>
+    /// <param name="getStreamStatusService">StreamingHostBuilderContext builder function</param>
     /// <typeparam name="TStreamGraphBuilder">The stream graph builder type.</typeparam>
     /// <returns>Services collection</returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IServiceCollection AddStreamGraphBuilder<TStreamGraphBuilder>(this IServiceCollection services,
-        Func<StreamingHostBuilderContext, IStreamContext> provideStreamContext,
-        Func<StreamingHostBuilderContext> provideStreamHostContextBuilder = null,
-        Func<IServiceProvider, IStreamStatusService> provideStreamStatusService = null)
+        Func<StreamingHostBuilderContext, IStreamContext> getStreamContext,
+        Func<StreamingHostBuilderContext> getStreamHostContextBuilder = null,
+        Func<IServiceProvider, IStreamStatusService> getStreamStatusService = null)
         where TStreamGraphBuilder : class, IStreamGraphBuilder<IStreamContext>
     {
-        var context = provideStreamHostContextBuilder?.Invoke() ?? StreamingHostBuilderContext.FromEnvironment(ENV_PREFIX);
+        var context = getStreamHostContextBuilder?.Invoke() ?? StreamingHostBuilderContext.FromEnvironment(ENV_PREFIX);
         services.AddSingleton<IStreamGraphBuilder<IStreamContext>, TStreamGraphBuilder>();
-        services.AddServiceWithOptionalFactory<IStreamStatusService, StreamStatusService>(provideStreamStatusService);
-        services.AddSingleton(_ => provideStreamContext(context));
+        services.AddServiceWithOptionalFactory<IStreamStatusService, StreamStatusService>(getStreamStatusService);
+        services.AddSingleton(_ => getStreamContext(context));
         return services;
     }
 
@@ -138,21 +138,21 @@ public static class HostBuilderExtensions
     /// I's preferable to use this method when possible.
     /// </summary>
     /// <param name="services">Services collection.</param>
-    /// <param name="provideStreamHostContextBuilder">Provides a TStreamContext instance</param>
-    /// <param name="provideStreamStatusService">Provides a TStreamContext instance</param>
+    /// <param name="getStreamHostContextBuilder">Provides a TStreamContext instance</param>
+    /// <param name="getStreamStatusService">Provides a TStreamContext instance</param>
     /// <typeparam name="TStreamContext">The stream context type</typeparam>
     /// <typeparam name="TStreamGraphBuilder">The stream graph builder type.</typeparam>
     /// <returns></returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
     public static IServiceCollection AddStreamGraphBuilder<TStreamGraphBuilder, TStreamContext>(this IServiceCollection services,
-        Func<TStreamContext> provideStreamHostContextBuilder = null,
-        Func<IServiceProvider, IStreamStatusService> provideStreamStatusService = null)
+        Func<TStreamContext> getStreamHostContextBuilder = null,
+        Func<IServiceProvider, IStreamStatusService> getStreamStatusService = null)
         where TStreamContext : class, IStreamContext, IStreamContextWriter, new()
         where TStreamGraphBuilder : class, IStreamGraphBuilder<TStreamContext>
     {
         services.AddSingleton<IStreamGraphBuilder<TStreamContext>, TStreamGraphBuilder>();
-        services.AddServiceWithOptionalFactory<IStreamStatusService, StreamStatusService>(provideStreamStatusService);
-        services.AddStreamContext<TStreamContext>(provideStreamHostContextBuilder);
+        services.AddServiceWithOptionalFactory<IStreamStatusService, StreamStatusService>(getStreamStatusService);
+        services.AddStreamContext<TStreamContext>(getStreamHostContextBuilder);
         return services;
     }
 

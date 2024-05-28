@@ -27,9 +27,9 @@ public class HostBuilderExtensionsTests
         var host = new HostBuilder().ConfigureRequiredServices(
                 services =>
                     services.AddStreamGraphBuilder<TestGraphBuilder, TestStreamContext>(
-                        provideStreamHostContextBuilder: () => new TestStreamContext(),
-                        provideStreamStatusService: _ => this.streamStatusServiceMock.Object),
-                provideStreamHostContextBuilder: CreateContext)
+                        getStreamHostContextBuilder: () => new TestStreamContext(),
+                        getStreamStatusService: _ => this.streamStatusServiceMock.Object),
+                getStreamHostContextBuilder: CreateContext)
             .Build();
 
         // Act
@@ -46,9 +46,9 @@ public class HostBuilderExtensionsTests
         var host = new HostBuilder()
             .ConfigureRequiredServices(services => services.AddStreamGraphBuilder<TestGraphBuilder>(
                     _ => new TestStreamContext(),
-                    provideStreamStatusService: _ => this.streamStatusServiceMock.Object,
-                    provideStreamHostContextBuilder: CreateContext),
-                provideStreamHostContextBuilder: CreateContext)
+                    getStreamStatusService: _ => this.streamStatusServiceMock.Object,
+                    getStreamHostContextBuilder: CreateContext),
+                getStreamHostContextBuilder: CreateContext)
             .Build();
 
         // Act
@@ -66,9 +66,9 @@ public class HostBuilderExtensionsTests
         var host = new HostBuilder()
             .ConfigureRequiredServices(services => services.AddStreamGraphBuilder<TestFailedGraphBuilder>(
                     _ => new TestStreamContext(),
-                    provideStreamStatusService: _ => this.streamStatusServiceMock.Object,
-                    provideStreamHostContextBuilder: CreateContext),
-                provideStreamHostContextBuilder: CreateContext)
+                    getStreamStatusService: _ => this.streamStatusServiceMock.Object,
+                    getStreamHostContextBuilder: CreateContext),
+                getStreamHostContextBuilder: CreateContext)
             .ConfigureServices(s => s.AddSingleton(exception))
             .Build();
 
