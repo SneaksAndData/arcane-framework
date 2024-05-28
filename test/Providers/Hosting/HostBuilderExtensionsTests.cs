@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Akka.Util;
 using Akka.Util.Extensions;
 using Arcane.Framework.Contracts;
 using Arcane.Framework.Providers.Hosting;
@@ -72,38 +73,22 @@ public class HostBuilderExtensionsTests
             .Build();
 
         // Act
-        var exitCode = await host.RunStream(Mock.Of<Serilog.ILogger>());
+        var exitCode = await host.RunStream(Mock.Of<Serilog.ILogger>(),
+            handleUnknownException: (ex, _) => ex is DivideByZeroException
+                ? Task.FromResult(35.AsOption())
+                : Task.FromResult(Option<int>.None));
 
         // Assert
         Assert.Equal(expectedExitCode, exitCode);
     }
 
-    [Fact]
-    public async Task TestCustomExceptionHandler()
-    {
-        // Arrange
-        var host = new HostBuilder()
-            .ConfigureRequiredServices(services => services.AddStreamGraphBuilder<TestFailedGraphBuilder>(
-                    _ => new TestStreamContext(),
-                    addStreamStatusService: _ => this.streamStatusServiceMock.Object,
-                    contextBuilder: CreateContext),
-                contextBuilder: CreateContext)
-            .ConfigureServices(s => s.AddSingleton(new Exception()))
-            .Build();
-
-        // Act
-        var exitCode = await host.RunStream(
-            Mock.Of<Serilog.ILogger>(), handleUnknownException: (_, _) => Task.FromResult(35.AsOption()));
-
-        // Assert
-        Assert.Equal(35, exitCode);
-    }
 
     public static IEnumerable<object[]> GenerateExceptionTestCases()
     {
         yield return new object[] { new SchemaInconsistentException(1, 2), ExitCodes.RESTART };
         yield return new object[] { new SchemaMismatchException(), ExitCodes.SUCCESS };
         yield return new object[] { new Exception(), ExitCodes.FATAL };
+        yield return new object[] { new DivideByZeroException(), 35 };
     }
 
     private static StreamingHostBuilderContext CreateContext()
