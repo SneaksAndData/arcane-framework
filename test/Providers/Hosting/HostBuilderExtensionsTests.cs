@@ -27,9 +27,9 @@ public class HostBuilderExtensionsTests
         var host = new HostBuilder().ConfigureRequiredServices(
                 services =>
                     services.AddStreamGraphBuilder<TestGraphBuilder, TestStreamContext>(
-                        contextProvider: () => new TestStreamContext(),
-                        addStreamStatusService: _ => this.streamStatusServiceMock.Object),
-                contextBuilder: CreateContext)
+                        provideStreamHostContextBuilder: () => new TestStreamContext(),
+                        provideStreamStatusService: _ => this.streamStatusServiceMock.Object),
+                provideStreamHostContextBuilder: CreateContext)
             .Build();
 
         // Act
@@ -46,9 +46,9 @@ public class HostBuilderExtensionsTests
         var host = new HostBuilder()
             .ConfigureRequiredServices(services => services.AddStreamGraphBuilder<TestGraphBuilder>(
                     _ => new TestStreamContext(),
-                    addStreamStatusService: _ => this.streamStatusServiceMock.Object,
-                    contextBuilder: CreateContext),
-                contextBuilder: CreateContext)
+                    provideStreamStatusService: _ => this.streamStatusServiceMock.Object,
+                    provideStreamHostContextBuilder: CreateContext),
+                provideStreamHostContextBuilder: CreateContext)
             .Build();
 
         // Act
@@ -66,9 +66,9 @@ public class HostBuilderExtensionsTests
         var host = new HostBuilder()
             .ConfigureRequiredServices(services => services.AddStreamGraphBuilder<TestFailedGraphBuilder>(
                     _ => new TestStreamContext(),
-                    addStreamStatusService: _ => this.streamStatusServiceMock.Object,
-                    contextBuilder: CreateContext),
-                contextBuilder: CreateContext)
+                    provideStreamStatusService: _ => this.streamStatusServiceMock.Object,
+                    provideStreamHostContextBuilder: CreateContext),
+                provideStreamHostContextBuilder: CreateContext)
             .ConfigureServices(s => s.AddSingleton(exception))
             .Build();
 
