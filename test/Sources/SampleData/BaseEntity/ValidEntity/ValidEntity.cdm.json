@@ -1,0 +1,78 @@
+{
+  "jsonSchemaSemanticVersion": "1.4.0",
+  "imports": [],
+  "definitions": [
+    {
+      "entityName": "Entity",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.CDM.entityVersion",
+          "arguments": [
+            {
+              "name": "versionNumber",
+              "value": "1.0.0"
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "name": "_SysRowId",
+          "dataFormat": "String",
+          "description": "The Rec Id of this record."
+        },
+        {
+          "name": "LSN",
+          "dataFormat": "String",
+          "description": "The Log Sequence Number for the latest transaction updating this record."
+        },
+        {
+          "name": "LastProcessedChange_DateTime",
+          "dataFormat": "DateTime",
+          "description": "The DateTime timestamp for the last CDC change on this record."
+        },
+        {
+          "name": "DataLakeModified_DateTime",
+          "dataFormat": "DateTime",
+          "description": "The DateTime timestamp for the last modification on the Lake (write) for this record."
+        },
+        {
+          "name": "RECID",
+          "dataFormat": "Int64"
+        },
+        {
+          "name": "CustomField",
+          "dataType": "customDataTypeNumber",
+          "isNullable": true,
+          "displayName": "Activity number",
+          "maximumLength": 50
+        },
+        {
+          "name": "PARTITION",
+          "dataFormat": "Int64"
+        },
+        {
+          "name": "RECVERSION",
+          "dataFormat": "Int32"
+        },
+        {
+          "name": "MODIFIEDDATETIME",
+          "dataFormat": "DateTime"
+        }
+      ],
+      "displayName": "Test CDM entity",
+      "description": "The test CDM entity for testing purposes.",
+      "version": "1.0.0"
+    },
+    {
+      "explanation": "Extends nestedCustomDataTypeNumber data type",
+      "dataTypeName": "customDataTypeNumber",
+      "extendsDataType": "nestedCustomDataTypeNumber"
+    },
+    {
+      "explanation": "Extends string data type",
+      "dataTypeName": "nestedCustomDataTypeNumber",
+      "extendsDataType": "string"
+    }
+  ]
+}

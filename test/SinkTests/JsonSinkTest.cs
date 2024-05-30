@@ -7,20 +7,26 @@ using Akka.Streams.Dsl;
 using Arcane.Framework.Sinks.Json;
 using Arcane.Framework.Tests.Fixtures;
 using Moq;
+using Snd.Sdk.Storage.Base;
 using Snd.Sdk.Storage.Models;
 using Xunit;
 
 namespace Arcane.Framework.Tests.SinkTests;
 
-public class JsonSinkTests : IClassFixture<AkkaFixture>, IClassFixture<ServiceFixture>
+public class JsonSinkTests : IClassFixture<AkkaFixture>
 {
     private readonly AkkaFixture akkaFixture;
-    private readonly ServiceFixture serviceFixture;
+    private readonly Mock<IBlobStorageService> mockBlobStorageService = new();
 
-    public JsonSinkTests(AkkaFixture akkaFixture, ServiceFixture serviceFixture)
+    public JsonSinkTests(AkkaFixture akkaFixture)
     {
         this.akkaFixture = akkaFixture;
-        this.serviceFixture = serviceFixture;
+        this.mockBlobStorageService.Setup(mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>()))
+            .ReturnsAsync(new UploadedBlob());
+
     }
 
     [Theory]
@@ -30,10 +36,6 @@ public class JsonSinkTests : IClassFixture<AkkaFixture>, IClassFixture<ServiceFi
     {
         var mockDocument =
             JsonSerializer.Deserialize<JsonDocument>(JsonSerializer.Serialize(new { test = 1, moreTest = "a" }));
-
-        this.serviceFixture.MockBlobStorageService.Setup(mb =>
-                mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
-            .ReturnsAsync(new UploadedBlob());
 
         await Source
             .From(Enumerable.Range(0, sources).Select(ix =>
@@ -46,12 +48,12 @@ public class JsonSinkTests : IClassFixture<AkkaFixture>, IClassFixture<ServiceFi
 
                 return ($"test_{ix}", values);
             }))
-            .RunWith(JsonSink.Create(this.serviceFixture.MockBlobStorageService.Object, $"tmp@"),
+            .RunWith(JsonSink.Create(this.mockBlobStorageService.Object, $"tmp@"),
                 this.akkaFixture.Materializer);
 
         foreach (var ix_src in Enumerable.Range(0, sources))
         {
-            this.serviceFixture.MockBlobStorageService.Verify(
+            this.mockBlobStorageService.Verify(
                 mb => mb.SaveBytesAsBlob(
                     It.Is<BinaryData>(bd =>
                         bd.ToString().Split(Environment.NewLine, StringSplitOptions.None).Length - 1 == rowsPerSource),
