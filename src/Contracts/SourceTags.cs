@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Arcane.Framework.Services.Base;
 using Snd.Sdk.Helpers;
 
@@ -7,6 +8,7 @@ namespace Arcane.Framework.Contracts;
 /// <summary>
 /// Source tags for a stream metrics.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Trivial")]
 public sealed class SourceTags
 {
     /// <summary>
