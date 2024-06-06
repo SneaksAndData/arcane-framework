@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Akka.Streams.Dsl;
 using Arcane.Framework.Sinks;
+using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Tests.Fixtures;
 using Moq;
 using Parquet.Data;

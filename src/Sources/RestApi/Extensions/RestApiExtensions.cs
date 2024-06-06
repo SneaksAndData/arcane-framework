@@ -12,7 +12,7 @@ namespace Arcane.Framework.Sources.RestApi.Extensions;
 /// <summary>
 /// Contains extension methods for REST API operations.
 /// </summary>
-public static class RestApiExtensions
+internal static class RestApiExtensions
 {
     /// <summary>
     /// Parse OpenApi schema from base64 encoded string.

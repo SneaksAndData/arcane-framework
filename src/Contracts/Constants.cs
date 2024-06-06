@@ -6,7 +6,7 @@ namespace Arcane.Framework.Contracts;
 /// Common container exit codes
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Trivial")]
-public static class ExitCodes
+internal static class ExitCodes
 {
     /// <summary>
     /// Job completed successfully

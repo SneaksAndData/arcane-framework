@@ -12,7 +12,7 @@ namespace Arcane.Framework.Services;
 /// Creates a service that terminates the stream in response to the SIGTERM signal.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Implementation is platform-specific")]
-public class StreamLifetimeService: IStreamLifetimeService
+internal class StreamLifetimeService: IStreamLifetimeService
 {
     private readonly IStreamRunnerService streamRunnerService;
     private readonly ILogger<StreamLifetimeService> logger;

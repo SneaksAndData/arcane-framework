@@ -7,7 +7,7 @@ namespace Arcane.Framework.Sources.Extensions;
 /// <summary>
 /// Extensions for GraphStageLogic
 /// </summary>
-public static class GraphStageLogicExtensions
+internal static class GraphStageLogicExtensions
 {
     /// <summary>
     /// Complete stage if StopAfterFullLoad is set to true and source finished full load mode

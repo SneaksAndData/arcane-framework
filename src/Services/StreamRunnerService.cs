@@ -11,7 +11,7 @@ namespace Arcane.Framework.Services;
 
 /// <inheritdoc/>
 [ExcludeFromCodeCoverage(Justification = "Trivial")]
-public class StreamRunnerService : IStreamRunnerService
+internal class StreamRunnerService : IStreamRunnerService
 
 {
     private readonly IHostApplicationLifetime applicationLifetime;

@@ -9,7 +9,7 @@ namespace Arcane.Framework.Sources.CdmChangeFeedSource.Models;
 /// <summary>
 /// Represents CDM Change Feed attribute
 /// </summary>
-public class SimpleCdmAttribute
+internal class SimpleCdmAttribute
 {
     private static readonly Dictionary<string, Type> cdmTypeMap = new()
     {

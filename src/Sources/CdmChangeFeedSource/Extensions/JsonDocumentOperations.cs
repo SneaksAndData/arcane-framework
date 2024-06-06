@@ -6,7 +6,7 @@ namespace Arcane.Framework.Sources.CdmChangeFeedSource.Extensions;
 /// <summary>
 /// Contains operations for parsing JSON documents.
 /// </summary>
-public static class JsonDocumentOperations
+internal static class JsonDocumentOperations
 {
     /// <summary>
     /// Get an element from a JSON array

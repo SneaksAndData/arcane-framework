@@ -1,7 +1,7 @@
-﻿using System;
-using Akka.Streams.Dsl;
+﻿using Akka.Streams.Dsl;
+using Arcane.Framework.Sources.Base;
 
-namespace Arcane.Framework.Sources.Base;
+namespace Arcane.Framework.Sinks.Base;
 
 /// <summary>
 /// Wraps a sink that requires a schema
@@ -9,7 +9,7 @@ namespace Arcane.Framework.Sources.Base;
 /// <typeparam name="TIn">Input element type</typeparam>
 /// <typeparam name="TMat">Type of materialized value</typeparam>
 /// <typeparam name="TSchema">Type of the schema validator</typeparam>
-public interface ISchemaBoundSink<TIn, TMat, TSchema>  where TSchema : ISchemaValidator<TIn>
+public interface ISchemaBoundSink<TIn, out TMat, TSchema>  where TSchema : ISchemaValidator<TIn>
 {
     /// <summary>
     /// Returns a graph builder function that connects a source to the sink

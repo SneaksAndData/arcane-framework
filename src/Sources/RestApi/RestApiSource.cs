@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -130,10 +129,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     public override SourceShape<JsonElement> Shape { get; }
 
     /// <inheritdoc cref="IParquetSource.GetParquetSchema"/>
-    public Schema GetParquetSchema()
-    {
-        return this.apiSchema.ToParquetSchema();
-    }
+    public Schema GetParquetSchema() => this.apiSchema.ToParquetSchema();
 
     /// <inheritdoc cref="ITaggedSource.GetDefaultTags"/>
     public SourceTags GetDefaultTags()
@@ -302,10 +298,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     }
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
-    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes)
-    {
-        return new SourceLogic(this);
-    }
+    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
 
     private sealed class SourceLogic : TimerGraphStageLogic, IStopAfterBackfill
     {
