@@ -142,13 +142,13 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
             this.SetKeepGoing(true);
 
             if (this.sink.createSchemaFile)
-                // dump empty schema file and then pull first element
+            // dump empty schema file and then pull first element
             {
                 this.CreateSchemaFile()
                     .ContinueWith(_ => this.GetAsyncCallback(() => this.Pull(this.sink.In)).Invoke());
             }
             else
-                // request the first element
+            // request the first element
             {
                 this.Pull(this.sink.In);
             }
@@ -190,8 +190,8 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         private Task<UploadedBlob> SaveCompletionToken()
         {
             if (this.sink.dropCompletionToken)
-                // there seems to be an issue with Moq library and how it serializes BinaryData type
-                // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
+            // there seems to be an issue with Moq library and how it serializes BinaryData type
+            // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
             {
                 return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }), this.GetSavePath(),
                     $"{this.schemaHash}.COMPLETED");

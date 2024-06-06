@@ -171,7 +171,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
             this.recordsReceived = this.GetAsyncCallback<Task<Option<List<DataCell>>>>(this.OnRecordReceived);
             this.sqlConnection.Open();
             var command = new SqlCommand(this.source.GetQuery(), this.sqlConnection)
-                { CommandTimeout = this.source.commandTimeout };
+            { CommandTimeout = this.source.commandTimeout };
             this.reader = command.ExecuteReader();
         }
 

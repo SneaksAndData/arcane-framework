@@ -173,8 +173,8 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         private Task<UploadedBlob> SaveCompletionToken()
         {
             if (this.sink.dropCompletionToken)
-                // there seems to be an issue with Moq library and how it serializes BinaryData type
-                // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
+            // there seems to be an issue with Moq library and how it serializes BinaryData type
+            // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
             {
                 return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }),
                     $"{this.sink.jsonSinkPath}/{this.sink.dataPathSegment}",

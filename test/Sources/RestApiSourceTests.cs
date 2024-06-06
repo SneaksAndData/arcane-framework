@@ -65,7 +65,7 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
                 new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 HttpMethod.Get)
             .WithPageResolver(new PageResolverConfiguration
-                { ResolverPropertyKeyChain = new[] { "TotalPages" }, ResolverType = PageResolverType.COUNTER });
+            { ResolverPropertyKeyChain = new[] { "TotalPages" }, ResolverType = PageResolverType.COUNTER });
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
                         msg.RequestUri == new Uri("https://localhost/data?date=2023-01-01T00:00:00Z")),
                     It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-                { Content = new StringContent(JsonSerializer.Serialize(mockContent)) });
+            { Content = new StringContent(JsonSerializer.Serialize(mockContent)) });
 
         var src = RestApiSource.Create(
             this.db,
@@ -116,7 +116,7 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
                     It.IsAny<HttpRequestMessage>(),
                     It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-                { Content = new StringContent(JsonSerializer.Serialize(mockContent)) });
+            { Content = new StringContent(JsonSerializer.Serialize(mockContent)) });
 
         var src = RestApiSource.Create(
             this.db,
@@ -160,7 +160,7 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
                         hrm.RequestUri.ToString().Contains("updatedAt>=<")),
                     It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-                { Content = new StringContent(JsonSerializer.Serialize(mockContent)) });
+            { Content = new StringContent(JsonSerializer.Serialize(mockContent)) });
 
         // following invocations, page must be set
         this.mockHttp
@@ -172,7 +172,7 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
                         hrm.RequestUri.ToString().Contains("updatedAt>=<")),
                     It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-                { Content = new StringContent(JsonSerializer.Serialize(mockContent)) });
+            { Content = new StringContent(JsonSerializer.Serialize(mockContent)) });
 
         // over-the-last invocation, should return empty object
         this.mockHttp
@@ -182,8 +182,7 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
                         hrm.RequestUri.ToString().Contains("page=4") &&
                         hrm.RequestUri.ToString().Contains("updatedAt>=<")),
                     It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-                { Content = new StringContent("{}") });
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
 
         this.mockHttp
             .Setup(http =>

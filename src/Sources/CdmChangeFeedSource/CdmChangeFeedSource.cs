@@ -234,10 +234,11 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                             : blobSchema.Attributes[ix].Name;
                         return new DataCell(fieldName, tp, value);
                     })
-                    .Where(dc =>
-                        dc.FieldName !=
-                        "_SysRowId") // exclude system field as it is not present in the change feed
-                    // append fields from the change feed schema with default values
+                    .Where(dc => dc.FieldName != "_SysRowId")
+                    /*
+                     * exclude system field as it is not present in the change feed
+                     *  append fields from the change feed schema with default values
+                     */
                     .Append(new DataCell("End_LSN", typeof(string), null))
                     .Append(new DataCell("DML_Action", typeof(string), "INSERT"))
                     .Append(new DataCell("Seq_Val", typeof(string),

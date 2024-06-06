@@ -81,10 +81,11 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             tableAlias: "tq", changesAlias: "ct");
 
         var command = new SqlCommand(this.GetChangesQuery(
-            mergeExpression,
-            columnExpression,
-            matchExpression,
-            long.MaxValue), sqlCon) { CommandTimeout = this.commandTimeout };
+                mergeExpression,
+                columnExpression,
+                matchExpression,
+                long.MaxValue), sqlCon)
+        { CommandTimeout = this.commandTimeout };
 
         using var schemaReader = command.ExecuteReader(CommandBehavior.SchemaOnly);
 
@@ -378,11 +379,11 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                 new SqlCommand(this.source.GetChangesQuery(this.mergeExpression, this.columnExpression,
                         this.matchExpression,
                         newVersion.GetValueOrDefault(long.MaxValue) - 1), this.sqlConnection)
-                    { CommandTimeout = this.source.commandTimeout, Transaction = this.readTran };
+                { CommandTimeout = this.source.commandTimeout, Transaction = this.readTran };
             this.TryExecuteReader(command);
 
             if (this.reader.HasRows)
-                // reset current version so it can be updated from the source
+            // reset current version so it can be updated from the source
             {
                 this.currentVersion = 0;
             }
@@ -453,7 +454,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                 var command =
                     new SqlCommand(this.source.GetAllQuery(this.mergeExpression, this.GetChangeTrackingColumns("tq")),
                             this.sqlConnection)
-                        { CommandTimeout = this.source.commandTimeout, Transaction = this.readTran };
+                    { CommandTimeout = this.source.commandTimeout, Transaction = this.readTran };
 
                 this.IsRunningInBackfillMode = true;
                 this.TryExecuteReader(command);
