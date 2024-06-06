@@ -4,9 +4,10 @@ namespace Arcane.Framework.Tests.Providers.TestCases;
 
 public class TestStreamContext : IStreamContext, IStreamContextWriter
 {
-    public string StreamId => nameof(StreamId);
+    public string StreamId => nameof(this.StreamId);
     public bool IsBackfilling => false;
-    public string StreamKind => nameof(StreamKind);
+    public string StreamKind => nameof(this.StreamKind);
+
     public void SetStreamId(string streamId)
     {
         /* do nothing */

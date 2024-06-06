@@ -1,5 +1,6 @@
 ﻿using Akka.Streams.Dsl;
 using Arcane.Framework.Sinks;
+using Arcane.Framework.Sinks.Base;
 using Arcane.Framework.Sources.Base;
 
 namespace Arcane.Framework.Sources.Extensions;
@@ -16,5 +17,8 @@ public static class SinkExtensions
     /// <typeparam name="TIn"></typeparam>
     /// <typeparam name="TMat"></typeparam>
     /// <returns></returns>
-    public static ISchemaFreeSink<TIn, TMat> ToArcaneSink<TIn, TMat>(this Sink<TIn, TMat> sink) => new SchemaFreeSink<TIn, TMat>(sink);
+    public static ISchemaFreeSink<TIn, TMat> ToArcaneSink<TIn, TMat>(this Sink<TIn, TMat> sink)
+    {
+        return new SchemaFreeSink<TIn, TMat>(sink);
+    }
 }

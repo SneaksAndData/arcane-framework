@@ -49,7 +49,7 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
             .From(mockIn)
             .Select(v => v.ToList())
             .RunWith(MultilineJsonSink.Create(this.mockBlobStorageService.Object, mockPath, mockSchema,
-                    "data", "schema", dropsCompletion), this.akkaFixture.Materializer);
+                "data", "schema", dropsCompletion), this.akkaFixture.Materializer);
 
         foreach (var _ in Enumerable.Range(0, files))
         {

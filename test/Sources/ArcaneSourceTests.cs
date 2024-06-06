@@ -18,7 +18,7 @@ using ParquetColumn = Parquet.Data.DataColumn;
 
 namespace Arcane.Framework.Tests.Sources;
 
-public class ArcaneSourceTests: IClassFixture<AkkaFixture>
+public class ArcaneSourceTests : IClassFixture<AkkaFixture>
 {
     private readonly IMaterializer materializer;
 
@@ -39,10 +39,11 @@ public class ArcaneSourceTests: IClassFixture<AkkaFixture>
         };
         var brokenRows = new[]
         {
-            new DataCell("name", typeof(string), "John"),
+            new DataCell("name", typeof(string), "John")
         };
         var parquetSchema = new Schema(rows.Select(df => new DataField(df.FieldName, df.FieldType)).ToList());
-        var mockSource = Source.From(Enumerable.Range(0, 100).Select(idx => idx % 10 == 0 ? brokenRows.ToList() : rows.ToList()));
+        var mockSource = Source.From(Enumerable.Range(0, 100)
+            .Select(idx => idx % 10 == 0 ? brokenRows.ToList() : rows.ToList()));
         var sink = Sink.Aggregate<List<ParquetColumn>, int>(0, (acc, _) => acc + 1);
 
         // Act
@@ -73,11 +74,12 @@ public class ArcaneSourceTests: IClassFixture<AkkaFixture>
         var brokenRows = new[]
         {
             new DataCell("familyName", typeof(string), "Doe"),
-            new DataCell("familyName", typeof(string), "Doe"),
+            new DataCell("familyName", typeof(string), "Doe")
         };
         var brokenSchema = new Schema(rows.Take(2).Select(df => new DataField(df.FieldName, df.FieldType)).ToList());
 
-        var mockSource = Source.From(Enumerable.Range(0, 100).Select(idx => idx > 9 ? brokenRows.ToList() : rows.ToList()));
+        var mockSource =
+            Source.From(Enumerable.Range(0, 100).Select(idx => idx > 9 ? brokenRows.ToList() : rows.ToList()));
         var sink = Sink.Aggregate<List<ParquetColumn>, int>(0, (acc, _) => acc + 1);
         var validator = new FastParquetSchemaValidator(parquetSchema);
 
@@ -95,7 +97,7 @@ public class ArcaneSourceTests: IClassFixture<AkkaFixture>
             .WithSchema(validator)
             .To(sink.ToArcaneSink().WithSchema(validator));
 
-        var ex = await Assert.ThrowsAsync<SchemaInconsistentException>( async () => await sfs.Run(this.materializer));
+        var ex = await Assert.ThrowsAsync<SchemaInconsistentException>(async () => await sfs.Run(this.materializer));
 
         // Assert
         Assert.Contains("Source has 2 fields, sink has 3 fields", ex.Message);

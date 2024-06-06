@@ -6,10 +6,12 @@ using Snd.Sdk.Kubernetes.Base;
 
 namespace Arcane.Framework.Services;
 
-[ExcludeFromCodeCoverage(Justification = "Implementation is specific to Kubernetes API, should be tested in integration tests.")]
-internal class StreamStatusService: IStreamStatusService
+[ExcludeFromCodeCoverage(Justification =
+    "Implementation is specific to Kubernetes API, should be tested in integration tests.")]
+internal class StreamStatusService : IStreamStatusService
 {
     private readonly IKubeCluster kubernetesService;
+
     public StreamStatusService(IKubeCluster kubernetesService)
     {
         this.kubernetesService = kubernetesService;

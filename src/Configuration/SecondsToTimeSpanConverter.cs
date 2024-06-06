@@ -9,13 +9,17 @@ namespace Arcane.Framework.Configuration;
 /// Converts Seconds to/from TimeSpan for StreamContext properties serialization/deserialization
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Trivial")]
-public class SecondsToTimeSpanConverter: JsonConverter<TimeSpan>
+public class SecondsToTimeSpanConverter : JsonConverter<TimeSpan>
 {
     /// <inheritdoc cref="JsonConverter{T}.Read"/>>
-    public override TimeSpan Read( ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-        TimeSpan.FromSeconds(reader.GetInt64());
+    public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return TimeSpan.FromSeconds(reader.GetInt64());
+    }
 
     /// <inheritdoc cref="JsonConverter{T}.Write"/>>
-    public override void Write(Utf8JsonWriter writer, TimeSpan timeSpanValue, JsonSerializerOptions options) =>
+    public override void Write(Utf8JsonWriter writer, TimeSpan timeSpanValue, JsonSerializerOptions options)
+    {
         writer.WriteNumberValue(timeSpanValue.TotalSeconds);
+    }
 }

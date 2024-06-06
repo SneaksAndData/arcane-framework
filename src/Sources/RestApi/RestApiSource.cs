@@ -141,7 +141,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         return new SourceTags
         {
             SourceEntity = this.uriProvider.BaseUri.AbsolutePath,
-            SourceLocation = this.uriProvider.BaseUri.Host,
+            SourceLocation = this.uriProvider.BaseUri.Host
         };
     }
 

@@ -14,4 +14,3 @@ public interface IStreamStatusService
     /// <param name="streamId">Id of the current stream.</param>
     Task ReportSchemaMismatch(string streamId);
 }
-

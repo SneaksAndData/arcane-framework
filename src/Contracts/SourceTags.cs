@@ -33,7 +33,7 @@ public sealed class SourceTags
             { "arcane.sneaksanddata.com/mode", streamContext.IsBackfilling ? "backfill" : "stream" },
             { "arcane.sneaksanddata.com/stream_source_location", this.SourceLocation },
             { "arcane.sneaksanddata.com/stream_source_entity", this.SourceEntity },
-            { "arcane.sneaksanddata.com/stream_id", streamId}
+            { "arcane.sneaksanddata.com/stream_id", streamId }
         };
     }
 }

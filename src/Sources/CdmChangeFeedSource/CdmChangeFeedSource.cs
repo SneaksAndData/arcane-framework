@@ -83,7 +83,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         return new SourceTags
         {
             SourceEntity = this.entityName,
-            SourceLocation = this.rootPath,
+            SourceLocation = this.rootPath
         };
     }
 

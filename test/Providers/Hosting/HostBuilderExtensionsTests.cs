@@ -15,10 +15,9 @@ using Xunit;
 
 namespace Arcane.Framework.Tests.Providers.Hosting;
 
-
 public class HostBuilderExtensionsTests
 {
-    private readonly Mock<IStreamStatusService> streamStatusServiceMock = new ();
+    private readonly Mock<IStreamStatusService> streamStatusServiceMock = new();
 
     [Fact]
     public async Task ShouldHandleTypedHostedService()
@@ -27,8 +26,8 @@ public class HostBuilderExtensionsTests
         var host = new HostBuilder().ConfigureRequiredServices(
                 services =>
                     services.AddStreamGraphBuilder<TestGraphBuilder, TestStreamContext>(
-                        getStreamHostContextBuilder: () => new TestStreamContext(),
-                        getStreamStatusService: _ => this.streamStatusServiceMock.Object),
+                        () => new TestStreamContext(),
+                        _ => this.streamStatusServiceMock.Object),
                 getStreamHostContextBuilder: CreateContext)
             .Build();
 
@@ -74,7 +73,7 @@ public class HostBuilderExtensionsTests
 
         // Act
         var exitCode = await host.RunStream(Mock.Of<Serilog.ILogger>(),
-            handleUnknownException: (ex, _) => ex is DivideByZeroException
+            (ex, _) => ex is DivideByZeroException
                 ? Task.FromResult(35.AsOption())
                 : Task.FromResult(Option<int>.None));
 

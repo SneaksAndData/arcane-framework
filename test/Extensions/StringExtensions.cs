@@ -5,7 +5,6 @@ namespace Arcane.Framework.Tests.Extensions;
 
 public static class StringExtensions
 {
-
     public static string ToSampleCdmChangeFeedSchemaPath(this string entityName)
     {
         return Path.Join(

@@ -12,11 +12,11 @@ using Snd.Sdk.Tasks;
 namespace Arcane.Framework.Services;
 
 [ExcludeFromCodeCoverage(Justification = "Trivial")]
-internal class ArcaneExceptionHandler: IArcaneExceptionHandler
+internal class ArcaneExceptionHandler : IArcaneExceptionHandler
 {
     private readonly ILogger<ArcaneExceptionHandler> logger;
-    private readonly IStreamStatusService streamStatusService;
     private readonly IStreamContext streamContext;
+    private readonly IStreamStatusService streamStatusService;
 
     public ArcaneExceptionHandler(ILogger<ArcaneExceptionHandler> logger,
         IStreamStatusService streamStatusService, IStreamContext streamContext)
@@ -24,18 +24,6 @@ internal class ArcaneExceptionHandler: IArcaneExceptionHandler
         this.logger = logger;
         this.streamStatusService = streamStatusService;
         this.streamContext = streamContext;
-    }
-
-    private Task<Option<int>> HandleSchemaMismatch()
-    {
-        this.logger.LogInformation("Schema mismatch detected. Reporting schema mismatch and exiting");
-        return this.streamStatusService.ReportSchemaMismatch(this.streamContext.StreamId).Map(_ => ExitCodes.SUCCESS.AsOption());
-    }
-
-    private Task<Option<int>> HandleSchemaInconsistency()
-    {
-        this.logger.LogInformation("Schema mismatch detected. Reporting schema mismatch and exiting");
-        return Task.FromResult(ExitCodes.RESTART.AsOption());
     }
 
     public Task<Option<int>> HandleException(Exception exception)
@@ -46,5 +34,18 @@ internal class ArcaneExceptionHandler: IArcaneExceptionHandler
             SchemaInconsistentException => this.HandleSchemaInconsistency(),
             _ => Task.FromResult(Option<int>.None)
         };
+    }
+
+    private Task<Option<int>> HandleSchemaMismatch()
+    {
+        this.logger.LogInformation("Schema mismatch detected. Reporting schema mismatch and exiting");
+        return this.streamStatusService.ReportSchemaMismatch(this.streamContext.StreamId)
+            .Map(_ => ExitCodes.SUCCESS.AsOption());
+    }
+
+    private Task<Option<int>> HandleSchemaInconsistency()
+    {
+        this.logger.LogInformation("Schema mismatch detected. Reporting schema mismatch and exiting");
+        return Task.FromResult(ExitCodes.RESTART.AsOption());
     }
 }

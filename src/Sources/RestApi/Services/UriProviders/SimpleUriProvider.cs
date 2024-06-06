@@ -13,10 +13,10 @@ namespace Arcane.Framework.Sources.RestApi.Services.UriProviders;
 /// </summary>
 public class SimpleUriProvider : IRestApiUriProvider
 {
-    private readonly List<RestApiTemplatedField> templatedFields;
     private readonly DateTimeOffset backFillStartDate;
     private readonly RestApiTemplate bodyTemplate;
     private readonly HttpMethod requestMethod;
+    private readonly List<RestApiTemplatedField> templatedFields;
     private readonly RestApiTemplate urlTemplate;
 
     /// <summary>

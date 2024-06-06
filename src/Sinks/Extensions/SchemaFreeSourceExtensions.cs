@@ -1,3 +1,4 @@
+using Arcane.Framework.Sinks.Base;
 using Arcane.Framework.Sources.Base;
 
 namespace Arcane.Framework.Sinks.Extensions;
@@ -18,5 +19,8 @@ public static class SchemaFreeSinkExtensions
     /// <returns>Schema bound sink</returns>
     public static ISchemaBoundSink<TOut, TMat, TSchema>
         WithSchema<TOut, TMat, TSchema>(this ISchemaFreeSink<TOut, TMat> sink, TSchema schema)
-        where TSchema : ISchemaValidator<TOut> => new SchemaBoundSink<TOut, TMat, TSchema>(sink, schema);
+        where TSchema : ISchemaValidator<TOut>
+    {
+        return new SchemaBoundSink<TOut, TMat, TSchema>(sink, schema);
+    }
 }

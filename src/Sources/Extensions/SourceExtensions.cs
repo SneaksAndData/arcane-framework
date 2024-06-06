@@ -16,5 +16,7 @@ public static class SourceExtensions
     /// <typeparam name="TMat"></typeparam>
     /// <returns></returns>
     public static ISchemaFreeSource<TOut, TMat> ToArcaneSource<TOut, TMat>(this Source<TOut, TMat> source)
-        => new SchemaFreeSource<TOut, TMat>(source);
+    {
+        return new SchemaFreeSource<TOut, TMat>(source);
+    }
 }

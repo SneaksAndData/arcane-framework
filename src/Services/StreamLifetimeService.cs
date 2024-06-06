@@ -12,11 +12,11 @@ namespace Arcane.Framework.Services;
 /// Creates a service that terminates the stream in response to the SIGTERM signal.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Implementation is platform-specific")]
-public class StreamLifetimeService: IStreamLifetimeService
+public class StreamLifetimeService : IStreamLifetimeService
 {
-    private readonly IStreamRunnerService streamRunnerService;
     private readonly ILogger<StreamLifetimeService> logger;
     private readonly List<PosixSignalRegistration> registrations = new();
+    private readonly IStreamRunnerService streamRunnerService;
 
     /// <summary>
     /// Create a new instance of the <see cref="StreamLifetimeService"/> class and register the signal handler.
@@ -38,18 +38,19 @@ public class StreamLifetimeService: IStreamLifetimeService
         this.registrations.Add(PosixSignalRegistration.Create(posixSignal, this.StopStream));
     }
 
-    private void StopStream(PosixSignalContext context)
-    {
-        context.Cancel = true;
-        this.logger.LogInformation("Received a signal {signal}. Stopping the hosted stream and shutting down application", context.Signal);
-        this.streamRunnerService.StopStream();
-    }
-
     /// <inheritdoc />
     public void Dispose()
     {
         this.Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    private void StopStream(PosixSignalContext context)
+    {
+        context.Cancel = true;
+        this.logger.LogInformation(
+            "Received a signal {signal}. Stopping the hosted stream and shutting down application", context.Signal);
+        this.streamRunnerService.StopStream();
     }
 
     /// <summary>
@@ -69,4 +70,3 @@ public class StreamLifetimeService: IStreamLifetimeService
         }
     }
 }
-

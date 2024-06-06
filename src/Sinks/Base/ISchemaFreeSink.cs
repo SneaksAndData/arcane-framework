@@ -1,7 +1,6 @@
-using System;
 using Akka.Streams.Dsl;
 
-namespace Arcane.Framework.Sources.Base;
+namespace Arcane.Framework.Sinks.Base;
 
 /// <summary>
 /// Wraps a sink that does not require a schema
@@ -14,5 +13,4 @@ public interface ISchemaFreeSink<TIn, TMat>
     /// Returns a graph builder function that connects a source to the sink
     /// </summary>
     IRunnableGraph<TMat> GraphBuilder<TMat2>(Source<TIn, TMat2> source);
-
 }

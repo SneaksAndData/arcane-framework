@@ -26,7 +26,6 @@ public class JsonSinkTests : IClassFixture<AkkaFixture>
                 It.IsAny<string>(),
                 It.IsAny<bool>()))
             .ReturnsAsync(new UploadedBlob());
-
     }
 
     [Theory]

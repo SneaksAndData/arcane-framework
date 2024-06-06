@@ -8,7 +8,7 @@ namespace Arcane.Framework.Tests.Providers.TestCases;
 
 public class TestGraphBuilder : IStreamGraphBuilder<TestStreamContext>, IStreamGraphBuilder<IStreamContext>
 {
-    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(TestStreamContext context)
+    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(IStreamContext context)
     {
         return Source.Single(1)
             .ViaMaterialized(KillSwitches.Single<int>(), Keep.Right)
@@ -16,7 +16,7 @@ public class TestGraphBuilder : IStreamGraphBuilder<TestStreamContext>, IStreamG
             .MapMaterializedValue(tuple => (tuple.Item1, (Task)tuple.Item2));
     }
 
-    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(IStreamContext context)
+    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(TestStreamContext context)
     {
         return Source.Single(1)
             .ViaMaterialized(KillSwitches.Single<int>(), Keep.Right)
@@ -34,14 +34,13 @@ public class TestFailedGraphBuilder : IStreamGraphBuilder<TestStreamContext>, IS
         this.exception = exception;
     }
 
-    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(TestStreamContext context)
-    {
-        throw this.exception;
-    }
-
     public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(IStreamContext context)
     {
         throw this.exception;
     }
-}
 
+    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(TestStreamContext context)
+    {
+        throw this.exception;
+    }
+}

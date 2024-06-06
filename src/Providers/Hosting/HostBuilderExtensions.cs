@@ -72,7 +72,8 @@ public static class HostBuilderExtensions
         Func<IServiceCollection, IServiceCollection> getStreamGraphBuilder,
         Func<IServiceProvider, IStreamRunnerService> getStreamRunnerService = null,
         Func<IServiceProvider, IStreamLifetimeService> getStreamLifetimeService = null,
-        Func<HostBuilderContext, StreamingHostBuilderContext, Action<AkkaConfigurationBuilder>> configureActorSystem = null,
+        Func<HostBuilderContext, StreamingHostBuilderContext, Action<AkkaConfigurationBuilder>> configureActorSystem =
+            null,
         Func<StreamingHostBuilderContext> getStreamHostContextBuilder = null
     )
     {
@@ -101,10 +102,7 @@ public static class HostBuilderExtensions
         Func<StreamingHostBuilderContext> getStreamHostContextBuilder = null)
     {
         var context = getStreamHostContextBuilder?.Invoke() ?? StreamingHostBuilderContext.FromEnvironment(ENV_PREFIX);
-        return builder.ConfigureServices((_, services) =>
-        {
-            configureAdditionalServices.Invoke(services, context);
-        });
+        return builder.ConfigureServices((_, services) => { configureAdditionalServices.Invoke(services, context); });
     }
 
     /// <summary>
@@ -144,7 +142,8 @@ public static class HostBuilderExtensions
     /// <typeparam name="TStreamGraphBuilder">The stream graph builder type.</typeparam>
     /// <returns></returns>
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
-    public static IServiceCollection AddStreamGraphBuilder<TStreamGraphBuilder, TStreamContext>(this IServiceCollection services,
+    public static IServiceCollection AddStreamGraphBuilder<TStreamGraphBuilder, TStreamContext>(
+        this IServiceCollection services,
         Func<TStreamContext> getStreamHostContextBuilder = null,
         Func<IServiceProvider, IStreamStatusService> getStreamStatusService = null)
         where TStreamContext : class, IStreamContext, IStreamContextWriter, new()
@@ -172,8 +171,9 @@ public static class HostBuilderExtensions
     /// IStreamGraphBuilder interface.
     /// </typeparam>
     /// <returns>Application exit code</returns>
-    public static async Task<int> RunStream<TContext>(this IHost host, ILogger logger, Func<Exception, ILogger, Task<Option<int>>> handleUnknownException = null)
-    where TContext : IStreamContext
+    public static async Task<int> RunStream<TContext>(this IHost host, ILogger logger,
+        Func<Exception, ILogger, Task<Option<int>>> handleUnknownException = null)
+        where TContext : IStreamContext
     {
         var runner = host.Services.GetRequiredService<IStreamRunnerService>();
         var exceptionHandler = host.Services.GetService<IArcaneExceptionHandler>();
@@ -191,12 +191,12 @@ public static class HostBuilderExtensions
             {
                 return await TryHandleUnknownException(e, logger, handleUnknownException);
             }
+
             var handled = await exceptionHandler.HandleException(e);
             return handled switch
             {
-
                 { HasValue: true, Value: var exitCode } => exitCode,
-                { HasValue: false } => await TryHandleUnknownException(e, logger, handleUnknownException),
+                { HasValue: false } => await TryHandleUnknownException(e, logger, handleUnknownException)
             };
         }
 
@@ -222,16 +222,18 @@ public static class HostBuilderExtensions
         return await RunStream<IStreamContext>(host, logger, handleUnknownException);
     }
 
-    private static async Task<int> TryHandleUnknownException(Exception e, ILogger logger, Func<Exception, ILogger, Task<Option<int>>> handleUnknownException = null)
+    private static async Task<int> TryHandleUnknownException(Exception e, ILogger logger,
+        Func<Exception, ILogger, Task<Option<int>>> handleUnknownException = null)
     {
         if (handleUnknownException is null)
         {
             return FatalExit(e, logger);
         }
+
         return await handleUnknownException(e, logger) switch
         {
             { HasValue: true, Value: var exitCode } => exitCode,
-            _ => FatalExit(e, logger),
+            _ => FatalExit(e, logger)
         };
     }
 
@@ -242,7 +244,8 @@ public static class HostBuilderExtensions
     }
 
     [ExcludeFromCodeCoverage(Justification = "Trivial")]
-    private static IServiceCollection AddServiceWithOptionalFactory<TService, TImplementation>(this IServiceCollection services, Func<IServiceProvider, TService> factory = null)
+    private static IServiceCollection AddServiceWithOptionalFactory<TService, TImplementation>(
+        this IServiceCollection services, Func<IServiceProvider, TService> factory = null)
         where TService : class where TImplementation : class, TService
     {
         if (factory != null)
@@ -253,6 +256,7 @@ public static class HostBuilderExtensions
         {
             services.AddSingleton<TService, TImplementation>();
         }
+
         return services;
     }
 }

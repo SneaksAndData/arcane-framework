@@ -1,13 +1,14 @@
 ﻿using System;
 using Akka.Streams.Dsl;
+using Arcane.Framework.Sinks.Base;
 using Arcane.Framework.Sources.Base;
 
 namespace Arcane.Framework.Sinks;
 
 /// <inheritdoc />
-public class SchemaFreeSink<TIn, TMat>: ISchemaFreeSink<TIn, TMat>
+public class SchemaFreeSink<TIn, TMat> : ISchemaFreeSink<TIn, TMat>
 {
-    private readonly Sink<TIn,TMat> sink;
+    private readonly Sink<TIn, TMat> sink;
 
     /// <summary>
     /// Creates a new schema-free sink

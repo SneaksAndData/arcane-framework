@@ -46,7 +46,7 @@ public static class StreamContext
         where TStreamContext : class, IStreamContextWriter, IStreamContext
     {
         var streamSpec = Environment.GetEnvironmentVariable($"{ENV_PREFIX}SPEC") ??
-                        throw new ArgumentNullException($"{ENV_PREFIX}SPEC");
+                         throw new ArgumentNullException($"{ENV_PREFIX}SPEC");
         var context = JsonSerializer.Deserialize<TStreamContext>(streamSpec, DeFaultOptions);
         PopulateStreamContext(context);
         return context;
@@ -64,7 +64,7 @@ public static class StreamContext
     public static IStreamContext ProvideFromEnvironment(Type targetType)
     {
         var streamSpec = Environment.GetEnvironmentVariable($"{ENV_PREFIX}SPEC") ??
-                        throw new ArgumentNullException($"{ENV_PREFIX}SPEC");
+                         throw new ArgumentNullException($"{ENV_PREFIX}SPEC");
         var context = JsonSerializer.Deserialize(streamSpec, targetType, DeFaultOptions);
         if (context is IStreamContextWriter contextWriter)
         {
@@ -74,6 +74,7 @@ public static class StreamContext
                 return streamContext;
             }
         }
+
         throw new InvalidOperationException(
             $"Stream context type {targetType} should implement {nameof(IStreamContextWriter)}, {nameof(IStreamContext)}");
     }
@@ -86,4 +87,3 @@ public static class StreamContext
         contextWriter.SetStreamKind(streamBuilderContext.StreamKind);
     }
 }
-

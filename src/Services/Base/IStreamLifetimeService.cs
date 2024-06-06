@@ -6,7 +6,7 @@ namespace Arcane.Framework.Services.Base;
 /// <summary>
 /// Service to manage the lifetime of a stream runner
 /// </summary>
-public interface IStreamLifetimeService: IDisposable
+public interface IStreamLifetimeService : IDisposable
 {
     /// <summary>
     /// Add a signal to listen for to stop the stream

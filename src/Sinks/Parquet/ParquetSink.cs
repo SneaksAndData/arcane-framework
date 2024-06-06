@@ -7,7 +7,6 @@ using Akka.Actor;
 using Akka.Event;
 using Akka.Streams;
 using Akka.Streams.Stage;
-using Arcane.Framework.Sinks.Parquet;
 using Parquet;
 using Parquet.Data;
 using Snd.Sdk.Storage.Base;
@@ -15,7 +14,7 @@ using Snd.Sdk.Storage.Models;
 using Snd.Sdk.Tasks;
 using ParquetColumn = Parquet.Data.DataColumn;
 
-namespace Arcane.Framework.Sinks;
+namespace Arcane.Framework.Sinks.Parquet;
 
 /// <summary>
 /// Sink that allows writing data to Azure blob in Parquet format.

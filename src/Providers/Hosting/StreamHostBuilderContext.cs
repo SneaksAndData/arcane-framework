@@ -9,7 +9,6 @@ namespace Arcane.Framework.Providers.Hosting;
 [ExcludeFromCodeCoverage(Justification = "Model")]
 public class StreamingHostBuilderContext
 {
-
     /// <summary>
     /// Id of the stream
     /// </summary>
@@ -37,12 +36,12 @@ public class StreamingHostBuilderContext
     {
         var environmentPrefix = prefix ?? throw new ArgumentNullException(nameof(prefix));
         var isBackfilling = Environment.GetEnvironmentVariable($"{environmentPrefix}BACKFILL") ??
-                             throw new ArgumentNullException($"{environmentPrefix}BACKFILL");
+                            throw new ArgumentNullException($"{environmentPrefix}BACKFILL");
         return new StreamingHostBuilderContext
         {
             StreamId = Environment.GetEnvironmentVariable($"{environmentPrefix}STREAM_ID"),
             IsBackfilling = isBackfilling.Equals("true", StringComparison.InvariantCultureIgnoreCase),
-            StreamKind = Environment.GetEnvironmentVariable($"{environmentPrefix}STREAM_KIND"),
+            StreamKind = Environment.GetEnvironmentVariable($"{environmentPrefix}STREAM_KIND")
         };
     }
 }
