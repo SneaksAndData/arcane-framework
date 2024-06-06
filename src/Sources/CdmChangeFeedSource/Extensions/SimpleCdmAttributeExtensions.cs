@@ -9,7 +9,7 @@ namespace Arcane.Framework.Sources.CdmChangeFeedSource.Extensions;
 /// <summary>
 /// Extenstion method for SimpleCdmAttribute class
 /// </summary>
-public static class SimpleCdmAttributeExtensions
+internal static class SimpleCdmAttributeExtensions
 {
     /// <summary>
     /// Resolve complex type to list of attributes

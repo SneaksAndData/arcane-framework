@@ -6,7 +6,7 @@ namespace Arcane.Framework.Sources.RestApi.Services.AuthenticatedMessageProvider
 /// <summary>
 /// Authentication message provider interface for various REST API authentication methods.
 /// </summary>
-public interface IRestApiAuthenticatedMessageProvider
+internal interface IRestApiAuthenticatedMessageProvider
 {
     /// <summary>
     /// Generates authenticated message for the REST API request.

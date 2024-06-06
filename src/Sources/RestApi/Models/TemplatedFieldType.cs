@@ -1,5 +1,8 @@
 namespace Arcane.Framework.Sources.RestApi.Models;
 
+/// <summary>
+/// Type of the templated field in a REST API request or request body.
+/// </summary>
 public enum TemplatedFieldType
 {
     /// <summary>

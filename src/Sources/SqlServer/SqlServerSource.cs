@@ -31,17 +31,14 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     private readonly int commandTimeout;
     private readonly string connectionString;
     private readonly string schemaName;
-    private readonly string streamKind;
     private readonly string tableName;
 
-    private SqlServerSource(string connectionString, string schemaName, string tableName, string streamKind,
-        int commandTimeout)
+    private SqlServerSource(string connectionString, string schemaName, string tableName, int commandTimeout)
     {
         this.connectionString = connectionString;
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.commandTimeout = commandTimeout;
-        this.streamKind = streamKind;
 
         this.Shape = new SourceShape<List<DataCell>>(this.Out);
     }
@@ -85,20 +82,13 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     /// <param name="connectionString">Sql server connection string</param>
     /// <param name="schemaName">Sql server schema name</param>
     /// <param name="tableName">Table name</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="commandTimeout">Sql server command execution timeout</param>
     [ExcludeFromCodeCoverage(Justification = "Factory method")]
-    public static SqlServerSource Create(string connectionString, string schemaName, string tableName,
-        string streamKind, int commandTimeout = 3600)
-    {
-        return new SqlServerSource(connectionString, schemaName, tableName, streamKind, commandTimeout);
-    }
+    public static SqlServerSource Create(string connectionString, string schemaName, string tableName, int commandTimeout = 3600)
+        => new(connectionString, schemaName, tableName, commandTimeout);
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
-    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes)
-    {
-        return new SourceLogic(this);
-    }
+    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
 
     private string GetQuery()
     {

@@ -30,6 +30,12 @@
         </None>
     </ItemGroup>
 
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>Arcane.Framework.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
     <PropertyGroup>
         <PackageId>Arcane.Framework</PackageId>
         <Version>0.0.0</Version>

@@ -7,7 +7,7 @@ namespace Arcane.Framework.Sources.CdmChangeFeedSource.Extensions;
 /// <summary>
 /// Contains operations for parsing CSV files.
 /// </summary>
-public static class CsvOperations
+internal static class CsvOperations
 {
     /// <summary>
     /// Splits a CSV line into a string array, using provided header count and a delimiter.

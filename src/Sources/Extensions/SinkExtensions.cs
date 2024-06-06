@@ -1,5 +1,6 @@
 ﻿using Akka.Streams.Dsl;
 using Arcane.Framework.Sinks;
+using Arcane.Framework.Sinks.Base;
 using Arcane.Framework.Sources.Base;
 
 namespace Arcane.Framework.Sources.Extensions;
