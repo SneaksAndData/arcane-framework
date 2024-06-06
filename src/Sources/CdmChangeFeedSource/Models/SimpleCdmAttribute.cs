@@ -75,10 +75,7 @@ public class SimpleCdmAttribute
     /// </summary>
     /// <param name="cdmTypeName"></param>
     /// <returns></returns>
-    public static bool IsComplexType(string cdmTypeName)
-    {
-        return !cdmTypeMap.ContainsKey(cdmTypeName.ToLower());
-    }
+    public static bool IsComplexType(string cdmTypeName) => !cdmTypeMap.ContainsKey(cdmTypeName.ToLower());
 
     /// <summary>
     /// // Maps CDM type to .NET type
@@ -149,10 +146,8 @@ public class SimpleCdmAttribute
                    x.DisplayName == y.DisplayName;
         }
 
-        public int GetHashCode(SimpleCdmAttribute obj)
-        {
-            return HashCode.Combine(obj.Name, obj.DataFormat, obj.DataType, obj.Description, obj.Nullable,
+        public int GetHashCode(SimpleCdmAttribute obj) =>
+            HashCode.Combine(obj.Name, obj.DataFormat, obj.DataType, obj.Description, obj.Nullable,
                 obj.DisplayName);
-        }
     }
 }

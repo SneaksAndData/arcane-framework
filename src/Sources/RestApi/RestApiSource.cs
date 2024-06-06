@@ -130,20 +130,15 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     public override SourceShape<JsonElement> Shape { get; }
 
     /// <inheritdoc cref="IParquetSource.GetParquetSchema"/>
-    public Schema GetParquetSchema()
-    {
-        return this.apiSchema.ToParquetSchema();
-    }
+    public Schema GetParquetSchema() => this.apiSchema.ToParquetSchema();
 
     /// <inheritdoc cref="ITaggedSource.GetDefaultTags"/>
-    public SourceTags GetDefaultTags()
-    {
-        return new SourceTags
+    public SourceTags GetDefaultTags() =>
+        new()
         {
             SourceEntity = this.uriProvider.BaseUri.AbsolutePath,
             SourceLocation = this.uriProvider.BaseUri.Host
         };
-    }
 
     /// <summary>
     /// Creates new instance of <see cref="RestApiSource"/>
@@ -169,12 +164,10 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         bool stopAfterFullLoad,
         string streamKind,
         AsyncRateLimitPolicy rateLimitPolicy,
-        OpenApiSchema apiSchema)
-    {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+        OpenApiSchema apiSchema) =>
+        new(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
             lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema);
-    }
 
     /// <summary>
     /// Creates new instance of <see cref="RestApiSource"/>
@@ -198,12 +191,10 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         HttpClient httpClient,
         bool stopAfterFullLoad,
         AsyncRateLimitPolicy rateLimitPolicy,
-        OpenApiSchema apiSchema)
-    {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+        OpenApiSchema apiSchema) =>
+        new(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
             lookBackInterval, httpClient, stopAfterFullLoad, rateLimitPolicy, apiSchema);
-    }
 
     /// <summary>
     /// Creates new instance of <see cref="RestApiSource"/>
@@ -229,13 +220,11 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         bool stopAfterFullLoad,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
-        string[] responsePropertyKeyChain = null)
-    {
-        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
+        string[] responsePropertyKeyChain = null) =>
+        new(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
             lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
-    }
 
     /// <summary>
     /// Creates new instance of <see cref="RestApiSource"/>
@@ -261,13 +250,11 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         bool stopAfterFullLoad,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
-        string[] responsePropertyKeyChain = null)
-    {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+        string[] responsePropertyKeyChain = null) =>
+        new(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
             lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
-    }
 
     /// <summary>
     /// Creates new instance of <see cref="RestApiSource"/>
@@ -293,19 +280,14 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         bool stopAfterFullLoad,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
-        string[] responsePropertyKeyChain = null)
-    {
-        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
+        string[] responsePropertyKeyChain = null) =>
+        new(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
             changeCaptureInterval,
             lookBackInterval, httpClient, stopAfterFullLoad, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
-    }
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
-    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes)
-    {
-        return new SourceLogic(this);
-    }
+    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
 
     private sealed class SourceLogic : TimerGraphStageLogic, IStopAfterBackfill
     {

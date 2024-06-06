@@ -90,13 +90,11 @@ public class HostBuilderExtensionsTests
         yield return new object[] { new DivideByZeroException(), 35 };
     }
 
-    private static StreamingHostBuilderContext CreateContext()
-    {
-        return new StreamingHostBuilderContext
+    private static StreamingHostBuilderContext CreateContext() =>
+        new()
         {
             IsBackfilling = false,
             StreamId = "StreamId",
             StreamKind = "StreamKind"
         };
-    }
 }

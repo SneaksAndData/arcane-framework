@@ -51,10 +51,9 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
     /// <param name="jsonSinkPath">Sink path</param>
     /// <param name="jsonFileName">JSON file name ending</param>
     /// <returns></returns>
-    public static JsonSink Create(IBlobStorageWriter storageWriter, string jsonSinkPath, string jsonFileName = "chunk")
-    {
-        return new JsonSink(storageWriter, jsonSinkPath, jsonFileName);
-    }
+    public static JsonSink
+        Create(IBlobStorageWriter storageWriter, string jsonSinkPath, string jsonFileName = "chunk") =>
+        new(storageWriter, jsonSinkPath, jsonFileName);
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.CreateLogicAndMaterializedValue"/>
     public override ILogicAndMaterializedValue<Task> CreateLogicAndMaterializedValue(Attributes inheritedAttributes)
@@ -114,12 +113,10 @@ public class JsonSink : GraphStageWithMaterializedValue<SinkShape<(string, List<
             this.Pull(this.sink.In);
         }
 
-        private Task<UploadedBlob> SavePart()
-        {
-            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
+        private Task<UploadedBlob> SavePart() =>
+            this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
                 this.currentSavePath,
                 $"part-{Guid.NewGuid()}-{this.sink.jsonFileName}");
-        }
 
         private void WriteJson((string, List<(DateTimeOffset, JsonDocument)>) batch)
         {

@@ -80,11 +80,10 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     /// <returns></returns>
     public static ParquetSink Create(Schema parquetSchema, IBlobStorageWriter storageWriter, string parquetFilePath,
         int rowGroupsPerFile = 1, bool createSchemaFile = false, bool partitionByDate = false,
-        string dataSinkPathSegment = "data", string schemaSinkPathSegment = "schema", bool dropCompletionToken = false)
-    {
-        return new ParquetSink(parquetSchema, storageWriter, parquetFilePath, rowGroupsPerFile, createSchemaFile,
+        string dataSinkPathSegment = "data", string schemaSinkPathSegment = "schema",
+        bool dropCompletionToken = false) =>
+        new(parquetSchema, storageWriter, parquetFilePath, rowGroupsPerFile, createSchemaFile,
             partitionByDate, dataSinkPathSegment, schemaSinkPathSegment, dropCompletionToken);
-    }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.CreateLogicAndMaterializedValue"/>
     public override ILogicAndMaterializedValue<Task> CreateLogicAndMaterializedValue(Attributes inheritedAttributes)
@@ -163,10 +162,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
             return $"{basePath}/{this.sink.dataSinkPathSegment}";
         }
 
-        private string GetSchemaPath()
-        {
-            return $"{this.sink.path}/{this.sink.schemaSinkPathSegment}";
-        }
+        private string GetSchemaPath() => $"{this.sink.path}/{this.sink.schemaSinkPathSegment}";
 
         private Task<UploadedBlob> CreateSchemaFile()
         {
@@ -184,14 +180,12 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
                 .Flatten();
         }
 
-        private Task<UploadedBlob> SavePart()
-        {
-            return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
+        private Task<UploadedBlob> SavePart() =>
+            this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
                 this.GetSavePath(),
                 string.IsNullOrEmpty(this.schemaHash)
                     ? $"part-{Guid.NewGuid()}-chunk.parquet"
                     : $"part-{Guid.NewGuid()}-{this.schemaHash}-chunk.parquet");
-        }
 
         private Task<UploadedBlob> SaveCompletionToken()
         {

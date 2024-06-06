@@ -30,24 +30,20 @@ public abstract class PageResolverBase<TPagePointer> : IPageResolver
     public abstract bool Next(Option<HttpResponseMessage> apiResponse);
 
     /// <inheritdoc cref="IPageResolver.ResolvePage"/>
-    public RestApiTemplate ResolvePage(RestApiTemplate template, RestApiTemplatedField pageField)
-    {
-        return template.ResolveField(pageField.FieldName, this.pagePointer.ToString());
-    }
+    public RestApiTemplate ResolvePage(RestApiTemplate template, RestApiTemplatedField pageField) =>
+        template.ResolveField(pageField.FieldName, this.pagePointer.ToString());
 
     /// <summary>
     /// Deserialize the response content into a JsonElement.
     /// </summary>
     /// <param name="apiResponse">Api response message (if any)</param>
     /// <returns>Deserialized API response</returns>
-    protected JsonElement GetResponse(Option<HttpResponseMessage> apiResponse)
-    {
-        return JsonSerializer.Deserialize<JsonElement>(apiResponse.Value.Content
+    protected JsonElement GetResponse(Option<HttpResponseMessage> apiResponse) =>
+        JsonSerializer.Deserialize<JsonElement>(apiResponse.Value.Content
             .ReadAsStringAsync()
             .ConfigureAwait(false)
             .GetAwaiter()
             .GetResult());
-    }
 
     /// <summary>
     /// Read response content properties and parse it into a JsonElements.
@@ -56,8 +52,6 @@ public abstract class PageResolverBase<TPagePointer> : IPageResolver
     /// <param name="responseBodyPropertyKeyChain">List of keys to extract from API response</param>
     /// <returns>Deserialized API response</returns>
     protected IEnumerable<JsonElement> GetResponseContent(Option<HttpResponseMessage> apiResponse,
-        string[] responseBodyPropertyKeyChain)
-    {
-        return this.GetResponse(apiResponse).ParseResponse(responseBodyPropertyKeyChain);
-    }
+        string[] responseBodyPropertyKeyChain) =>
+        this.GetResponse(apiResponse).ParseResponse(responseBodyPropertyKeyChain);
 }

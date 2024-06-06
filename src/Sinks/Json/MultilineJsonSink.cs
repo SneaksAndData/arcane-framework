@@ -77,16 +77,14 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         Schema sinkSchema,
         string dataPathSegment = "data",
         string schemaPathSegment = "schema",
-        bool dropCompletionToken = false)
-    {
-        return new MultilineJsonSink(
+        bool dropCompletionToken = false) =>
+        new(
             storageWriter,
             jsonSinkPath,
             sinkSchema: sinkSchema,
             dataPathSegment: dataPathSegment,
             schemaPathSegment: schemaPathSegment,
             dropCompletionToken: dropCompletionToken);
-    }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.CreateLogicAndMaterializedValue"/>
     public override ILogicAndMaterializedValue<Task> CreateLogicAndMaterializedValue(Attributes inheritedAttributes)

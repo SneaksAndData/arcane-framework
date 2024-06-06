@@ -217,10 +217,8 @@ public static class HostBuilderExtensions
     /// </param>
     /// <returns>Application exit code</returns>
     public static async Task<int> RunStream(this IHost host, ILogger logger,
-        Func<Exception, ILogger, Task<Option<int>>> handleUnknownException = null)
-    {
-        return await RunStream<IStreamContext>(host, logger, handleUnknownException);
-    }
+        Func<Exception, ILogger, Task<Option<int>>> handleUnknownException = null) =>
+        await RunStream<IStreamContext>(host, logger, handleUnknownException);
 
     private static async Task<int> TryHandleUnknownException(Exception e, ILogger logger,
         Func<Exception, ILogger, Task<Option<int>>> handleUnknownException = null)

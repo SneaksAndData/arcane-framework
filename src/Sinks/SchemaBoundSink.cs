@@ -26,10 +26,8 @@ public class SchemaBoundSink<TIn, TMat, TSchema> : ISchemaBoundSink<TIn, TMat, T
 
 
     /// <inheritdoc />
-    public IRunnableGraph<TMat> GraphBuilder<TMat2>(ISchemaBoundSource<TIn, TMat2, TSchema> source)
-    {
-        return source.Via(this.Schema.Validate<TMat2>()).To(this.sink);
-    }
+    public IRunnableGraph<TMat> GraphBuilder<TMat2>(ISchemaBoundSource<TIn, TMat2, TSchema> source) =>
+        source.Via(this.Schema.Validate<TMat2>()).To(this.sink);
 
     /// <inheritdoc />
     public TSchema Schema { get; }

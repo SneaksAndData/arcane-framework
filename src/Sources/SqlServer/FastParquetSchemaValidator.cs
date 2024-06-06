@@ -24,10 +24,8 @@ public class FastParquetSchemaValidator : ISchemaValidator<List<ParquetColumn>>
     }
 
     /// <inheritdoc />
-    public Flow<List<ParquetColumn>, List<ParquetColumn>, TMat> Validate<TMat>()
-    {
-        return Flow.Create<List<ParquetColumn>, TMat>().Select(this.ValidateCellGroup);
-    }
+    public Flow<List<ParquetColumn>, List<ParquetColumn>, TMat> Validate<TMat>() =>
+        Flow.Create<List<ParquetColumn>, TMat>().Select(this.ValidateCellGroup);
 
     private List<ParquetColumn> ValidateCellGroup(List<ParquetColumn> cellGroups)
     {

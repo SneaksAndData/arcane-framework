@@ -140,10 +140,7 @@ public class PagedUriProvider : IPaginatedApiUriProvider
     }
 
     /// <inheritdoc cref="IPaginatedApiUriProvider.HasReadAllPages"/>
-    public bool HasReadAllPages()
-    {
-        return this.queryRange == null;
-    }
+    public bool HasReadAllPages() => this.queryRange == null;
 
     /// <inheritdoc cref="IRestApiUriProvider.BaseUri"/>
     public Uri BaseUri { get; }

@@ -139,10 +139,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
     }
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
-    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes)
-    {
-        return new SourceLogic(this);
-    }
+    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
 
     private string GetChangesQuery(string mergeExpression, string columnStatement, string matchStatement,
         long changeTrackingId)
@@ -284,7 +281,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         }
 
         public static string GetMergeExpression(
-            IReadOnlyCollection<(string columnName, bool isPrimaryKey)> tableColumns, string tableAlias)
+            IEnumerable<(string columnName, bool isPrimaryKey)> tableColumns, string tableAlias)
         {
             return string.Join(" + '#' + ", tableColumns
                 .Where(tc => tc.isPrimaryKey)

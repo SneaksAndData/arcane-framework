@@ -25,9 +25,8 @@ public sealed class SourceTags
     /// Converts to dictionary.
     /// </summary>
     /// <returns></returns>
-    public SortedDictionary<string, string> GetAsDictionary(IStreamContext streamContext, string streamId)
-    {
-        return new SortedDictionary<string, string>
+    public SortedDictionary<string, string> GetAsDictionary(IStreamContext streamContext, string streamId) =>
+        new()
         {
             { "arcane.sneaksanddata.com/kind", CodeExtensions.CamelCaseToSnakeCase(streamContext.StreamKind) },
             { "arcane.sneaksanddata.com/mode", streamContext.IsBackfilling ? "backfill" : "stream" },
@@ -35,5 +34,4 @@ public sealed class SourceTags
             { "arcane.sneaksanddata.com/stream_source_entity", this.SourceEntity },
             { "arcane.sneaksanddata.com/stream_id", streamId }
         };
-    }
 }

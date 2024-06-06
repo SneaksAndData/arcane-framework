@@ -46,10 +46,7 @@ public sealed class RestApiTemplate
     /// <summary>
     /// Create an empty REST API template.
     /// </summary>
-    public static RestApiTemplate Empty()
-    {
-        return new RestApiTemplate(null, new List<string>());
-    }
+    public static RestApiTemplate Empty() => new(null, new List<string>());
 
     /// <summary>
     /// Courtesy of https://stackoverflow.com/questions/36759694/is-there-a-string-format-that-can-accept-named-input-parameters-instead-of-ind

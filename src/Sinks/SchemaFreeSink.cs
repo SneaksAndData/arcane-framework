@@ -20,8 +20,6 @@ public class SchemaFreeSink<TIn, TMat> : ISchemaFreeSink<TIn, TMat>
     }
 
     /// <inheritdoc />
-    public IRunnableGraph<TMat> GraphBuilder<TMat2>(Source<TIn, TMat2> source)
-    {
-        return source.ToMaterialized(this.sink, Keep.Right);
-    }
+    public IRunnableGraph<TMat> GraphBuilder<TMat2>(Source<TIn, TMat2> source) =>
+        source.ToMaterialized(this.sink, Keep.Right);
 }

@@ -72,20 +72,15 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     public override SourceShape<List<DataCell>> Shape { get; }
 
     /// <inheritdoc cref="IParquetSource.GetParquetSchema"/>
-    public Schema GetParquetSchema()
-    {
-        return this.GetCdmSchema().GetReader(Constants.UPSERT_MERGE_KEY).ToParquetSchema();
-    }
+    public Schema GetParquetSchema() => this.GetCdmSchema().GetReader(Constants.UPSERT_MERGE_KEY).ToParquetSchema();
 
     /// <inheritdoc cref="ITaggedSource.GetDefaultTags"/>
-    public SourceTags GetDefaultTags()
-    {
-        return new SourceTags
+    public SourceTags GetDefaultTags() =>
+        new()
         {
             SourceEntity = this.entityName,
             SourceLocation = this.rootPath
         };
-    }
 
     /// <summary>
     /// Creates a <see cref="Source{TOut,TMat}"/> for Microsoft Common Data Model (CDM) change feed.
@@ -123,10 +118,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     }
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
-    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes)
-    {
-        return new SourceLogic(this);
-    }
+    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
 
     private SimpleCdmEntity GetCdmSchema()
     {

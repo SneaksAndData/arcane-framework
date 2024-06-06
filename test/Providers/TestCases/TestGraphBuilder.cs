@@ -34,13 +34,7 @@ public class TestFailedGraphBuilder : IStreamGraphBuilder<TestStreamContext>, IS
         this.exception = exception;
     }
 
-    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(IStreamContext context)
-    {
-        throw this.exception;
-    }
+    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(IStreamContext context) => throw this.exception;
 
-    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(TestStreamContext context)
-    {
-        throw this.exception;
-    }
+    public IRunnableGraph<(UniqueKillSwitch, Task)> BuildGraph(TestStreamContext context) => throw this.exception;
 }

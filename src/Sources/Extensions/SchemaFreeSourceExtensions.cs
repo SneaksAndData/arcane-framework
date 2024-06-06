@@ -18,9 +18,7 @@ public static class SchemaFreeSourceExtensions
     /// <returns>Schema bound source</returns>
     public static ISchemaBoundSource<TOut, TMat, TSchema> WithSchema<TOut, TMat, TSchema>(
         this ISchemaFreeSource<TOut, TMat> source,
-        TSchema schema) where TSchema : ISchemaValidator<TOut>
-    {
-        return new SchemaBoundSource<TOut, TMat, TSchema>(source,
+        TSchema schema) where TSchema : ISchemaValidator<TOut> =>
+        new SchemaBoundSource<TOut, TMat, TSchema>(source,
             schema);
-    }
 }

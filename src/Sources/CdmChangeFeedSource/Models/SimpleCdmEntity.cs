@@ -108,9 +108,7 @@ public class SimpleCdmEntity
                    && x.Attributes.SequenceEqual(y.Attributes, SimpleCdmAttribute.SimpleCdmAttributeComparer);
         }
 
-        public int GetHashCode(SimpleCdmEntity obj)
-        {
-            return HashCode.Combine(obj.EntityName, obj.VersionNumber, obj.Attributes);
-        }
+        public int GetHashCode(SimpleCdmEntity obj) =>
+            HashCode.Combine(obj.EntityName, obj.VersionNumber, obj.Attributes);
     }
 }
