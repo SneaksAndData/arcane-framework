@@ -8,7 +8,7 @@ namespace Arcane.Framework.Sources.RestApi.Services.PageResolvers;
 /// <summary>
 /// Page offset resolver for numeric page pointers.
 /// </summary>
-public sealed class PageCountingResolver : PageResolverBase<int?>
+internal sealed class PageCountingResolver : PageResolverBase<int?>
 {
     private readonly string[] totalPagesPropertyKeyChain;
     private int? totalPages;

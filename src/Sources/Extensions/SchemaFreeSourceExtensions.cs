@@ -1,4 +1,6 @@
-namespace Arcane.Framework.Sources.Base;
+using Arcane.Framework.Sources.Base;
+
+namespace Arcane.Framework.Sources.Extensions;
 
 /// <summary>
 /// Extension methods for a ISchemaFreeSource interface
@@ -14,9 +16,6 @@ public static class SchemaFreeSourceExtensions
     /// <typeparam name="TMat">Type of materialized value</typeparam>
     /// <typeparam name="TSchema">Type of the schema validator</typeparam>
     /// <returns>Schema bound source</returns>
-    public static ISchemaBoundSource<TOut, TMat, TSchema> WithSchema<TOut, TMat, TSchema>(
-        this ISchemaFreeSource<TOut, TMat> source,
-        TSchema schema) where TSchema : ISchemaValidator<TOut> =>
-        new SchemaBoundSource<TOut, TMat, TSchema>(source,
-            schema);
+    public static ISchemaBoundSource<TOut, TMat, TSchema> WithSchema<TOut, TMat, TSchema>(this ISchemaFreeSource<TOut, TMat> source, TSchema schema) where TSchema : ISchemaValidator<TOut> =>
+        new SchemaBoundSource<TOut, TMat, TSchema>(source, schema);
 }

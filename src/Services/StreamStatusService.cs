@@ -1,10 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using Arcane.Framework.Contracts;
 using Arcane.Framework.Services.Base;
 using Snd.Sdk.Kubernetes.Base;
 
 namespace Arcane.Framework.Services;
 
+[ExcludeFromCodeCoverage(Justification = "Implementation is specific to Kubernetes API, should be tested in integration tests.")]
 internal class StreamStatusService: IStreamStatusService
 {
     private readonly IKubeCluster kubernetesService;

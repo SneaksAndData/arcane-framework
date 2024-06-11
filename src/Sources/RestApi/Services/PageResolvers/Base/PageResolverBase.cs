@@ -11,7 +11,7 @@ namespace Arcane.Framework.Sources.RestApi.Services.PageResolvers.Base;
 /// Base class for page resolvers.
 /// </summary>
 /// <typeparam name="TPagePointer">Type of a page pointer</typeparam>
-public abstract class PageResolverBase<TPagePointer> : IPageResolver
+internal abstract class PageResolverBase<TPagePointer> : IPageResolver
 {
     protected TPagePointer pagePointer;
 

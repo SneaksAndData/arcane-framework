@@ -8,7 +8,7 @@ namespace Arcane.Framework.Sources.RestApi.Services.PageResolvers;
 /// <summary>
 /// Page offset resolver for pages with next link
 /// </summary>
-public class PageNextTokenResolver : PageResolverBase<string>
+internal class PageNextTokenResolver : PageResolverBase<string>
 {
     private readonly string[] nextPageTokenPropertyKeyChain;
 

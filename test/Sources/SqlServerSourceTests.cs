@@ -26,7 +26,7 @@ public class SqlServerSourceTests : IClassFixture<ServiceFixture>, IClassFixture
     public async Task Test()
     {
         var result = await Source
-            .FromGraph(SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests), "test"))
+            .FromGraph(SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests)))
             .TakeWithin(TimeSpan.FromSeconds(3))
             .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
 
@@ -36,7 +36,7 @@ public class SqlServerSourceTests : IClassFixture<ServiceFixture>, IClassFixture
     [Fact]
     public void GetParquetSchema()
     {
-        var schema = SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests), "test")
+        var schema = SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests))
             .GetParquetSchema();
 
         Assert.Equal(2, schema.Fields.Count); // two base columns

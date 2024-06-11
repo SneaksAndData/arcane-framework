@@ -1,7 +1,9 @@
 using System;
 using Akka.Streams;
 using Akka.Streams.Dsl;
+using Arcane.Framework.Sinks.Base;
 using Arcane.Framework.Sources.Base;
+using Arcane.Framework.Sources.Extensions;
 
 namespace Arcane.Framework.Sources;
 
@@ -25,7 +27,8 @@ public class SchemaBoundSource<TOut, TMat, TSchema>: ISchemaBoundSource<TOut, TM
     public TSchema Schema { get; }
 
     /// <inheritdoc />
-    public IArcaneSource<TOut, TMat2> MapMaterializedValue<TMat2>(Func<TMat, TMat2> mapper) => this.source.MapMaterializedValue(mapper);
+    public IArcaneSource<TOut, TMat2> MapMaterializedValue<TMat2>(Func<TMat, TMat2> mapper) =>
+        this.source.MapMaterializedValue(mapper);
 
 
     /// <inheritdoc />
@@ -33,19 +36,19 @@ public class SchemaBoundSource<TOut, TMat, TSchema>: ISchemaBoundSource<TOut, TM
 
 
     /// <inheritdoc />
-    public ISchemaFreeSource<TOut2, TMat> MapSource<TOut2>(Func<Source<TOut, TMat>, Source<TOut2, TMat>> mapper) => this.source.MapSource(mapper);
+    public ISchemaFreeSource<TOut2, TMat> MapSource<TOut2>(Func<Source<TOut, TMat>, Source<TOut2, TMat>> mapper)
+        => this.source.MapSource(mapper);
 
     /// <inheritdoc />
     public IRunnableGraph<TMat2> To<TMat2>(ISchemaFreeSink<TOut, TMat2> sink) => this.source.To(sink);
 
     /// <inheritdoc />
-    public ISchemaFreeSource<TOut2, TMat> Via<TOut2>(IGraph<FlowShape<TOut, TOut2>, TMat> flow)
-    {
-        return this.source.Via(flow);
-    }
+    public ISchemaFreeSource<TOut2, TMat> Via<TOut2>(IGraph<FlowShape<TOut, TOut2>, TMat> flow) =>
+        this.source.Via(flow);
 
     /// <inheritdoc />
-    public ISchemaBoundSource<TOut2, TMat, TNewSchema> Map<TOut2, TNewSchema>(Func<TOut, TOut2> mapper, TNewSchema newSchema) where TNewSchema : ISchemaValidator<TOut2> =>
+    public ISchemaBoundSource<TOut2, TMat, TNewSchema> Map<TOut2, TNewSchema>(Func<TOut, TOut2> mapper, TNewSchema newSchema)
+        where TNewSchema : ISchemaValidator<TOut2> =>
         this.source.Map(mapper).WithSchema(newSchema);
 
     /// <inheritdoc />

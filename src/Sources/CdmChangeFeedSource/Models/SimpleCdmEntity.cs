@@ -10,7 +10,7 @@ namespace Arcane.Framework.Sources.CdmChangeFeedSource.Models;
 /// <summary>
 /// Represents CDM Change Feed entity
 /// </summary>
-public class SimpleCdmEntity
+internal class SimpleCdmEntity
 {
     /// <summary>
     /// Entity name

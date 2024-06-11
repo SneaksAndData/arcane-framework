@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -30,17 +31,14 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     private readonly int commandTimeout;
     private readonly string connectionString;
     private readonly string schemaName;
-    private readonly string streamKind;
     private readonly string tableName;
 
-    private SqlServerSource(string connectionString, string schemaName, string tableName, string streamKind,
-        int commandTimeout)
+    private SqlServerSource(string connectionString, string schemaName, string tableName, int commandTimeout)
     {
         this.connectionString = connectionString;
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.commandTimeout = commandTimeout;
-        this.streamKind = streamKind;
 
         this.Shape = new SourceShape<List<DataCell>>(this.Out);
     }
@@ -84,19 +82,13 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     /// <param name="connectionString">Sql server connection string</param>
     /// <param name="schemaName">Sql server schema name</param>
     /// <param name="tableName">Table name</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="commandTimeout">Sql server command execution timeout</param>
-    public static SqlServerSource Create(string connectionString, string schemaName, string tableName,
-        string streamKind, int commandTimeout = 3600)
-    {
-        return new SqlServerSource(connectionString, schemaName, tableName, streamKind, commandTimeout);
-    }
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
+    public static SqlServerSource Create(string connectionString, string schemaName, string tableName, int commandTimeout = 3600)
+        => new(connectionString, schemaName, tableName, commandTimeout);
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
-    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes)
-    {
-        return new SourceLogic(this);
-    }
+    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
 
     private string GetQuery()
     {
@@ -119,13 +111,6 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
             this.sqlConnection = new SqlConnection(this.source.connectionString);
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
-                nameof(ArgumentException) => Directive.Stop,
-                nameof(ArgumentNullException) => Directive.Stop,
-                nameof(InvalidOperationException) => Directive.Stop,
-                nameof(SqlException) => Directive.Stop,
-                nameof(ConfigurationErrorsException) => Directive.Stop,
-                nameof(ObjectDisposedException) => Directive.Stop,
-                nameof(IOException) => Directive.Stop,
                 nameof(TimeoutException) => Directive.Restart,
                 _ => Directive.Stop
             });

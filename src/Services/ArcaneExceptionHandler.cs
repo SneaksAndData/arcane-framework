@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Akka.Util;
 using Akka.Util.Extensions;
@@ -10,6 +11,7 @@ using Snd.Sdk.Tasks;
 
 namespace Arcane.Framework.Services;
 
+[ExcludeFromCodeCoverage(Justification = "Trivial")]
 internal class ArcaneExceptionHandler: IArcaneExceptionHandler
 {
     private readonly ILogger<ArcaneExceptionHandler> logger;

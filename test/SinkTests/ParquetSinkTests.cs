@@ -3,23 +3,24 @@ using System.Linq;
 using System.Threading.Tasks;
 using Akka.Streams.Dsl;
 using Arcane.Framework.Sinks;
+using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Tests.Fixtures;
 using Moq;
 using Parquet.Data;
+using Snd.Sdk.Storage.Base;
 using Snd.Sdk.Storage.Models;
 using Xunit;
 
 namespace Arcane.Framework.Tests.SinkTests;
 
-public class ParquetSinkTests : IClassFixture<AkkaFixture>, IClassFixture<ServiceFixture>
+public class ParquetSinkTests : IClassFixture<AkkaFixture>
 {
     private readonly AkkaFixture akkaFixture;
-    private readonly ServiceFixture serviceFixture;
+    private readonly Mock<IBlobStorageService> mockBlobStorageService = new();
 
-    public ParquetSinkTests(AkkaFixture akkaFixture, ServiceFixture serviceFixture)
+    public ParquetSinkTests(AkkaFixture akkaFixture)
     {
         this.akkaFixture = akkaFixture;
-        this.serviceFixture = serviceFixture;
     }
 
     [Theory]
@@ -40,28 +41,28 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>, IClassFixture<Servic
         var pathString = Guid.NewGuid().ToString();
 
         var schema = new Schema(columns.Select(c => c.Field).ToList());
-        this.serviceFixture.MockBlobStorageService.Setup(mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(),
+        this.mockBlobStorageService.Setup(mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(),
                 It.Is<string>(p => p.Contains(pathString)), It.IsAny<string>(), It.IsAny<bool>()))
             .ReturnsAsync(new UploadedBlob());
 
         await Source.From(Enumerable.Range(0, blocks).Select(_ => columns.ToList())).RunWith(
-            ParquetSink.Create(schema, this.serviceFixture.MockBlobStorageService.Object, $"tmp@{pathString}",
+            ParquetSink.Create(schema, this.mockBlobStorageService.Object, $"tmp@{pathString}",
                 rowGroupsPerBlock, createSchemaFile, dropCompletionToken: dropCompletionToken),
             this.akkaFixture.Materializer);
 
-        this.serviceFixture.MockBlobStorageService.Verify(
+        this.mockBlobStorageService.Verify(
             mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
                 It.Is<string>(fn => fn.StartsWith("part-")), It.IsAny<bool>()),
             createSchemaFile
                 ? Times.Exactly(blocks / rowGroupsPerBlock + 2)
                 : Times.Exactly(blocks / rowGroupsPerBlock + 1));
-        this.serviceFixture.MockBlobStorageService.Verify(
+        this.mockBlobStorageService.Verify(
             mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
                 It.Is<string>(fn => fn.StartsWith("schema-")), It.IsAny<bool>()),
             createSchemaFile ? Times.Exactly(1) : Times.Exactly(0));
         if (dropCompletionToken)
         {
-            this.serviceFixture.MockBlobStorageService.Verify(
+            this.mockBlobStorageService.Verify(
                 mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
                     It.Is<string>(fn => fn.EndsWith(".COMPLETED")), It.IsAny<bool>()), Times.Exactly(1));
         }

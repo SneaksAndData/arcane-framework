@@ -1,3 +1,4 @@
+using Arcane.Framework.Sinks.Base;
 using Arcane.Framework.Sources.Base;
 
 namespace Arcane.Framework.Sinks.Extensions;
