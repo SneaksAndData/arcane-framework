@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Arcane.Framework.Sources.CdmChangeFeedSource.Extensions;
+namespace Arcane.Framework.Sources.Extensions;
 
 /// <summary>
 /// Contains operations for parsing CSV files.
@@ -16,7 +16,7 @@ public static class CsvOperations
     /// <param name="headerCount">Number of expected headers.</param>
     /// <param name="delimiter">Delimiter used in the line.</param>
     /// <returns>A string array of individual values.</returns>
-    public static string[] ParseCsvLine(string line, int headerCount, char delimiter = ',')
+    public static string[] ParseCsvLine(this string line, int headerCount, char delimiter = ',')
     {
         var result = new string[headerCount];
         var fieldCounter = 0;
@@ -91,7 +91,7 @@ public static class CsvOperations
     /// </summary>
     /// <param name="csvLine">A CSV line to purge newlines from.</param>
     /// <returns>A CSV line without newline characters inside column values.</returns>
-    public static string ReplaceQuotedNewlines(string csvLine)
+    public static string ReplaceQuotedNewlines(this string csvLine)
     {
         return Regex.Replace(csvLine, "\"[^\"]*(?:\"\"[^\"]*)*\"", m => m.Value.Replace("\n", "")).Replace("\r", "");
     }
