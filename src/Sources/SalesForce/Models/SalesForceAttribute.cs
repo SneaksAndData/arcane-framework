@@ -13,7 +13,6 @@ public class SalesForceAttribute
     {
         { "string", typeof(string) },
         { "id", typeof(string) },
-        { "address", typeof(string) },
         { "datetime", typeof(DateTime) },
         { "date", typeof(DateTime) },
         { "decimal", typeof(decimal) },
