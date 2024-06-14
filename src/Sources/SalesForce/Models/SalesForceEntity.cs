@@ -59,8 +59,6 @@ public class SalesForceEntity
             dt.Columns.Add(new DataColumn(attr.Name, SalesForceAttribute.MapSalesforceType(attr.DataType)));
         }
 
-        // dt.Columns.Add(new DataColumn(mergeColumnName, typeof(string)));
-
         return dt.CreateDataReader();
     }
 

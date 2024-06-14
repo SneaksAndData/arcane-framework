@@ -27,7 +27,10 @@ public record SalesForceJobProvider
     private string currentToken;
     private DateTimeOffset? validTo;
     private readonly Uri tokenSource;
-    private readonly string accountName;
+    /// <summary>
+    /// Salesforce Account
+    /// </summary>
+    public readonly string accountName;
     private readonly string clientId;
     private readonly string clientSecret;
     private readonly string username;
