@@ -42,7 +42,7 @@ public class SalesForceAttribute
         new SalesForceAttributeEqualityComparer();
 
     /// <summary>
-    /// // Maps Salesforce type to .NET type
+    /// Maps Salesforce type to .NET type
     /// </summary>
     /// <param name="salesforceTypeName">Salesforce type name</param>
     /// <returns>.NET type instance</returns>
