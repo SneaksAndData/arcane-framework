@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Arcane.Framework.Sources.SalesForce.Models;
 
 /// <summary>
-/// Represents CDM Change Feed attribute
+/// Represents Salesforce attribute
 /// </summary>
 public class SalesForceAttribute
 {
@@ -32,7 +30,7 @@ public class SalesForceAttribute
     public string Name { get; set; }
 
     /// <summary>
-    /// Attribute data format
+    /// Attribute data type
     /// </summary>
     [JsonPropertyName("ValueTypeId")]
     public string DataType { get; set; }
@@ -45,21 +43,11 @@ public class SalesForceAttribute
         new SalesForceAttributeEqualityComparer();
 
     /// <summary>
-    /// Returns true if the type is composition of other types
+    /// // Maps Salesforce type to .NET type
     /// </summary>
-    /// <param name="cdmTypeName"></param>
-    /// <returns></returns>
-    // public static bool IsComplexType(string cdmTypeName)
-    // {
-    //     return !cdmTypeMap.ContainsKey(cdmTypeName.ToLower());
-    // }
-
-    // /// <summary>
-    // /// // Maps CDM type to .NET type
-    // /// </summary>
-    // /// <param name="cdmTypeName">CDM type name</param>
-    // /// <returns>.NET type instance</returns>
-    // /// <exception cref="InvalidOperationException">Thrown if type is not supported</exception>
+    /// <param name="salesforceTypeName">Salesforce type name</param>
+    /// <returns>.NET type instance</returns>
+    /// <exception cref="InvalidOperationException">Thrown if type is not supported</exception>
     public static Type MapSalesforceType(string salesforceTypeName)
     {
         if (salesforceTypeMap.ContainsKey(salesforceTypeName.ToLower()))
@@ -69,27 +57,6 @@ public class SalesForceAttribute
 
         throw new InvalidOperationException($"Unsupported type: {salesforceTypeName}");
     }
-
-    // /// <summary>
-    // /// Resolves complex type
-    // /// </summary>
-    // /// <param name="startFrom">Start element for type resolution</param>
-    // /// <param name="types">Element types list</param>
-    // /// <returns></returns>
-    // public static string ResolveComplexType(JsonElement startFrom, IEnumerable<JsonElement> types)
-    // {
-    //     var objectKind = startFrom.GetProperty("extendsDataType").ValueKind;
-    //     var typeName = objectKind == JsonValueKind.Object
-    //         ? startFrom.GetProperty("extendsDataType").GetProperty("dataTypeReference").GetString()
-    //         : startFrom.GetProperty("extendsDataType").GetString();
-    //     if (!IsComplexType(typeName))
-    //     {
-    //         return typeName;
-    //     }
-
-    //     return ResolveComplexType(
-    //         types.Where(tp => tp.GetProperty("dataTypeName").GetString() == typeName).FirstOrDefault(), types);
-    // }
 
     private sealed class SalesForceAttributeEqualityComparer : IEqualityComparer<SalesForceAttribute>
     {

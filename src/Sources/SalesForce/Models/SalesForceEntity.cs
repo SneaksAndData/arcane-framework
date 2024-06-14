@@ -29,8 +29,9 @@ public class SalesForceEntity
         new SalesForceEntityEqualityComparer();
 
     /// <summary>
-    /// Parse CDM entity from a JSON document
+    /// Parse Salesforce entity from a JSON document
     /// </summary>
+    /// <param name="entityName">Name of the Salesforce entity </param>
     /// <param name="document">Json document to parse</param>
     /// <returns>Parsed SimpleCdmEntity object</returns>
     public static SalesForceEntity FromJson(string entityName, JsonDocument document)
@@ -48,7 +49,6 @@ public class SalesForceEntity
     /// <summary>
     /// Create DataReader for the entity
     /// </summary>
-    /// <param name="mergeColumnName">Column to merge by</param>
     /// <returns>DataReader instance</returns>
     public IDataReader GetReader()
     {

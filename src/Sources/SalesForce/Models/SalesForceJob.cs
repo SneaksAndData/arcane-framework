@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Arcane.Framework.Sources.SalesForce.Models;
 
-
+/// <summary>
+/// Job status types
+/// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SalesforceJobStatus
 {
@@ -20,7 +17,7 @@ public enum SalesforceJobStatus
 }
 
 /// <summary>
-/// Represents CDM Change Feed entity
+/// Represents Salesforce job
 /// </summary>
 public class SalesForceJob
 {
@@ -32,18 +29,26 @@ public class SalesForceJob
 
 
     /// <summary>
-    /// Attributes collection
+    /// Job status
     /// </summary>
     [JsonPropertyName("state")]
     public SalesforceJobStatus Status { get; set; }
 
+    /// <summary>
+    /// object
+    /// </summary>
     [JsonPropertyName("object")]
     public string Object { get; set; }
 
-
+    /// <summary>
+    /// Total processing time of the job
+    /// </summary>
     [JsonPropertyName("totalProcessingTime")]
     public long? TotalProcessingTime { get; set; }
 
+    /// <summary>
+    /// Numbers of records processed by the job
+    /// </summary>
     [JsonPropertyName("numberRecordsProcessed")]
     public long? NumberRecordsProcessed { get; set; }
 
