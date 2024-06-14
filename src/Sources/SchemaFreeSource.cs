@@ -1,6 +1,7 @@
 ﻿using System;
 using Akka.Streams;
 using Akka.Streams.Dsl;
+using Arcane.Framework.Sinks.Base;
 using Arcane.Framework.Sources.Base;
 
 namespace Arcane.Framework.Sources;
@@ -36,8 +37,6 @@ public class SchemaFreeSource<TOut, TMat>: ISchemaFreeSource<TOut, TMat>
         sink.GraphBuilder(this.source);
 
     /// <inheritdoc />
-    public ISchemaFreeSource<TOut2, TMat> Via<TOut2>(IGraph<FlowShape<TOut, TOut2>, TMat> flow)
-    {
-        return new SchemaFreeSource<TOut2, TMat>(this.source.Via(flow));
-    }
+    public ISchemaFreeSource<TOut2, TMat> Via<TOut2>(IGraph<FlowShape<TOut, TOut2>, TMat> flow) =>
+        new SchemaFreeSource<TOut2, TMat>(this.source.Via(flow));
 }

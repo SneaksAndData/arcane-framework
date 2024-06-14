@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Configuration;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -98,6 +98,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
     /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
     /// <returns></returns>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static CdmChangeFeedSource Create(string rootPath,
         string entityName,
         IBlobStorageService blobStorage,
@@ -157,12 +158,6 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
-                nameof(ArgumentException) => Directive.Stop,
-                nameof(ArgumentNullException) => Directive.Stop,
-                nameof(InvalidOperationException) => Directive.Stop,
-                nameof(ConfigurationErrorsException) => Directive.Stop,
-                nameof(ObjectDisposedException) => Directive.Stop,
-                nameof(IOException) => Directive.Stop,
                 nameof(TimeoutException) => Directive.Restart,
                 _ => Directive.Stop
             });

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Akka.Streams;
 using Akka.Streams.Dsl;
@@ -9,7 +10,8 @@ using Microsoft.Extensions.Logging;
 namespace Arcane.Framework.Services;
 
 /// <inheritdoc/>
-public class StreamRunnerService : IStreamRunnerService
+[ExcludeFromCodeCoverage(Justification = "Trivial")]
+internal class StreamRunnerService : IStreamRunnerService
 
 {
     private readonly IHostApplicationLifetime applicationLifetime;

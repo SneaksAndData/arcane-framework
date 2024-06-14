@@ -40,6 +40,9 @@
         <None Update="Operations\RestApiTestData\open_api_schema_nested_two_levels.yaml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="Sources\SampleData\**">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>

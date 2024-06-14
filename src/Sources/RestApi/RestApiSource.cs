@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Configuration;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -34,34 +34,34 @@ namespace Arcane.Framework.Sources.RestApi;
 /// </summary>
 public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSource, ITaggedSource
 {
-    private readonly IRestApiAuthenticatedMessageProvider _authenticatedMessageProvider;
+    private readonly IRestApiAuthenticatedMessageProvider authenticatedMessageProvider;
     private readonly OpenApiSchema apiSchema;
     private readonly TimeSpan changeCaptureInterval;
-    private readonly bool fullLoadOnStart;
+    private readonly bool isBackfilling;
     private readonly HttpClient httpClient;
     private readonly TimeSpan httpRequestTimeout;
     private readonly TimeSpan lookBackInterval;
     private readonly AsyncRateLimitPolicy rateLimitPolicy;
     private readonly string[] responsePropertyKeyChain;
-    private readonly bool stopAfterFullLoad;
+    private readonly bool stopAfterBackfill;
     private readonly IRestApiUriProvider uriProvider;
 
     private RestApiSource(
         IRestApiUriProvider uriProvider,
         IRestApiAuthenticatedMessageProvider authenticatedMessageProvider,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
-        bool stopAfterFullLoad,
+        bool stopAfterBackfill,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
         this.uriProvider = uriProvider;
-        this.stopAfterFullLoad = stopAfterFullLoad;
+        this.stopAfterBackfill = stopAfterBackfill;
         this.changeCaptureInterval = changeCaptureInterval;
-        this.fullLoadOnStart = fullLoadOnStart;
-        this._authenticatedMessageProvider = authenticatedMessageProvider;
+        this.isBackfilling = isBackfilling;
+        this.authenticatedMessageProvider = authenticatedMessageProvider;
         this.lookBackInterval = lookBackInterval;
         this.rateLimitPolicy = rateLimitPolicy;
         this.responsePropertyKeyChain = responsePropertyKeyChain;
@@ -73,15 +73,15 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     private RestApiSource(
         IRestApiUriProvider uriProvider,
         IRestApiAuthenticatedMessageProvider authenticatedMessageProvider,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
         TimeSpan httpRequestTimeout,
-        bool stopAfterFullLoad,
+        bool stopAfterBackfill,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
-        string[] responsePropertyKeyChain = null) : this(uriProvider, authenticatedMessageProvider, fullLoadOnStart,
-        changeCaptureInterval, lookBackInterval, stopAfterFullLoad, rateLimitPolicy, apiSchema,
+        string[] responsePropertyKeyChain = null) : this(uriProvider, authenticatedMessageProvider, isBackfilling,
+        changeCaptureInterval, lookBackInterval, stopAfterBackfill, rateLimitPolicy, apiSchema,
         responsePropertyKeyChain)
     {
         this.httpRequestTimeout = httpRequestTimeout;
@@ -98,20 +98,20 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
-    /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
-    /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
+    /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
+    /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
     private RestApiSource(
         IRestApiUriProvider uriProvider,
         IRestApiAuthenticatedMessageProvider authenticatedMessageProvider,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
         HttpClient httpClient,
-        bool stopAfterFullLoad,
+        bool stopAfterBackfill,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
-        string[] responsePropertyKeyChain = null) : this(uriProvider, authenticatedMessageProvider, fullLoadOnStart,
-        changeCaptureInterval, lookBackInterval, stopAfterFullLoad, rateLimitPolicy, apiSchema,
+        string[] responsePropertyKeyChain = null) : this(uriProvider, authenticatedMessageProvider, isBackfilling,
+        changeCaptureInterval, lookBackInterval, stopAfterBackfill, rateLimitPolicy, apiSchema,
         responsePropertyKeyChain)
     {
         this.httpClient = httpClient;
@@ -129,10 +129,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     public override SourceShape<JsonElement> Shape { get; }
 
     /// <inheritdoc cref="IParquetSource.GetParquetSchema"/>
-    public Schema GetParquetSchema()
-    {
-        return this.apiSchema.ToParquetSchema();
-    }
+    public Schema GetParquetSchema() => this.apiSchema.ToParquetSchema();
 
     /// <inheritdoc cref="ITaggedSource.GetDefaultTags"/>
     public SourceTags GetDefaultTags()
@@ -150,28 +147,29 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="uriProvider">URI provider</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="lookBackInterval">Look back interval</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="httpRequestTimeout">Http request rimeout</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
-    /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
-    /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
+    /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
+    /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
     /// <param name="headerAuthenticatedMessageProvider">Authenticated message provider</param>
+    /// <param name="responsePropertyKeyChain">Response property key chain</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         SimpleUriProvider uriProvider,
         FixedHeaderAuthenticatedMessageProvider headerAuthenticatedMessageProvider,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
         TimeSpan httpRequestTimeout,
-        bool stopAfterFullLoad,
-        string streamKind,
+        bool stopAfterBackfill,
         AsyncRateLimitPolicy rateLimitPolicy,
-        OpenApiSchema apiSchema)
+        OpenApiSchema apiSchema,
+        string[] responsePropertyKeyChain = null)
     {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, isBackfilling,
             changeCaptureInterval,
-            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema);
+            lookBackInterval, httpRequestTimeout, stopAfterBackfill, rateLimitPolicy, apiSchema, responsePropertyKeyChain);
     }
 
     /// <summary>
@@ -183,23 +181,24 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="httpClient">Http Client</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
-    /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
-    /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
+    /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
+    /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
     /// <param name="headerAuthenticatedMessageProvider">Authenticated message provider</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         SimpleUriProvider uriProvider,
         FixedHeaderAuthenticatedMessageProvider headerAuthenticatedMessageProvider,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
         HttpClient httpClient,
-        bool stopAfterFullLoad,
+        bool stopAfterBackfill,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema)
     {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, isBackfilling,
             changeCaptureInterval,
-            lookBackInterval, httpClient, stopAfterFullLoad, rateLimitPolicy, apiSchema);
+            lookBackInterval, httpClient, stopAfterBackfill, rateLimitPolicy, apiSchema);
     }
 
     /// <summary>
@@ -211,25 +210,26 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="httpRequestTimeout">Http request timeout</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
-    /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
-    /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
+    /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
+    /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
     /// <param name="authHeaderAuthenticatedMessageProvider">Authenticated message provider</param>
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         PagedUriProvider uriProvider,
         DynamicBearerAuthenticatedMessageProvider authHeaderAuthenticatedMessageProvider,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
         TimeSpan httpRequestTimeout,
-        bool stopAfterFullLoad,
+        bool stopAfterBackfill,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
-        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
+        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, isBackfilling,
             changeCaptureInterval,
-            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema,
+            lookBackInterval, httpRequestTimeout, stopAfterBackfill, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
 
@@ -242,25 +242,26 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="httpRequestTimeout">Http request timeout</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
-    /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
-    /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
+    /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
+    /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
     /// <param name="headerAuthenticatedMessageProvider">Authenticated message provider</param>
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         PagedUriProvider uriProvider,
         FixedHeaderAuthenticatedMessageProvider headerAuthenticatedMessageProvider,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
         TimeSpan httpRequestTimeout,
-        bool stopAfterFullLoad,
+        bool stopAfterBackfill,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
-        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, fullLoadOnStart,
+        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, isBackfilling,
             changeCaptureInterval,
-            lookBackInterval, httpRequestTimeout, stopAfterFullLoad, rateLimitPolicy, apiSchema,
+            lookBackInterval, httpRequestTimeout, stopAfterBackfill, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
 
@@ -273,33 +274,31 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="httpClient">Http request timeout</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
-    /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
-    /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
+    /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
+    /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
     /// <param name="authHeaderAuthenticatedMessageProvider">Authenticated message provider</param>
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
         PagedUriProvider uriProvider,
         DynamicBearerAuthenticatedMessageProvider authHeaderAuthenticatedMessageProvider,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
         TimeSpan lookBackInterval,
         HttpClient httpClient,
-        bool stopAfterFullLoad,
+        bool stopAfterBackfill,
         AsyncRateLimitPolicy rateLimitPolicy,
         OpenApiSchema apiSchema,
         string[] responsePropertyKeyChain = null)
     {
-        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, fullLoadOnStart,
+        return new RestApiSource(uriProvider, authHeaderAuthenticatedMessageProvider, isBackfilling,
             changeCaptureInterval,
-            lookBackInterval, httpClient, stopAfterFullLoad, rateLimitPolicy, apiSchema,
+            lookBackInterval, httpClient, stopAfterBackfill, rateLimitPolicy, apiSchema,
             responsePropertyKeyChain);
     }
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
-    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes)
-    {
-        return new SourceLogic(this);
-    }
+    protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
 
     private sealed class SourceLogic : TimerGraphStageLogic, IStopAfterBackfill
     {
@@ -322,11 +321,6 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
 
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
-                nameof(ArgumentException) => Directive.Stop,
-                nameof(ArgumentNullException) => Directive.Stop,
-                nameof(InvalidOperationException) => Directive.Stop,
-                nameof(ConfigurationErrorsException) => Directive.Stop,
-                nameof(ObjectDisposedException) => Directive.Stop,
                 nameof(IOException) => Directive.Restart,
                 nameof(TimeoutException) => Directive.Restart,
                 nameof(HttpRequestException) => Directive.Restart,
@@ -341,7 +335,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
         public bool IsRunningInBackfillMode { get; set; }
 
         /// <inheritdoc cref="IStopAfterBackfill.StopAfterBackfill"/>
-        public bool StopAfterBackfill => this.source.stopAfterFullLoad;
+        public bool StopAfterBackfill => this.source.stopAfterBackfill;
 
         private void Finish(Exception cause)
         {
@@ -359,7 +353,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
 
             this.responseReceived = this.GetAsyncCallback<Task<Option<JsonElement>>>(this.OnRecordReceived);
 
-            if (this.source.fullLoadOnStart)
+            if (this.source.isBackfilling)
             {
                 this.IsRunningInBackfillMode = true;
             }
@@ -411,7 +405,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
 
         private void PullChanges()
         {
-            this.source.rateLimitPolicy.ExecuteAsync(() => this.source._authenticatedMessageProvider
+            this.source.rateLimitPolicy.ExecuteAsync(() => this.source.authenticatedMessageProvider
                 .GetAuthenticatedMessage(this.httpClient)
                 .Map(msg =>
                 {

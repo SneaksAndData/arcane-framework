@@ -16,7 +16,6 @@ public class ServiceFixture
 {
     public ServiceFixture()
     {
-        this.MockBlobStorageService = new Mock<IBlobStorageService>();
         this.MockMetricsService = new Mock<MetricsService>();
         this.MockHttpClient = new Mock<HttpClient>();
         this.MockKubeCluster = new Mock<IKubeCluster>();
@@ -38,7 +37,6 @@ public class ServiceFixture
         }
     }
 
-    public Mock<IBlobStorageService> MockBlobStorageService { get; }
     public Mock<MetricsService> MockMetricsService { get; }
     public Mock<HttpClient> MockHttpClient { get; }
     public Mock<IKubeCluster> MockKubeCluster { get; }

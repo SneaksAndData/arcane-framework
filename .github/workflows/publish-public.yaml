@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3.0.3
+        uses: actions/setup-dotnet@v4.0.0
         with:
           dotnet-version: 6.0.x
       - name: Set Package Version
@@ -26,7 +26,7 @@ jobs:
           version=$(git describe --tags --abbrev=7 | tr -d "v")
           sed -i "s/<Version>0.0.0/<Version>$version/" src/Arcane.Framework.csproj
       - name: Import Secrets
-        uses: hashicorp/vault-action@v2.7.3
+        uses: hashicorp/vault-action@v3.0.0
         with:
           url: https://hashicorp-vault.production.sneaksanddata.com/
           role: github

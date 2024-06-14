@@ -8,7 +8,7 @@ namespace Arcane.Framework.Sources.Extensions;
 /// <summary>
 /// Utilities for SQL Server database operations.
 /// </summary>
-public static class SqlServerUtils
+internal static class SqlServerUtils
 {
     /// <summary>
     /// Get all columns for the specified table.

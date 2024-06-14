@@ -8,20 +8,20 @@ using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Tests.Fixtures;
 using Moq;
 using Parquet.Data;
+using Snd.Sdk.Storage.Base;
 using Snd.Sdk.Storage.Models;
 using Xunit;
 
 namespace Arcane.Framework.Tests.SinkTests;
 
-public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>, IClassFixture<ServiceFixture>
+public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
 {
     private readonly AkkaFixture akkaFixture;
-    private readonly ServiceFixture serviceFixture;
+    private readonly Mock<IBlobStorageService> mockBlobStorageService = new();
 
-    public MultilineJsonSinkTest(AkkaFixture akkaFixture, ServiceFixture serviceFixture)
+    public MultilineJsonSinkTest(AkkaFixture akkaFixture)
     {
         this.akkaFixture = akkaFixture;
-        this.serviceFixture = serviceFixture;
     }
 
     [Theory]
@@ -41,20 +41,19 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>, IClassFixture<S
                 JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(new { Value = ix }))))
             .ToList();
 
-        this.serviceFixture.MockBlobStorageService.Setup(mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(),
+        this.mockBlobStorageService.Setup(mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(),
                 It.Is<string>(p => p == mockPath), It.IsAny<string>(), It.IsAny<bool>()))
             .ReturnsAsync(new UploadedBlob());
 
         await Source
             .From(mockIn)
             .Select(v => v.ToList())
-            .RunWith(
-                MultilineJsonSink.Create(this.serviceFixture.MockBlobStorageService.Object, mockPath, mockSchema,
+            .RunWith(MultilineJsonSink.Create(this.mockBlobStorageService.Object, mockPath, mockSchema,
                     "data", "schema", dropsCompletion), this.akkaFixture.Materializer);
 
         foreach (var _ in Enumerable.Range(0, files))
         {
-            this.serviceFixture.MockBlobStorageService.Verify(mb => mb.SaveBytesAsBlob(
+            this.mockBlobStorageService.Verify(mb => mb.SaveBytesAsBlob(
                     It.Is<BinaryData>(bd =>
                         (bd.ToArray().Length > 0 ? bd.ToString() : string.Empty)
                         .Split(Environment.NewLine, StringSplitOptions.None).Length - 1 == rowsPerFile),
@@ -64,7 +63,7 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>, IClassFixture<S
                 Times.Exactly(rowsPerFile > 0 ? files : 0));
         }
 
-        this.serviceFixture.MockBlobStorageService.Verify(mb => mb.SaveBytesAsBlob(
+        this.mockBlobStorageService.Verify(mb => mb.SaveBytesAsBlob(
                 It.Is<BinaryData>(bd => bd.ToArray().SequenceEqual(schemaBytes)),
                 It.Is<string>(path => path == $"{mockPath}/schema"),
                 It.Is<string>(fn => fn.EndsWith($"{shortHash}.parquet")),
@@ -73,7 +72,7 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>, IClassFixture<S
 
         if (dropsCompletion)
         {
-            this.serviceFixture.MockBlobStorageService.Verify(mb => mb.SaveBytesAsBlob(
+            this.mockBlobStorageService.Verify(mb => mb.SaveBytesAsBlob(
                     It.Is<BinaryData>(bd => bd.ToArray().SequenceEqual(new byte[] { 0 })),
                     It.Is<string>(path => path == $"{mockPath}/data"),
                     It.Is<string>(fn => fn == $"{shortHash}.COMPLETED"),
