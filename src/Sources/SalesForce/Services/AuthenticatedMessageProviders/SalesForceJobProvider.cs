@@ -37,7 +37,6 @@ public record SalesForceJobProvider
     private readonly string password;
     private readonly string securityToken;
     private readonly string apiVersion;
-    private Option<string> currentJobLocator;
     private readonly Option<int> rowsPerPage;
 
     /// <summary>
@@ -54,7 +53,6 @@ public record SalesForceJobProvider
         this.password = password;
         this.securityToken = securityToken;
         this.apiVersion = apiVersion;
-        this.currentJobLocator = Option<string>.None;
         this.rowsPerPage = rowsPerPage;
     }
 
@@ -78,7 +76,6 @@ public record SalesForceJobProvider
         this.password = password;
         this.securityToken = securityToken;
         this.apiVersion = apiVersion;
-        this.currentJobLocator = Option<string>.None;
         this.rowsPerPage = Option<int>.None;
         this.expirationPeriod = TimeSpan.FromMinutes(19);
     }
@@ -274,13 +271,13 @@ public record SalesForceJobProvider
     /// <param name="httpClient"></param>
     /// <param name="job"></param>
     /// <param name="entitySchema"></param>
-    public Task<IEnumerable<List<DataCell>>> GetJobResult(HttpClient httpClient, SalesForceJob job, SalesForceEntity entitySchema)
+    public Task<(IEnumerable<List<DataCell>>, Option<string>)> GetJobResult(HttpClient httpClient, SalesForceJob job, SalesForceEntity entitySchema, Option<string> jobLocator)
     {
         return this.GetAuthenticatedMessage(httpClient).Map(msg =>
 
             {
                 var maxRowString = this.rowsPerPage.HasValue ? $"maxRecords={this.rowsPerPage.Value}" : "";
-                var locatorString = this.currentJobLocator.HasValue ? $"locator={this.currentJobLocator.Value}" : "";
+                var locatorString = jobLocator.HasValue ? $"locator={jobLocator.Value}" : "";
                 var urlParams = string.Join("&", new[] { maxRowString, locatorString });
                 msg.RequestUri = new Uri($"https://{this.accountName}/services/data/{this.apiVersion}/jobs/query/{job.Id}/results?{urlParams}");
                 msg.Headers.Add("Accept", "text/csv");
@@ -292,7 +289,7 @@ public record SalesForceJobProvider
                         return response.Content.ReadAsStringAsync().Map(value =>
                         {
 
-                            this.currentJobLocator = response.Headers.GetValues("Sforce-Locator").Select(h => h == "null" ? Option<string>.None : h.AsOption()).First();
+                            var newjobLocator = response.Headers.GetValues("Sforce-Locator").Select(h => h == "null" ? Option<string>.None : h.AsOption()).First();
                             var rows = value.ReplaceQuotedNewlines().Split("\n").Skip(1).Where(line => !string.IsNullOrEmpty(line)).Select(line =>
                             {
                                 var cells = line.ParseCsvLine(entitySchema.Attributes.Length).Select(
@@ -304,7 +301,7 @@ public record SalesForceJobProvider
                                         }).ToList();
                                 return cells;
                             });
-                            return rows;
+                            return (rows, newjobLocator);
 
 
                         });

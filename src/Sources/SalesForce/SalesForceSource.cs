@@ -132,6 +132,7 @@ public class SalesForceSource : GraphStage<SourceShape<List<DataCell>>>, IParque
         private readonly SalesForceSource source;
         private SalesForceEntity entitySchema;
         private Option<SalesForceJob> currentJob;
+        private Option<string> nextJobLocator;
 
 
 
@@ -155,6 +156,7 @@ public class SalesForceSource : GraphStage<SourceShape<List<DataCell>>>, IParque
             });
 
             this.currentJob = Option<SalesForceJob>.None;
+            this.nextJobLocator = Option<string>.None;
 
 
             this.SetHandler(source.Out, this.PullChanges, this.Finish);
@@ -172,7 +174,6 @@ public class SalesForceSource : GraphStage<SourceShape<List<DataCell>>>, IParque
 
         public override void PreStart()
         {
-            this.Log.Info("Prestart");
             this.UpdateSchema();
         }
 
@@ -199,7 +200,6 @@ public class SalesForceSource : GraphStage<SourceShape<List<DataCell>>>, IParque
 
         private void CreateNewJob()
         {
-            this.Log.Info("Creating new job");
             var job = this.source.jobProvider.CreateJob(httpClient, this.entitySchema).Result;
 
             if (job.IsEmpty)
@@ -215,7 +215,6 @@ public class SalesForceSource : GraphStage<SourceShape<List<DataCell>>>, IParque
 
         private void UpdateJobStatus()
         {
-            this.Log.Info("Updating job status");
             var response = this.source.jobProvider.GetJobStatus(httpClient, this.currentJob.Value).Result;
 
             if (response.IsEmpty)
@@ -232,10 +231,11 @@ public class SalesForceSource : GraphStage<SourceShape<List<DataCell>>>, IParque
         private void ProcessResult()
         {
 
-            var rows = this.source.jobProvider.GetJobResult(httpClient, this.currentJob.Value, this.entitySchema).Result;
+            var (rows, nextJobLocator) = this.source.jobProvider.GetJobResult(httpClient, this.currentJob.Value, this.entitySchema, this.nextJobLocator).Result;
+            this.nextJobLocator = nextJobLocator;
             this.EmitMultiple(this.source.Out, rows);
 
-            if (!rows.Any())
+            if (nextJobLocator.IsEmpty)
             {
                 this.currentJob = Option<SalesForceJob>.None;
                 this.ScheduleOnce(TimerKey, this.source.changeCaptureInterval);

@@ -212,10 +212,10 @@ public class SalesforceSourceTests : IClassFixture<AkkaFixture>
                     It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockGetResultResponse2);
 
-        var source = SalesForceSource.Create(this.jobProvider, this.mockHttp.Object, "account", TimeSpan.FromSeconds(5));
+        var source = SalesForceSource.Create(this.jobProvider, this.mockHttp.Object, "account", TimeSpan.FromSeconds(60));
 
         var result = await Source.FromGraph(source)
-            .Take(10)
+            .TakeWithin(TimeSpan.FromSeconds(10))
             .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
 
         Assert.Equal(10, result.Count);
