@@ -19,7 +19,7 @@ using Snd.Sdk.Tasks;
 namespace Arcane.Framework.Sources.SalesForce.Services.AuthenticatedMessageProviders;
 
 /// <summary>
-/// Authenticated message provider that generated dynamic bearer token header.
+/// Salesforce Job provider that handles talking with the Bulk V2 API
 /// </summary>
 public record SalesForceJobProvider
 {
@@ -41,7 +41,7 @@ public record SalesForceJobProvider
     private readonly Option<int> rowsPerPage;
 
     /// <summary>
-    /// Authenticated message provider that generated dynamic bearer token header.
+    /// Salesforce Job provider that handles talking with the Bulk V2 API.
     /// </summary>
 
     public SalesForceJobProvider(string accountName, string clientId, string clientSecret, string username, string password, string securityToken, string apiVersion, int rowsPerPage)
@@ -59,7 +59,7 @@ public record SalesForceJobProvider
     }
 
     /// <summary>
-    /// 
+    /// Salesforce Job provider that handles talking with the Bulk V2 API
     /// </summary>
     /// <param name="accountName"></param>
     /// <param name="clientId"></param>
@@ -128,11 +128,10 @@ public record SalesForceJobProvider
     }
 
     /// <summary>
-    /// 
+    /// Get the schema of a Salesforce entity
     /// </summary>
     /// <param name="httpClient"></param>
     /// <param name="entityName"></param>
-    /// <returns></returns>
     public Task<Option<SalesForceEntity>> GetSchema(HttpClient httpClient, string entityName)
     {
         return this.GetAuthenticatedMessage(httpClient).Map(msg =>
@@ -154,7 +153,6 @@ public record SalesForceJobProvider
 
                     var errorMsg = $"API request to {msg.RequestUri} failed with {response.StatusCode}, reason: {response.ReasonPhrase}, content: {response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult()}";
 
-                    // this.Log.Warning(errorMsg);
 
                     throw new HttpRequestException(errorMsg, null, response.StatusCode);
                 }).Flatten();
@@ -173,11 +171,10 @@ public record SalesForceJobProvider
     }
 
     /// <summary>
-    /// 
+    /// Submit a new query job
     /// </summary>
     /// <param name="httpClient"></param>
     /// <param name="entitySchema"></param>
-    /// <returns></returns>
     public Task<Option<SalesForceJob>> CreateJob(HttpClient httpClient, SalesForceEntity entitySchema)
     {
         return this.GetAuthenticatedMessage(httpClient).Map(msg =>
@@ -223,11 +220,10 @@ public record SalesForceJobProvider
     }
 
     /// <summary>
-    /// 
+    /// Get status of query job
     /// </summary>
     /// <param name="httpClient"></param>
     /// <param name="job"></param>
-    /// <returns></returns>
     public Task<Option<SalesForceJob>> GetJobStatus(HttpClient httpClient, SalesForceJob job)
     {
         return this.GetAuthenticatedMessage(httpClient).Map(msg =>
@@ -273,12 +269,11 @@ public record SalesForceJobProvider
     }
 
     /// <summary>
-    /// 
+    /// Get result of query job
     /// </summary>
     /// <param name="httpClient"></param>
     /// <param name="job"></param>
     /// <param name="entitySchema"></param>
-    /// <returns></returns>
     public Task<IEnumerable<List<DataCell>>> GetJobResult(HttpClient httpClient, SalesForceJob job, SalesForceEntity entitySchema)
     {
         return this.GetAuthenticatedMessage(httpClient).Map(msg =>
