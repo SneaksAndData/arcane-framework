@@ -249,8 +249,8 @@ public class SalesForceSource : GraphStage<SourceShape<List<DataCell>>>, IParque
             {
                 case SalesforceJobStatus.UploadComplete:; this.UpdateJobStatus(); break;
                 case SalesforceJobStatus.InProgress: this.UpdateJobStatus(); break;
-                case SalesforceJobStatus.Aborted: this.FailStage(new SalesForceJobFailedException("Something bad happened")); break;
-                case SalesforceJobStatus.Failed: this.FailStage(new SalesForceJobAbortedException("Something bad happened")); break;
+                case SalesforceJobStatus.Aborted: this.FailStage(new SalesForceJobAbortedException($"job : {this.currentJob.Value.Id} was aborted by source")); break;
+                case SalesforceJobStatus.Failed: this.FailStage(new SalesForceJobFailedException($"job : {this.currentJob.Value.Id} returned with failure")); break;
                 case SalesforceJobStatus.JobComplete: this.ProcessResult(); break;
                 case SalesforceJobStatus.None: this.CreateNewJob(); break;
             };
