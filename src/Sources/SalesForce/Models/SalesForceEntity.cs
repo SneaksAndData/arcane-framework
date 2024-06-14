@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace Arcane.Framework.Sources.SalesForce.Models;
 
 /// <summary>
-/// Represents CDM Change Feed entity
+/// Represents Salesforce entity
 /// </summary>
 public class SalesForceEntity
 {
@@ -33,7 +33,7 @@ public class SalesForceEntity
     /// </summary>
     /// <param name="entityName">Name of the Salesforce entity </param>
     /// <param name="document">Json document to parse</param>
-    /// <returns>Parsed SimpleCdmEntity object</returns>
+    /// <returns>Parsed SalesForceEntity object</returns>
     public static SalesForceEntity FromJson(string entityName, JsonDocument document)
     {
         var entity = new SalesForceEntity
