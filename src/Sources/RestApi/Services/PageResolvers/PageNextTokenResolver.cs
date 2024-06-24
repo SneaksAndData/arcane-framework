@@ -26,6 +26,13 @@ internal class PageNextTokenResolver : PageResolverBase<string>
     {
         if (!apiResponse.IsEmpty)
         {
+            // exit immediately if next page token property is not present
+            if (!this.GetResponseContent(apiResponse, this.nextPageTokenPropertyKeyChain).Any())
+            {
+                this.pagePointer = null;
+                return false;
+            }
+
             // read next page token from response
             this.pagePointer = this.nextPageTokenPropertyKeyChain
                 .Aggregate(this.GetResponse(apiResponse), (je, property) => je.GetProperty(property)).GetString();
@@ -38,6 +45,8 @@ internal class PageNextTokenResolver : PageResolverBase<string>
             };
         }
 
-        return string.IsNullOrEmpty(this.pagePointer);
+        // in case of empty response - reset page pointer to empty string and report ready for next
+        this.pagePointer = string.Empty;
+        return true;
     }
 }

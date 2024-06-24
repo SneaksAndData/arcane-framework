@@ -53,6 +53,12 @@ public class SimpleUriProvider : IRestApiUriProvider
         var resultUri = this.urlTemplate.CreateResolver();
         var resultBody = this.bodyTemplate.CreateResolver();
 
+
+        if (isBackfill && !paginatedResponse.IsEmpty)
+        {
+            return (Option<Uri>.None, this.requestMethod, Option<string>.None);
+        }
+
         var filterTimestamp = (isFullLoad: isBackfill, paginatedResponse.IsEmpty) switch
         {
             (true, _) => this.backFillStartDate,
