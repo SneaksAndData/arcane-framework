@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -20,7 +21,10 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     private readonly HttpMethod requestMethod;
     private readonly string tokenPropertyName;
     private readonly string tokenRequestBody;
+    private readonly string authHeaderName;
+    private readonly string authScheme;
     private readonly Uri tokenSource;
+    private readonly Dictionary<string, string> additionalHeaders;
     private string currentToken;
     private DateTimeOffset? validTo;
 
@@ -32,14 +36,26 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     /// <param name="expirationPeriodPropertyName">Token expiration property name</param>
     /// <param name="requestMethod">HTTP method for token request</param>
     /// <param name="tokenRequestBody">HTTP body for token request</param>
-    public DynamicBearerAuthenticatedMessageProvider(string tokenSource, string tokenPropertyName,
-        string expirationPeriodPropertyName, HttpMethod requestMethod = null, string tokenRequestBody = null)
+    /// <param name="authHeaderName">Authorization header name</param>
+    /// <param name="authScheme">Authorization scheme</param>
+    /// <param name="additionalHeaders">Additional token headers</param>
+    public DynamicBearerAuthenticatedMessageProvider(string tokenSource,
+        string tokenPropertyName,
+        string expirationPeriodPropertyName,
+        HttpMethod requestMethod = null,
+        string tokenRequestBody = null,
+        Dictionary<string, string> additionalHeaders = null,
+        string authHeaderName = null,
+        string authScheme = null)
     {
         this.tokenSource = new Uri(tokenSource);
         this.tokenPropertyName = tokenPropertyName;
         this.expirationPeriodPropertyName = expirationPeriodPropertyName;
         this.tokenRequestBody = tokenRequestBody;
         this.requestMethod = requestMethod ?? HttpMethod.Get;
+        this.authHeaderName = authHeaderName;
+        this.authScheme = authScheme;
+        this.additionalHeaders = additionalHeaders ?? new Dictionary<string, string>();
     }
 
     /// <summary>
@@ -47,29 +63,38 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     /// </summary>
     /// <param name="tokenSource">Token source address</param>
     /// <param name="tokenPropertyName">Token property name</param>
+    /// <param name="expirationPeriod">Token expiration period</param>
     /// <param name="requestMethod">HTTP method for token request</param>
     /// <param name="tokenRequestBody">HTTP body for token request</param>
-    public DynamicBearerAuthenticatedMessageProvider(string tokenSource, string tokenPropertyName,
+    /// <param name="additionalHeaders">Additional token headers</param>
+    /// <param name="authHeaderName">Authorization header name</param>
+    /// <param name="authScheme">Authorization scheme</param>
+    public DynamicBearerAuthenticatedMessageProvider(string tokenSource,
+        string tokenPropertyName,
         TimeSpan expirationPeriod,
-        HttpMethod requestMethod = null, string tokenRequestBody = null)
+        HttpMethod requestMethod = null,
+        string tokenRequestBody = null,
+        Dictionary<string, string> additionalHeaders = null,
+        string authHeaderName = null,
+        string authScheme = null)
     {
         this.tokenSource = new Uri(tokenSource);
         this.tokenPropertyName = tokenPropertyName;
         this.expirationPeriod = expirationPeriod;
         this.tokenRequestBody = tokenRequestBody;
         this.requestMethod = requestMethod ?? HttpMethod.Get;
+        this.authHeaderName = authHeaderName;
+        this.authScheme = authScheme;
+        this.additionalHeaders = additionalHeaders ?? new Dictionary<string, string>();
     }
 
     /// <inheritdoc cref="IRestApiAuthenticatedMessageProvider.GetAuthenticatedMessage"/>
     public Task<HttpRequestMessage> GetAuthenticatedMessage(HttpClient httpClient)
     {
-        if (this.validTo.GetValueOrDefault(DateTimeOffset.MaxValue) <
-            DateTimeOffset.UtcNow.Subtract(TimeSpan.FromMinutes(1)))
+
+        if (this.validTo.GetValueOrDefault(DateTimeOffset.MaxValue) <  DateTimeOffset.UtcNow.Subtract(TimeSpan.FromMinutes(1)))
         {
-            return Task.FromResult(new HttpRequestMessage
-            {
-                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", this.currentToken) }
-            });
+            return Task.FromResult(this.GetRequest());
         }
 
         var tokenHrm = new HttpRequestMessage(this.requestMethod, this.tokenSource);
@@ -97,4 +122,26 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
             };
         });
     }
+
+    private HttpRequestMessage GetRequest()
+    {
+        var request = new HttpRequestMessage();
+        switch (this.authHeaderName)
+        {
+            case null or "" or "Authorization":
+                request.Headers.Authorization = new AuthenticationHeaderValue(scheme: this.authScheme ?? "Bearer", this.currentToken);
+                break;
+            default:
+                request.Headers.Add(this.authHeaderName,  string.IsNullOrEmpty(this.authScheme) ? this.currentToken : $"{this.authScheme} {this.currentToken}");
+                break;
+        }
+
+        foreach (var (headerKey, headerValue) in this.additionalHeaders ?? new Dictionary<string, string>())
+        {
+            request.Headers.Add(headerKey, headerValue);
+        }
+
+        return request;
+    }
+
 }

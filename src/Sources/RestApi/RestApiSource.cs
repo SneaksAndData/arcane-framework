@@ -178,6 +178,37 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="uriProvider">URI provider</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="lookBackInterval">Look back interval</param>
+    /// <param name="httpRequestTimeout">Http request rimeout</param>
+    /// <param name="apiSchema">Api Schema</param>
+    /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
+    /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
+    /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
+    /// <param name="headerAuthenticatedMessageProvider">Authenticated message provider</param>
+    /// <param name="responsePropertyKeyChain">Response property key chain</param>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
+    public static RestApiSource Create(
+        SimpleUriProvider uriProvider,
+        DynamicBearerAuthenticatedMessageProvider headerAuthenticatedMessageProvider,
+        bool isBackfilling,
+        TimeSpan changeCaptureInterval,
+        TimeSpan lookBackInterval,
+        TimeSpan httpRequestTimeout,
+        bool stopAfterBackfill,
+        AsyncRateLimitPolicy rateLimitPolicy,
+        OpenApiSchema apiSchema,
+        string[] responsePropertyKeyChain = null)
+    {
+        return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, isBackfilling,
+            changeCaptureInterval,
+            lookBackInterval, httpRequestTimeout, stopAfterBackfill, rateLimitPolicy, apiSchema, responsePropertyKeyChain);
+    }
+
+    /// <summary>
+    /// Creates new instance of <see cref="RestApiSource"/>
+    /// </summary>
+    /// <param name="uriProvider">URI provider</param>
+    /// <param name="changeCaptureInterval">How often to track changes.</param>
+    /// <param name="lookBackInterval">Look back interval</param>
     /// <param name="httpClient">Http Client</param>
     /// <param name="apiSchema">Api Schema</param>
     /// <param name="rateLimitPolicy">Rate limiting policy instance</param>
