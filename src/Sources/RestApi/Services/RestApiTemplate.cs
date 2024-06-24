@@ -64,13 +64,22 @@ public sealed class RestApiTemplate
             return this;
         }
 
-        if (this.remainingFieldNames.Contains(fieldName))
+        if (!this.remainingFieldNames.Contains(fieldName))
         {
-            var parameters = new Dictionary<string, object> { { $"@{fieldName}", fieldValue } };
-            this.resolvedTemplate = parameters.Aggregate(this.resolvedTemplate,
-                (current, parameter) => current.Replace(parameter.Key, parameter.Value.ToString()));
-            this.remainingFieldNames.Remove(fieldName);
+            return this;
         }
+
+        // some resolvers may return a full uri - in this case we replace the resolved template with that value and clear out the template queue
+        if (Uri.TryCreate(fieldValue, UriKind.Absolute, out _))
+        {
+            this.resolvedTemplate = fieldValue;
+            this.remainingFieldNames.Clear();
+            return this;
+        }
+
+        var parameters = new Dictionary<string, object> { { $"@{fieldName}", fieldValue } };
+        this.resolvedTemplate = parameters.Aggregate(this.resolvedTemplate, (current, parameter)=> current.Replace(parameter.Key, parameter.Value.ToString()));
+        this.remainingFieldNames.Remove(fieldName);
 
         return this;
     }

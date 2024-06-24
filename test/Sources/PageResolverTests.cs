@@ -17,7 +17,7 @@ public class PageResolverTests
         foreach (var (message, continuePagination) in RestApiArrayResponseSequence())
         {
 
-            Assert.Equal(resolver.Next(message), continuePagination);
+            Assert.Equal( continuePagination, resolver.Next(message));
         }
     }
 
@@ -28,7 +28,7 @@ public class PageResolverTests
         foreach (var (message, continuePagination) in RestApiTokenResponseSequence())
         {
 
-            Assert.Equal(resolver.Next(message), continuePagination);
+            Assert.Equal(continuePagination, resolver.Next(message));
         }
     }
 
@@ -73,8 +73,8 @@ public class PageResolverTests
         };
 
         yield return (Option<HttpResponseMessage>.None, true);
-        yield return (filledMessage, true);
-        yield return (filledMessage, true);
+        yield return (filledMessage, false);
+        yield return (filledMessage, false);
         yield return (emptyMessage,  false);
     }
 }
