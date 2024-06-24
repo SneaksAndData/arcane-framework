@@ -57,7 +57,7 @@ public class PageResolverTests
 
     private static IEnumerable<(Option<HttpResponseMessage>, bool)> RestApiTokenResponseSequence()
     {
-        var emptyResponseContent = new Dictionary<string, object> { {"next", "next-1" } };
+        var emptyResponseContent = new Dictionary<string, object> { {"next", null } };
         var emptyMessage =  new HttpResponseMessage
         {
             Content = new StringContent(JsonSerializer.Serialize(emptyResponseContent))
