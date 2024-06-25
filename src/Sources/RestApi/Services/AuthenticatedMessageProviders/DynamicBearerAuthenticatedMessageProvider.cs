@@ -21,6 +21,7 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     private readonly HttpMethod requestMethod;
     private readonly string tokenPropertyName;
     private readonly string tokenRequestBody;
+    private readonly string tokenRequestContentType;
     private readonly string authHeaderName;
     private readonly string authScheme;
     private readonly Uri tokenSource;
@@ -36,6 +37,7 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     /// <param name="expirationPeriodPropertyName">Token expiration property name</param>
     /// <param name="requestMethod">HTTP method for token request</param>
     /// <param name="tokenRequestBody">HTTP body for token request</param>
+    /// <param name="tokenRequestContentType">HTTP content-type header for the token request</param>
     /// <param name="authHeaderName">Authorization header name</param>
     /// <param name="authScheme">Authorization scheme</param>
     /// <param name="additionalHeaders">Additional token headers</param>
@@ -44,6 +46,7 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
         string expirationPeriodPropertyName,
         HttpMethod requestMethod = null,
         string tokenRequestBody = null,
+        string tokenRequestContentType = null,
         Dictionary<string, string> additionalHeaders = null,
         string authHeaderName = null,
         string authScheme = null)
@@ -52,6 +55,7 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
         this.tokenPropertyName = tokenPropertyName;
         this.expirationPeriodPropertyName = expirationPeriodPropertyName;
         this.tokenRequestBody = tokenRequestBody;
+        this.tokenRequestContentType = tokenRequestContentType;
         this.requestMethod = requestMethod ?? HttpMethod.Get;
         this.authHeaderName = authHeaderName;
         this.authScheme = authScheme;
@@ -66,6 +70,7 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     /// <param name="expirationPeriod">Token expiration period</param>
     /// <param name="requestMethod">HTTP method for token request</param>
     /// <param name="tokenRequestBody">HTTP body for token request</param>
+    /// <param name="tokenRequestContentType">HTTP content-type header for the token request</param>
     /// <param name="additionalHeaders">Additional token headers</param>
     /// <param name="authHeaderName">Authorization header name</param>
     /// <param name="authScheme">Authorization scheme</param>
@@ -74,6 +79,7 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
         TimeSpan expirationPeriod,
         HttpMethod requestMethod = null,
         string tokenRequestBody = null,
+        string tokenRequestContentType = null,
         Dictionary<string, string> additionalHeaders = null,
         string authHeaderName = null,
         string authScheme = null)
@@ -82,6 +88,7 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
         this.tokenPropertyName = tokenPropertyName;
         this.expirationPeriod = expirationPeriod;
         this.tokenRequestBody = tokenRequestBody;
+        this.tokenRequestContentType = tokenRequestContentType;
         this.requestMethod = requestMethod ?? HttpMethod.Get;
         this.authHeaderName = authHeaderName;
         this.authScheme = authScheme;
