@@ -98,7 +98,6 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
     /// <inheritdoc cref="IRestApiAuthenticatedMessageProvider.GetAuthenticatedMessage"/>
     public Task<HttpRequestMessage> GetAuthenticatedMessage(HttpClient httpClient)
     {
-
         if (this.validTo.GetValueOrDefault(DateTimeOffset.MaxValue) <  DateTimeOffset.UtcNow.Subtract(TimeSpan.FromMinutes(1)))
         {
             return Task.FromResult(this.GetRequest());
@@ -106,9 +105,15 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
 
         var tokenHrm = new HttpRequestMessage(this.requestMethod, this.tokenSource);
 
-        if (!string.IsNullOrEmpty(this.tokenRequestBody))
+        if (!string.IsNullOrEmpty(tokenRequestBody))
         {
-            tokenHrm.Content = new StringContent(this.tokenRequestBody, Encoding.UTF8, "application/json");
+            tokenHrm.Content = this.tokenRequestContentType switch
+            {
+                null or "application/json" => new StringContent(tokenRequestBody, Encoding.UTF8, "application/json"),
+                "application/x-www-form-urlencoded" => new FormUrlEncodedContent(JsonSerializer.Deserialize<Dictionary<string, string>>(tokenRequestBody)),
+                _ => throw new ArgumentException($"Unsupported content type for authentication: {this.tokenRequestContentType}")
+            };
+
         }
 
         return httpClient.SendAsync(tokenHrm, CancellationToken.None).Map(response =>
@@ -119,14 +124,10 @@ public record DynamicBearerAuthenticatedMessageProvider : IRestApiAuthenticatedM
         {
             var tokenResponse = JsonSerializer.Deserialize<JsonElement>(result);
             this.currentToken = tokenResponse.GetProperty(this.tokenPropertyName).GetString();
-            this.validTo = !string.IsNullOrEmpty(this.expirationPeriodPropertyName)
-                ? DateTimeOffset.UtcNow.AddSeconds(tokenResponse.GetProperty(this.expirationPeriodPropertyName)
-                    .GetInt32())
+            this.validTo = !string.IsNullOrEmpty(expirationPeriodPropertyName)
+                ? DateTimeOffset.UtcNow.AddSeconds(tokenResponse.GetProperty(this.expirationPeriodPropertyName).GetInt32())
                 : DateTimeOffset.UtcNow.Add(this.expirationPeriod);
-            return new HttpRequestMessage
-            {
-                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", this.currentToken) }
-            };
+            return this.GetRequest();
         });
     }
 
