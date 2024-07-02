@@ -247,7 +247,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
     [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
-        PagedUriProvider uriProvider,
+        IPaginatedApiUriProvider uriProvider,
         DynamicBearerAuthenticatedMessageProvider authHeaderAuthenticatedMessageProvider,
         bool isBackfilling,
         TimeSpan changeCaptureInterval,
@@ -279,7 +279,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
     [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
-        PagedUriProvider uriProvider,
+        IPaginatedApiUriProvider uriProvider,
         FixedHeaderAuthenticatedMessageProvider headerAuthenticatedMessageProvider,
         bool isBackfilling,
         TimeSpan changeCaptureInterval,
@@ -311,7 +311,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <param name="responsePropertyKeyChain">Response property key chain</param>
     [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static RestApiSource Create(
-        PagedUriProvider uriProvider,
+        IPaginatedApiUriProvider uriProvider,
         DynamicBearerAuthenticatedMessageProvider authHeaderAuthenticatedMessageProvider,
         bool isBackfilling,
         TimeSpan changeCaptureInterval,
