@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Akka.Actor;
 using Akka.Streams;
+using Akka.Streams.Dsl;
 using Akka.Streams.Stage;
 using Arcane.Framework.Contracts;
 using Arcane.Framework.Sources.Base;
@@ -57,6 +59,24 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
             SourceEntity = this.blobContainer,
             SourceLocation = this.prefix
         };
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Source"/> for Microsoft Common Data Model (CDM) change feed.
+    /// </summary>
+    /// <param name="blobContainer">Container name (Blob storage container, S3 bucket etc...)</param>
+    /// <param name="prefix">Filter objects by prefix</param>
+    /// <param name="blobStorageService">Blob storage service instance</param>
+    /// <param name="changeCaptureInterval">How often check for storage updates</param>
+    /// <returns></returns>
+    [ExcludeFromCodeCoverage(Justification = "Factory method")]
+    public static BlobStorageSource Create(
+        string blobContainer,
+        string prefix,
+        IBlobStorageService blobStorageService,
+        TimeSpan changeCaptureInterval)
+    {
+        return new BlobStorageSource(blobContainer, prefix, blobStorageService, changeCaptureInterval);
     }
 
     private class SourceLogic : TimerGraphStageLogic
