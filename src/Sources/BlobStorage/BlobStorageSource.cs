@@ -20,11 +20,11 @@ namespace Arcane.Framework.Sources.BlobStorage;
 public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
 {
     private readonly string prefix;
-    private readonly IBlobStorageService blobStorageService;
+    private readonly IBlobStorageListService blobStorageService;
     private readonly TimeSpan changeCaptureInterval;
     private readonly string blobContainer;
 
-    private BlobStorageSource(string blobContainer, string prefix, IBlobStorageService blobStorageService,
+    private BlobStorageSource(string blobContainer, string prefix, IBlobStorageListService blobStorageService,
         TimeSpan changeCaptureInterval)
     {
         this.prefix = prefix;
@@ -84,7 +84,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
         private const string TimerKey = nameof(SourceLogic);
 
         private readonly string prefix;
-        private readonly IBlobStorageService blobStorageService;
+        private readonly IBlobStorageListService blobStorageService;
         private readonly TimeSpan changeCaptureInterval;
         private readonly LocalOnlyDecider decider;
         private readonly BlobStorageSource source;
