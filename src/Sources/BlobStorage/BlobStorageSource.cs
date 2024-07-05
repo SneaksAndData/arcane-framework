@@ -35,7 +35,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
     }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.InitialAttributes"/>
-    protected override Attributes InitialAttributes { get; } = Attributes.CreateName(nameof(CdmChangeFeedSource));
+    protected override Attributes InitialAttributes { get; } = Attributes.CreateName(nameof(BlobStorageSource));
 
     /// <summary>
     /// Source outlet
@@ -62,13 +62,13 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
     }
 
     /// <summary>
-    /// Creates a <see cref="Source"/> for Microsoft Common Data Model (CDM) change feed.
+    /// Creates a <see cref="Source"/> for a cloud blob storage container.
     /// </summary>
     /// <param name="blobContainer">Container name (Blob storage container, S3 bucket etc...)</param>
     /// <param name="prefix">Filter objects by prefix</param>
     /// <param name="blobStorageService">Blob storage service instance</param>
     /// <param name="changeCaptureInterval">How often check for storage updates</param>
-    /// <returns></returns>
+    /// <returns>BlobStorageSource instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static BlobStorageSource Create(
         string blobContainer,
@@ -133,7 +133,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
                     this.FailStage(ex);
                     break;
                 default:
-                    this.ScheduleOnce(TimerKey, TimeSpan.FromSeconds(1));
+                    this.ScheduleOnce(TimerKey, this.changeCaptureInterval);
                     break;
             }
         }
@@ -145,10 +145,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
                 this.EmitMultiple(this.source.Out, this.blobs);
                 this.blobs = Enumerable.Empty<string>();
             }
-            else
-            {
-                this.ScheduleOnce(TimerKey, this.changeCaptureInterval);
-            }
+            this.ScheduleOnce(TimerKey, this.changeCaptureInterval);
         }
 
         private void GetBlobs()
