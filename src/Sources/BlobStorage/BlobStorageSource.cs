@@ -14,7 +14,7 @@ namespace Arcane.Framework.Sources.BlobStorage;
 
 /// <summary>
 /// Akka source that emits list of blobs in a blob container with a given prefix.
-/// The source enumerates a cloud blob storage content (e.g. S3 or Azure Blob Container) ane emits list of objects
+/// The source enumerates a cloud blob storage content (e.g. S3 or Azure Blob Container) and emits list of objects
 /// that exist in the storage.
 /// </summary>
 public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
