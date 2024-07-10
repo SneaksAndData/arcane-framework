@@ -73,7 +73,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
     public static BlobStorageSource Create(
         string blobContainer,
         string prefix,
-        IBlobStorageService blobStorageService,
+        IBlobStorageListService blobStorageService,
         TimeSpan changeCaptureInterval)
     {
         return new BlobStorageSource(blobContainer, prefix, blobStorageService, changeCaptureInterval);
