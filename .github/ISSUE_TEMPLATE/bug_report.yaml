@@ -1,0 +1,34 @@
+name: Bug report
+description: Create a bug report to help us to improve
+title: "[BUG] ..."
+labels:
+  - code/bug
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Briefly describe the problem you are having in a few paragraphs.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce the issue
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Describe the results you expected
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: System information
+      placeholder: Arcane version, OS, dotnet version etc.
