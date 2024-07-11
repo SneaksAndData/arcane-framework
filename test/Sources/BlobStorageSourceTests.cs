@@ -25,8 +25,7 @@ public class BlobStorageSourceTests: IDisposable
         this.mockBlobStorageService
             .Setup(s => s.ListBlobsAsEnumerable(It.IsAny<string>()))
             .Returns(new[] { new StoredBlob { Name = "key/value/item.csv", LastModified = DateTimeOffset.UtcNow } });
-        var blobStorageSource = BlobStorageSource.Create("container",
-            "",
+        var blobStorageSource = BlobStorageSource.Create("s3a://bucket/prefix",
             this.mockBlobStorageService.Object,
             TimeSpan.FromMinutes(1));
         var source = Source.FromGraph(blobStorageSource);
@@ -64,8 +63,7 @@ public class BlobStorageSourceTests: IDisposable
                 callCount++;
                 return Array.Empty<StoredBlob>();
             });
-        var blobStorageSource = BlobStorageSource.Create("container",
-            "",
+        var blobStorageSource = BlobStorageSource.Create("s3a://bucket/prefix",
             this.mockBlobStorageService.Object,
             TimeSpan.FromSeconds(1));
         var source = Source.FromGraph(blobStorageSource);
