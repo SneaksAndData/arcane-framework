@@ -6,8 +6,6 @@ using Akka.Actor;
 using Akka.Streams;
 using Akka.Streams.Dsl;
 using Akka.Streams.Stage;
-using Arcane.Framework.Contracts;
-using Arcane.Framework.Sources.Base;
 using Snd.Sdk.Storage.Base;
 
 namespace Arcane.Framework.Sources.BlobStorage;
@@ -17,20 +15,18 @@ namespace Arcane.Framework.Sources.BlobStorage;
 /// The source enumerates a cloud blob storage content (e.g. S3 or Azure Blob Container) and emits list of objects
 /// that exist in the storage.
 /// </summary>
-public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
+public class BlobStorageSource : GraphStage<SourceShape<string>>
 {
-    private readonly string prefix;
+    private readonly string path;
     private readonly IBlobStorageListService blobStorageService;
     private readonly TimeSpan changeCaptureInterval;
-    private readonly string blobContainer;
 
-    private BlobStorageSource(string blobContainer, string prefix, IBlobStorageListService blobStorageService,
+    private BlobStorageSource(string path, IBlobStorageListService blobStorageService,
         TimeSpan changeCaptureInterval)
     {
-        this.prefix = prefix;
+        this.path = path;
         this.blobStorageService = blobStorageService;
         this.changeCaptureInterval = changeCaptureInterval;
-        this.blobContainer = blobContainer;
         this.Shape = new SourceShape<string>(this.Out);
     }
 
@@ -51,39 +47,27 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
         return new SourceLogic(this);
     }
 
-    /// <inheritdoc cref="ITaggedSource.GetDefaultTags"/>
-    public SourceTags GetDefaultTags()
-    {
-        return new SourceTags
-        {
-            SourceEntity = this.blobContainer,
-            SourceLocation = this.prefix
-        };
-    }
-
     /// <summary>
     /// Creates a <see cref="Source"/> for a cloud blob storage container.
     /// </summary>
-    /// <param name="blobContainer">Container name (Blob storage container, S3 bucket etc...)</param>
-    /// <param name="prefix">Filter objects by prefix</param>
+    /// <param name="path">Filter objects by prefix</param>
     /// <param name="blobStorageService">Blob storage service instance</param>
     /// <param name="changeCaptureInterval">How often check for storage updates</param>
     /// <returns>BlobStorageSource instance</returns>
     [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static BlobStorageSource Create(
-        string blobContainer,
-        string prefix,
+        string path,
         IBlobStorageListService blobStorageService,
         TimeSpan changeCaptureInterval)
     {
-        return new BlobStorageSource(blobContainer, prefix, blobStorageService, changeCaptureInterval);
+        return new BlobStorageSource(path, blobStorageService, changeCaptureInterval);
     }
 
     private class SourceLogic : TimerGraphStageLogic
     {
         private const string TimerKey = nameof(SourceLogic);
 
-        private readonly string prefix;
+        private readonly string path;
         private readonly IBlobStorageListService blobStorageService;
         private readonly TimeSpan changeCaptureInterval;
         private readonly LocalOnlyDecider decider;
@@ -94,7 +78,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
         public SourceLogic(BlobStorageSource source) : base(source.Shape)
         {
             this.source = source;
-            this.prefix = source.prefix;
+            this.path = source.path;
             this.blobStorageService = source.blobStorageService;
             this.changeCaptureInterval = source.changeCaptureInterval;
             this.blobs = Enumerable.Empty<string>();
@@ -150,7 +134,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>, ITaggedSource
 
         private void GetBlobs()
         {
-            this.blobs = this.blobStorageService.ListBlobsAsEnumerable(this.prefix).Select(s => s.Name).ToList();
+            this.blobs = this.blobStorageService.ListBlobsAsEnumerable(this.path).Select(s => s.Name).ToList();
         }
     }
 }
