@@ -107,7 +107,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         bool stopAfterBackfill = false,
         TimeSpan? schemaUpdateInterval = null)
     {
-        if (isBackfilling && !stopAfterBackfill)
+        if (!isBackfilling && stopAfterBackfill)
         {
             throw new ArgumentException(
                 $"{nameof(isBackfilling)} must be true if {nameof(stopAfterBackfill)} is set to true");
