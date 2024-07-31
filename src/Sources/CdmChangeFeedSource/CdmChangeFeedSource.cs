@@ -37,25 +37,25 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     private readonly IBlobStorageService blobStorage;
     private readonly TimeSpan changeCaptureInterval;
     private readonly string entityName;
-    private readonly bool fullLoadOnStart;
+    private readonly bool isBackfilling;
     private readonly string rootPath;
     private readonly TimeSpan schemaUpdateInterval;
-    private readonly bool stopAfterFullLoad;
+    private readonly bool stopAfterBackfill;
 
     private CdmChangeFeedSource(string rootPath,
         string entityName,
         IBlobStorageService blobStorage,
-        bool fullLoadOnStart,
+        bool isBackfilling,
         TimeSpan changeCaptureInterval,
-        bool stopAfterFullLoad,
+        bool stopAfterBackfill,
         TimeSpan schemaUpdateInterval)
     {
         this.rootPath = rootPath;
         this.entityName = entityName;
         this.blobStorage = blobStorage;
-        this.fullLoadOnStart = fullLoadOnStart;
+        this.isBackfilling = isBackfilling;
         this.changeCaptureInterval = changeCaptureInterval;
-        this.stopAfterFullLoad = stopAfterFullLoad;
+        this.stopAfterBackfill = stopAfterBackfill;
         this.Shape = new SourceShape<List<DataCell>>(this.Out);
         this.schemaUpdateInterval = schemaUpdateInterval;
     }
@@ -95,30 +95,30 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     /// <param name="blobStorage">Blob storage service</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="schemaUpdateInterval">Interval to refresh schema.</param>
-    /// <param name="fullLoadOnStart">Set to true to stream full current version of the table first.</param>
-    /// <param name="stopAfterFullLoad">Set to true if stream should stop after full load is finished</param>
+    /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
+    /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
     /// <returns></returns>
     [ExcludeFromCodeCoverage(Justification = "Factory method")]
     public static CdmChangeFeedSource Create(string rootPath,
         string entityName,
         IBlobStorageService blobStorage,
-        bool fullLoadOnStart = true,
+        bool isBackfilling = true,
         TimeSpan? changeCaptureInterval = null,
-        bool stopAfterFullLoad = false,
+        bool stopAfterBackfill = false,
         TimeSpan? schemaUpdateInterval = null)
     {
-        if (stopAfterFullLoad && !fullLoadOnStart)
+        if (!isBackfilling && stopAfterBackfill)
         {
             throw new ArgumentException(
-                $"{nameof(fullLoadOnStart)} must be true if {nameof(stopAfterFullLoad)} is set to true");
+                $"{nameof(isBackfilling)} must be true if {nameof(stopAfterBackfill)} is set to true");
         }
 
         return new CdmChangeFeedSource(rootPath,
             entityName,
             blobStorage,
-            fullLoadOnStart,
+            isBackfilling,
             changeCaptureInterval ?? TimeSpan.FromSeconds(15),
-            stopAfterFullLoad,
+            stopAfterBackfill,
             schemaUpdateInterval ?? TimeSpan.FromSeconds(60));
     }
 
@@ -170,12 +170,12 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         public bool IsRunningInBackfillMode { get; set; }
 
         /// <inheritdoc cref="IStopAfterBackfill.StopAfterBackfill"/>
-        public bool StopAfterBackfill => this.source.stopAfterFullLoad;
+        public bool StopAfterBackfill => this.source.stopAfterBackfill;
 
         public override void PreStart()
         {
             this.UpdateSchema(false);
-            if (this.source.fullLoadOnStart)
+            if (this.source.isBackfilling)
             {
                 this.PrepareEntityAsChanges();
             }

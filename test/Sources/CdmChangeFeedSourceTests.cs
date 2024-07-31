@@ -33,7 +33,7 @@ namespace Arcane.Framework.Tests.Sources
         [Theory]
         [InlineData(true, 11, "ValidEntity")]
         [InlineData(false, 8, "ValidEntity")]
-        public async Task GetChanges(bool fullLoadOnStart, int expectedRows, string entityName)
+        public async Task GetChanges(bool isBackfilling, int expectedRows, string entityName)
         {
             this.SetupTableMocks(entityName);
 
@@ -41,7 +41,7 @@ namespace Arcane.Framework.Tests.Sources
             var result = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
                     entityName: entityName,
                     blobStorage: this.mockBlobStorageService.Object,
-                    fullLoadOnStart: fullLoadOnStart,
+                    isBackfilling: isBackfilling,
                     changeCaptureInterval: TimeSpan.FromSeconds(15)))
                 .TakeWithin(TimeSpan.FromSeconds(5)).RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
 
@@ -65,7 +65,7 @@ namespace Arcane.Framework.Tests.Sources
                 _ = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
                         entityName: "ExceptionTest",
                         blobStorage: this.mockBlobStorageService.Object,
-                        fullLoadOnStart: false,
+                        isBackfilling: false,
                         changeCaptureInterval: TimeSpan.FromSeconds(15)))
                     .TakeWithin(TimeSpan.FromSeconds(5))
                     .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
@@ -230,21 +230,21 @@ namespace Arcane.Framework.Tests.Sources
         [Theory]
         [InlineData(true, true, 11, "ValidEntity")]
         [InlineData(false, true, 19, "ValidEntity")]
-        public async Task StopAfterBackfill(bool stopAfterFullLoad, bool fullLoadOnStart, int expectedRows, string entityName)
+        public async Task StopAfterBackfill(bool stopAfterBackfill, bool isBackfilling, int expectedRows, string entityName)
         {
             this.mockBlobStorageService.Reset();
             this.SetupTableMocks(entityName);
             var result = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
                     entityName: entityName,
                     blobStorage: this.mockBlobStorageService.Object,
-                    fullLoadOnStart: fullLoadOnStart,
-                    stopAfterFullLoad: stopAfterFullLoad,
+                    isBackfilling: isBackfilling,
+                    stopAfterBackfill: stopAfterBackfill,
                     changeCaptureInterval: TimeSpan.FromSeconds(1)))
                 .TakeWithin(TimeSpan.FromSeconds(5))
                 .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
             this.mockBlobStorageService.Verify(
                 mbs => mbs.ListBlobsAsEnumerable(It.IsAny<string>()),
-                stopAfterFullLoad ? Times.Once() : Times.AtLeast(2)
+                stopAfterBackfill ? Times.Once() : Times.AtLeast(2)
              );
             Assert.Equal(expectedRows, result.Count);
         }
@@ -252,14 +252,14 @@ namespace Arcane.Framework.Tests.Sources
         [Theory]
         [InlineData(false, "InvalidBinaryType")]
         [InlineData(true, "InvalidBinaryType")]
-        public async Task TestThrowsOnUnknownType(bool fullLoadOnStart, string entityName)
+        public async Task TestThrowsOnUnknownType(bool isBackfilling, string entityName)
         {
             this.SetupTableMocks("InvalidBinaryType");
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await Source.FromGraph(
                     CdmChangeFeedSource.Create(rootPath: "test",
                         entityName: entityName,
                         blobStorage: this.mockBlobStorageService.Object,
-                        fullLoadOnStart: fullLoadOnStart,
+                        isBackfilling: isBackfilling,
                         changeCaptureInterval: TimeSpan.FromSeconds(15)))
                 .TakeWithin(TimeSpan.FromSeconds(5))
                 .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer));
@@ -273,7 +273,7 @@ namespace Arcane.Framework.Tests.Sources
             var schema = CdmChangeFeedSource.Create(rootPath: "test",
                 entityName: "ValidEntity",
                 blobStorage: this.mockBlobStorageService.Object,
-                fullLoadOnStart: true,
+                isBackfilling: true,
                 changeCaptureInterval: TimeSpan.FromSeconds(15)).GetParquetSchema();
 
             Assert.Equal(Constants.UPSERT_MERGE_KEY, schema.Fields.Last().Name);
