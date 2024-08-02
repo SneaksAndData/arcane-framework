@@ -331,7 +331,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
     protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
 
-    private sealed class SourceLogic : TimerGraphStageLogic, IStopAfterBackfill
+    private sealed class SourceLogic : PollingSourceLogic, IStopAfterBackfill
     {
         private const string TimerKey = nameof(RestApiSource);
         private readonly LocalOnlyDecider decider;
@@ -341,7 +341,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
 
         private Action<Task<Option<JsonElement>>> responseReceived;
 
-        public SourceLogic(RestApiSource source) : base(source.Shape)
+        public SourceLogic(RestApiSource source) : base(source.changeCaptureInterval, source.Shape)
         {
             this.source = source;
 
@@ -424,7 +424,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
                 }
 
                 this.Log.Info(
-                    $"No data returned by latest call, next check in {this.source.changeCaptureInterval.TotalSeconds} seconds");
+                    $"No data returned by latest call, next check in {this.ChangeCaptureInterval.TotalSeconds} seconds");
 
                 this.ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
             }
@@ -443,7 +443,7 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
                     this.Log.Debug("Successfully authenticated");
                     var (maybeNextUri, requestMethod, maybePayload) = this.source.uriProvider.GetNextResultUri(
                         this.currentResponse, this.IsRunningInBackfillMode, this.source.lookBackInterval,
-                        this.source.changeCaptureInterval);
+                        this.ChangeCaptureInterval);
 
                     if (maybeNextUri.IsEmpty)
                     {
