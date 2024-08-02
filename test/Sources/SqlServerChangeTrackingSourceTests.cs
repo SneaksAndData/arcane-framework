@@ -119,9 +119,8 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
             .Create(this.connectionString, "dbo", nameof(SqlServerChangeTrackingSourceTests), "test")
             .GetParquetSchema();
 
-        Assert.Equal(6,
-            schema.Fields
-                .Count); // two base columns, SYS_CHANGE_VERSION, SYS_CHANGE_OPERATION, ChangeTrackingVersion and ARCANE_MERGE_KEY
+        // two base columns, SYS_CHANGE_VERSION, SYS_CHANGE_OPERATION, ChangeTrackingVersion and ARCANE_MERGE_KEY
+        Assert.Equal(6, schema.Fields .Count);
     }
 
     [Fact]
@@ -130,7 +129,8 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
         Assert.Throws<ArgumentException>(() =>
         {
             var source = SqlServerChangeTrackingSource
-                .Create(this.connectionString, "dbo", nameof(SqlServerChangeTrackingSourceTests), "test");
+                .Create(this.connectionString, "dbo", nameof(SqlServerChangeTrackingSourceTests), "test",
+                    changeCaptureInterval: TimeSpan.FromHours(0));
             Source.FromGraph(source)
                 .TakeWithin(TimeSpan.FromSeconds(5))
                 .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
