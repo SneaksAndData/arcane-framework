@@ -280,6 +280,22 @@ namespace Arcane.Framework.Tests.Sources
             Assert.Equal(typeof(string), (schema.Fields.Last() as DataField)!.ClrType);
         }
 
+        [Fact]
+        public void FailsIfChangeCaptureIntervalIsEmpty()
+        {
+            Assert.Throws<ArgumentException>(() =>
+            {
+                var source = CdmChangeFeedSource.Create(rootPath: "test",
+                    entityName: "ValidEntity",
+                    blobStorage: this.mockBlobStorageService.Object,
+                    isBackfilling: true,
+                    changeCaptureInterval: TimeSpan.FromSeconds(0));
+                Source.FromGraph(source)
+                    .TakeWithin(TimeSpan.FromSeconds(5))
+                    .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
+            });
+        }
+
         private void SetupTableMocks(string entityName)
         {
             this.mockBlobStorageService.Setup(mbs => mbs.ListBlobsAsEnumerable(It.IsAny<string>())).Returns(

@@ -125,6 +125,19 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
     }
 
     [Fact]
+    public void FailsIfChangeCaptureIntervalIsEmpty()
+    {
+        Assert.Throws<ArgumentException>(() =>
+        {
+            var source = SqlServerChangeTrackingSource
+                .Create(this.connectionString, "dbo", nameof(SqlServerChangeTrackingSourceTests), "test");
+            Source.FromGraph(source)
+                .TakeWithin(TimeSpan.FromSeconds(5))
+                .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
+        });
+    }
+
+    [Fact]
     public void GetColumns()
     {
         var inputCols = new Dictionary<string, string>
