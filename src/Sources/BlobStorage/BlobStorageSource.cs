@@ -6,6 +6,7 @@ using Akka.Actor;
 using Akka.Streams;
 using Akka.Streams.Dsl;
 using Akka.Streams.Stage;
+using Arcane.Framework.Sources.Base;
 using Snd.Sdk.Storage.Base;
 
 namespace Arcane.Framework.Sources.BlobStorage;
@@ -63,24 +64,22 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>
         return new BlobStorageSource(path, blobStorageService, changeCaptureInterval);
     }
 
-    private class SourceLogic : TimerGraphStageLogic
+    private class SourceLogic : PollingSourceLogic
     {
         private const string TimerKey = nameof(SourceLogic);
 
         private readonly string path;
         private readonly IBlobStorageListService blobStorageService;
-        private readonly TimeSpan changeCaptureInterval;
         private readonly LocalOnlyDecider decider;
         private readonly BlobStorageSource source;
 
         private IEnumerable<string> blobs;
 
-        public SourceLogic(BlobStorageSource source) : base(source.Shape)
+        public SourceLogic(BlobStorageSource source) : base(source.changeCaptureInterval, source.Shape)
         {
             this.source = source;
             this.path = source.path;
             this.blobStorageService = source.blobStorageService;
-            this.changeCaptureInterval = source.changeCaptureInterval;
             this.blobs = Enumerable.Empty<string>();
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
@@ -117,7 +116,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>
                     this.FailStage(ex);
                     break;
                 default:
-                    this.ScheduleOnce(TimerKey, this.changeCaptureInterval);
+                    this.ScheduleOnce(TimerKey, this.ChangeCaptureInterval);
                     break;
             }
         }
@@ -129,7 +128,7 @@ public class BlobStorageSource : GraphStage<SourceShape<string>>
                 this.EmitMultiple(this.source.Out, this.blobs);
                 this.blobs = Enumerable.Empty<string>();
             }
-            this.ScheduleOnce(TimerKey, this.changeCaptureInterval);
+            this.ScheduleOnce(TimerKey, this.ChangeCaptureInterval);
         }
 
         private void GetBlobs()

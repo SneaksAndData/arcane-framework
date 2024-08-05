@@ -137,7 +137,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         return SimpleCdmEntity.FromJson(schemaData);
     }
 
-    private sealed class SourceLogic : TimerGraphStageLogic, IStopAfterBackfill
+    private sealed class SourceLogic : PollingSourceLogic, IStopAfterBackfill
     {
         private const string TimerKey = "Source";
         private readonly string changeFeedPath;
@@ -150,7 +150,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         private DateTimeOffset? maxAvailableTimestamp;
         private DateTimeOffset? nextSchemaUpdateTimestamp;
 
-        public SourceLogic(CdmChangeFeedSource source) : base(source.Shape)
+        public SourceLogic(CdmChangeFeedSource source) : base(source.changeCaptureInterval, source.Shape)
         {
             this.source = source;
             this.changeFeedPath = $"{source.rootPath}/ChangeFeed/{source.entityName}";
@@ -346,7 +346,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             {
                 if (!this.CompleteStageAfterFullLoad())
                 {
-                    this.ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
+                    this.ScheduleOnce(TimerKey, this.ChangeCaptureInterval);
                 }
             }
             else

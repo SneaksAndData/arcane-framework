@@ -175,7 +175,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             .Replace("{MERGE_KEY}", Constants.UPSERT_MERGE_KEY);
     }
 
-    private sealed class SourceLogic : TimerGraphStageLogic, IStopAfterBackfill
+    private sealed class SourceLogic : PollingSourceLogic, IStopAfterBackfill
     {
         private const string TimerKey = "Source";
         private readonly LocalOnlyDecider decider;
@@ -190,7 +190,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         private Action<Task<Option<List<DataCell>>>> recordsReceived;
         private List<(string columnName, bool isPrimaryKey)> tableColumns;
 
-        public SourceLogic(SqlServerChangeTrackingSource source) : base(source.Shape)
+        public SourceLogic(SqlServerChangeTrackingSource source) : base(source.changeCaptureInterval, source.Shape)
         {
             this.source = source;
             this.sqlConnection = new SqlConnection(this.source.connectionString);
@@ -419,7 +419,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                 }
 
                 this.GetChanges();
-                this.ScheduleOnce(TimerKey, this.source.changeCaptureInterval);
+                this.ScheduleOnce(TimerKey, this.ChangeCaptureInterval);
             }
             else
             {

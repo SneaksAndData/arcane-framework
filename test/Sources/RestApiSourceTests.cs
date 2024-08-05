@@ -65,7 +65,7 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
                 new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 HttpMethod.Get)
             .WithPageResolver(new PageResolverConfiguration
-                { ResolverPropertyKeyChain = new[] { "TotalPages" }, ResolverType = PageResolverType.COUNTER });
+                { ResolverPropertyKeyChain = ["TotalPages"], ResolverType = PageResolverType.COUNTER });
     }
 
     [Fact]
@@ -202,11 +202,33 @@ public class RestApiSourceTests : IClassFixture<AkkaFixture>
         var src = RestApiSource.Create(this.pdb, this.dynamicAuth, true, TimeSpan.FromSeconds(5), TimeSpan.FromDays(1),
             this.mockHttp.Object, true, Policy.RateLimitAsync(1, TimeSpan.FromSeconds(5)),
             new OpenApiSchema(),
-            new[] { "MockRootValue", "MockEntryValue" });
+            ["MockRootValue", "MockEntryValue"]);
 
         var result = await Source.FromGraph(src).RunWith(Sink.Seq<JsonElement>(), this.akkaFixture.Materializer);
 
         Assert.Equal(mockContent.TotalPages * 2, result.Count);
+    }
+
+    [Fact]
+    public void FailsIfChangeCaptureIntervalIsEmpty()
+    {
+        Assert.Throws<ArgumentException>(() =>
+        {
+            var source = RestApiSource.Create(
+                this.pdb,
+                this.dynamicAuth,
+                true,
+                TimeSpan.FromSeconds(0),
+                TimeSpan.FromDays(1),
+                this.mockHttp.Object,
+                true,
+                Policy.RateLimitAsync(1, TimeSpan.FromSeconds(5)),
+                new OpenApiSchema(),
+                ["MockRootValue", "MockEntryValue"]);
+            Source.FromGraph(source)
+                .TakeWithin(TimeSpan.FromSeconds(5))
+                .RunWith(Sink.Seq<JsonElement>(), this.akkaFixture.Materializer);
+        });
     }
 
     private class MockResult
