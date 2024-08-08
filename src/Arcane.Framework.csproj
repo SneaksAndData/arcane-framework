@@ -19,13 +19,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Sources\SqlServer\SqlSnippets\GetColumns.sql">
+        <None Update="Sources\SqlServer\SqlSnippets\GetColumns.sql" pack="true" PackagePath="Sources\SqlServer\SqlSnippets\GetColumns.sql">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Sources\SqlServer\SqlSnippets\GetSelectAllQuery.sql">
+        <None Update="Sources\SqlServer\SqlSnippets\GetSelectAllQuery.sql" pack="true" PackagePath="Sources\SqlServer\SqlSnippets\GetSelectAllQuery.sql">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery.sql">
+        <None Update="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery.sql" pack="true" PackagePath="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery.sql">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
