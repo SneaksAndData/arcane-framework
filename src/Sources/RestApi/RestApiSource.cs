@@ -22,7 +22,6 @@ using Arcane.Framework.Sources.RestApi.Services.AuthenticatedMessageProviders;
 using Arcane.Framework.Sources.RestApi.Services.AuthenticatedMessageProviders.Base;
 using Arcane.Framework.Sources.RestApi.Services.UriProviders;
 using Arcane.Framework.Sources.RestApi.Services.UriProviders.Base;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.OpenApi.Models;
 using Parquet.Data;
 using Polly.RateLimit;
@@ -393,6 +392,11 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
             }
         }
 
+        protected override void OnTimer(object timerKey)
+        {
+            this.PullChanges();
+        }
+
         private void OnRecordReceived(Task<Option<JsonElement>> readTask)
         {
             if (readTask.IsFaulted || readTask.IsCanceled)
@@ -509,10 +513,5 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
             } => Option<JsonElement>.None, // Potential server-side timeout due to overload
             _ => throw exception
         };
-
-        protected override void OnTimer(object timerKey)
-        {
-            this.PullChanges();
-        }
     }
 }
