@@ -22,6 +22,7 @@ using Arcane.Framework.Sources.RestApi.Services.AuthenticatedMessageProviders;
 using Arcane.Framework.Sources.RestApi.Services.AuthenticatedMessageProviders.Base;
 using Arcane.Framework.Sources.RestApi.Services.UriProviders;
 using Arcane.Framework.Sources.RestApi.Services.UriProviders.Base;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.OpenApi.Models;
 using Parquet.Data;
 using Polly.RateLimit;
@@ -169,7 +170,8 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     {
         return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, isBackfilling,
             changeCaptureInterval,
-            lookBackInterval, httpRequestTimeout, stopAfterBackfill, rateLimitPolicy, apiSchema, responsePropertyKeyChain);
+            lookBackInterval, httpRequestTimeout, stopAfterBackfill, rateLimitPolicy, apiSchema,
+            responsePropertyKeyChain);
     }
 
     /// <summary>
@@ -200,7 +202,8 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
     {
         return new RestApiSource(uriProvider, headerAuthenticatedMessageProvider, isBackfilling,
             changeCaptureInterval,
-            lookBackInterval, httpRequestTimeout, stopAfterBackfill, rateLimitPolicy, apiSchema, responsePropertyKeyChain);
+            lookBackInterval, httpRequestTimeout, stopAfterBackfill, rateLimitPolicy, apiSchema,
+            responsePropertyKeyChain);
     }
 
     /// <summary>
@@ -350,11 +353,11 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
                 Timeout = this.source.httpRequestTimeout
             };
 
-            this.decider = Decider.From((ex) => ex.GetType().Name switch
+            this.decider = Decider.From(ex => ex switch
             {
-                nameof(IOException) => Directive.Restart,
-                nameof(TimeoutException) => Directive.Restart,
-                nameof(HttpRequestException) => Directive.Restart,
+                IOException => Directive.Restart,
+                TimeoutException => Directive.Restart,
+                HttpRequestException => Directive.Restart,
                 _ => Directive.Stop
             });
 
@@ -434,70 +437,78 @@ public class RestApiSource : GraphStage<SourceShape<JsonElement>>, IParquetSourc
             }
         }
 
-        private void PullChanges()
-        {
-            this.source.rateLimitPolicy.ExecuteAsync(() => this.source.authenticatedMessageProvider
+        private void PullChanges() =>
+            this.source.rateLimitPolicy.ExecuteAsync(this.SendRequestOnce)
+                .TryMap(result => result, HandleException)
+                .ContinueWith(this.responseReceived);
+
+        private Task<Option<JsonElement>> SendRequestOnce() => this.source
+                .authenticatedMessageProvider
                 .GetAuthenticatedMessage(this.httpClient)
-                .Map(msg =>
-                {
-                    this.Log.Debug("Successfully authenticated");
-                    var (maybeNextUri, requestMethod, maybePayload) = this.source.uriProvider.GetNextResultUri(
-                        this.currentResponse, this.IsRunningInBackfillMode, this.source.lookBackInterval,
-                        this.ChangeCaptureInterval);
+                .Map(this.SendRequest)
+                .Flatten();
 
-                    if (maybeNextUri.IsEmpty)
-                    {
-                        return Task.FromResult(Option<JsonElement>.None);
-                    }
+        private Task<Option<JsonElement>> SendRequest(HttpRequestMessage msg)
+        {
+            this.Log.Debug("Successfully authenticated");
+            var (maybeNextUri, requestMethod, maybePayload) = this.source.uriProvider.GetNextResultUri(
+                this.currentResponse, this.IsRunningInBackfillMode, this.source.lookBackInterval,
+                this.ChangeCaptureInterval);
 
-                    msg.RequestUri = maybeNextUri.Value;
-                    msg.Method = requestMethod;
-
-                    if (maybePayload.HasValue)
-                    {
-                        msg.Content = new StringContent(maybePayload.Value);
-                        if (!string.IsNullOrEmpty(maybePayload.Value))
-                        {
-                            this.Log.Info($"Request payload for next result: {maybePayload.Value}");
-                        }
-                    }
-
-                    this.Log.Info($"Requesting next result from {msg.RequestUri}");
-
-                    return this.httpClient.SendAsync(msg, default(CancellationToken))
-                        .Map(response =>
-                        {
-                            if (response.IsSuccessStatusCode)
-                            {
-                                this.currentResponse = response;
-                                return response.Content.ReadAsStringAsync().Map(value =>
-                                {
-                                    this.Log.Debug($"Got response: {value}");
-                                    return JsonSerializer.Deserialize<JsonElement>(value).AsOption();
-                                });
-                            }
-
-                            var errorMsg =
-                                $"API request to {msg.RequestUri} failed with {response.StatusCode}, reason: {response.ReasonPhrase}, content: {response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult()}";
-
-                            this.Log.Warning(errorMsg);
-
-                            throw new HttpRequestException(errorMsg, null, response.StatusCode);
-                        }).Flatten();
-                }).Flatten()).TryMap(result => result, exception => exception switch
+            if (maybeNextUri.IsEmpty)
             {
-                RateLimitRejectedException => Option<JsonElement>.None, // configured rate limit
-                HttpRequestException
+                return Task.FromResult(Option<JsonElement>.None);
+            }
+
+            msg.RequestUri = maybeNextUri.Value;
+            msg.Method = requestMethod;
+
+            if (maybePayload.HasValue)
+            {
+                msg.Content = new StringContent(maybePayload.Value);
+                if (!string.IsNullOrEmpty(maybePayload.Value))
                 {
-                    StatusCode: HttpStatusCode.TooManyRequests
-                } => Option<JsonElement>.None, // API rate limit, in case configured rate limit is not good enough
-                HttpRequestException
+                    this.Log.Info($"Request payload for next result: {maybePayload.Value}");
+                }
+            }
+
+            this.Log.Info($"Requesting next result from {msg.RequestUri}");
+
+            return this.httpClient.SendAsync(msg, default(CancellationToken))
+                .Map(response =>
                 {
-                    StatusCode: HttpStatusCode.RequestTimeout
-                } => Option<JsonElement>.None, // Potential server-side timeout due to overload
-                _ => throw exception
-            }).ContinueWith(this.responseReceived);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        this.currentResponse = response;
+                        return response.Content.ReadAsStringAsync().Map(value =>
+                        {
+                            this.Log.Debug($"Got response: {value}");
+                            return JsonSerializer.Deserialize<JsonElement>(value).AsOption();
+                        });
+                    }
+
+                    var errorMsg =
+                        $"API request to {msg.RequestUri} failed with {response.StatusCode}, reason: {response.ReasonPhrase}, content: {response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult()}";
+
+                    this.Log.Warning(errorMsg);
+
+                    throw new HttpRequestException(errorMsg, null, response.StatusCode);
+                }).Flatten();
         }
+
+        private static Option<JsonElement> HandleException(Exception exception) => exception switch
+        {
+            RateLimitRejectedException => Option<JsonElement>.None, // configured rate limit
+            HttpRequestException
+            {
+                StatusCode: HttpStatusCode.TooManyRequests
+            } => Option<JsonElement>.None, // API rate limit, in case configured rate limit is not good enough
+            HttpRequestException
+            {
+                StatusCode: HttpStatusCode.RequestTimeout
+            } => Option<JsonElement>.None, // Potential server-side timeout due to overload
+            _ => throw exception
+        };
 
         protected override void OnTimer(object timerKey)
         {
