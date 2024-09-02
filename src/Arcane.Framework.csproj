@@ -10,8 +10,8 @@
         <PackageReference Include="SnD.Sdk" Version="1.1.20" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5"/>
         <PackageReference Include="Parquet.Net" Version="3.9.1"/>
-        <PackageReference Include="Microsoft.OpenApi" Version="1.6.15"/>
-        <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.6"/>
+        <PackageReference Include="Microsoft.OpenApi" Version="1.6.19"/>
+        <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.19"/>
     </ItemGroup>
 
     <ItemGroup>
