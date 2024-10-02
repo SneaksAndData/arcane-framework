@@ -23,10 +23,10 @@ public class SqlServerSourceTests : IClassFixture<ServiceFixture>, IClassFixture
     }
 
     [Fact]
-    public async Task Test()
+    public async Task TestPullChanges()
     {
         var result = await Source
-            .FromGraph(SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests)))
+            .FromGraph(SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests), TimeSpan.FromSeconds(1)))
             .TakeWithin(TimeSpan.FromSeconds(3))
             .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
 
@@ -36,9 +36,20 @@ public class SqlServerSourceTests : IClassFixture<ServiceFixture>, IClassFixture
     [Fact]
     public void GetParquetSchema()
     {
-        var schema = SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests))
+        var schema = SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests), TimeSpan.FromSeconds(1))
             .GetParquetSchema();
 
         Assert.Equal(2, schema.Fields.Count); // two base columns
+    }
+
+    [Fact]
+    public async Task ChangeCaptureInterval()
+    {
+        var result = await Source
+            .FromGraph(SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests), TimeSpan.FromSeconds(5)))
+            .TakeWithin(TimeSpan.FromSeconds(15))
+            .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
+
+        Assert.InRange(result.Count, 101, 101 * 3);
     }
 }
