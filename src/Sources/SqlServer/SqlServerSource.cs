@@ -32,13 +32,16 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     private readonly string connectionString;
     private readonly string schemaName;
     private readonly string tableName;
+    private readonly TimeSpan changeCaptureInterval;
 
-    private SqlServerSource(string connectionString, string schemaName, string tableName, int commandTimeout)
+    private SqlServerSource(string connectionString, string schemaName, string tableName, int commandTimeout,
+        TimeSpan changeCaptureInterval)
     {
         this.connectionString = connectionString;
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.commandTimeout = commandTimeout;
+        this.changeCaptureInterval = changeCaptureInterval;
 
         this.Shape = new SourceShape<List<DataCell>>(this.Out);
     }
@@ -82,10 +85,15 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
     /// <param name="connectionString">Sql server connection string</param>
     /// <param name="schemaName">Sql server schema name</param>
     /// <param name="tableName">Table name</param>
+    /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="commandTimeout">Sql server command execution timeout</param>
     [ExcludeFromCodeCoverage(Justification = "Factory method")]
-    public static SqlServerSource Create(string connectionString, string schemaName, string tableName, int commandTimeout = 3600)
-        => new(connectionString, schemaName, tableName, commandTimeout);
+    public static SqlServerSource Create(string connectionString,
+        string schemaName,
+        string tableName,
+        TimeSpan changeCaptureInterval,
+        int commandTimeout = 3600)
+        => new(connectionString, schemaName, tableName, commandTimeout, changeCaptureInterval);
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
     protected override GraphStageLogic CreateLogic(Attributes inheritedAttributes) => new SourceLogic(this);
@@ -96,7 +104,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
         return $"SELECT * FROM [{sqlConBuilder.InitialCatalog}].[{this.schemaName}].[{this.tableName}]";
     }
 
-    private sealed class SourceLogic : TimerGraphStageLogic
+    private sealed class SourceLogic : PollingSourceLogic
     {
         private const string TimerKey = "PollTimer";
         private readonly LocalOnlyDecider decider;
@@ -105,7 +113,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
         private SqlDataReader reader;
         private Action<Task<Option<List<DataCell>>>> recordsReceived;
 
-        public SourceLogic(SqlServerSource source) : base(source.Shape)
+        public SourceLogic(SqlServerSource source) : base(source.changeCaptureInterval, source.Shape)
         {
             this.source = source;
             this.sqlConnection = new SqlConnection(this.source.connectionString);
@@ -143,7 +151,7 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
                         this.FailStage(readTask.Exception);
                         break;
                     default:
-                        this.ScheduleOnce(TimerKey, TimeSpan.FromSeconds(1));
+                        this.ScheduleOnce(TimerKey, this.ChangeCaptureInterval);
                         break;
                 }
 
