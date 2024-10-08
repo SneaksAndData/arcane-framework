@@ -93,7 +93,8 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         bool dropCompletionToken = false, string metadataSinkPathSegment = "metadata")
     {
         return new ParquetSink(parquetSchema, storageWriter, parquetFilePath, rowGroupsPerFile, createSchemaFile,
-            partitionByDate, dataSinkPathSegment, schemaSinkPathSegment, dropCompletionToken, streamMetadata, metadataSinkPathSegment);
+            partitionByDate, dataSinkPathSegment, schemaSinkPathSegment, dropCompletionToken, streamMetadata,
+            metadataSinkPathSegment);
     }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.CreateLogicAndMaterializedValue"/>

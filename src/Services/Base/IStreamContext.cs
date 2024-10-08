@@ -9,22 +9,22 @@ namespace Arcane.Framework.Services.Base;
 public interface IStreamContext
 {
     /// <summary>
-    /// The stream identifier
+    /// The stream identifier.
     /// </summary>
     string StreamId { get; }
 
     /// <summary>
-    /// True if stream is running in backfill (full reload) mode
+    /// True if stream is running in backfill (full reload) mode.
     /// </summary>
     bool IsBackfilling { get; }
 
     /// <summary>
-    /// Kind of the custom resource that manages the stream
+    /// Kind of the custom resource that manages the stream.
     /// </summary>
     string StreamKind { get; }
 
     /// <summary>
-    /// Stream metadata that can be used by the stream consumer
+    /// Stream metadata that can be used by the stream consumer.
     /// </summary>
-    public Option<StreamMetadata> StreamMetadata { get; }
+    Option<StreamMetadata> StreamMetadata { get; }
 }
