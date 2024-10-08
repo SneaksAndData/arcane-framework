@@ -1,6 +1,7 @@
 using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Services;
 using Arcane.Framework.Sinks.Services.Base;
+using Arcane.Framework.Sinks.Services.StreamMetadata.V1;
 using Snd.Sdk.Storage.Base;
 
 namespace Arcane.Framework.Sinks.Extensions;

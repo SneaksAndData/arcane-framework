@@ -101,7 +101,7 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
 
         await Source.From(mockIn).Select(v => v.ToList()).RunWith(sink, this.akkaFixture.Materializer);
 
-        this.mockBlobStorageService.Verify(m => m.RemoveBlob($"{basePath}/metadata", "partitions.json"), Times.Once);
+        this.mockBlobStorageService.Verify(m => m.RemoveBlob($"{basePath}/metadata", "v1/partitions.json"), Times.Once);
     }
 
     [Fact]
@@ -139,6 +139,6 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
 
         var expectedMetadata =
             """[{"name":"date","field_name":"my_column_with_date","field_format":"datetime"},{"name":"sales_organisation","field_name":"my_column_with_sales_org","field_format":"string"}]""";
-        this.mockBlobStorageService.Verify(m => m.SaveTextAsBlob(expectedMetadata, $"{basePath}/metadata", "partitions.json"), Times.Once);
+        this.mockBlobStorageService.Verify(m => m.SaveTextAsBlob(expectedMetadata, $"{basePath}/metadata", "v1/partitions.json"), Times.Once);
     }
 }

@@ -6,7 +6,7 @@ using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Services.Base;
 using Snd.Sdk.Storage.Base;
 
-namespace Arcane.Framework.Sinks.Services;
+namespace Arcane.Framework.Sinks.Services.StreamMetadata.V1;
 
 /// <summary>
 /// A stream metadata writer that writes partitions metadata to a blob storage
@@ -16,7 +16,7 @@ public class PartitionsWriter: IMetadataWriter
     private readonly IBlobStorageWriter blobStorageWriter;
     private readonly Option<StreamPartition[]> partitions;
     private readonly string basePath;
-    private const string MetadataFileName = "partitions.json";
+    private const string MetadataFileName = "v1/partitions.json";
 
     /// <summary>
     /// A stream metadata writer that writes partitions metadata to a blob storage
