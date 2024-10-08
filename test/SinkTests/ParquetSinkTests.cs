@@ -2,7 +2,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Akka.Streams.Dsl;
-using Arcane.Framework.Sinks;
+using Akka.Util;
+using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Tests.Fixtures;
 using Moq;
@@ -47,6 +48,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
 
         await Source.From(Enumerable.Range(0, blocks).Select(_ => columns.ToList())).RunWith(
             ParquetSink.Create(schema, this.mockBlobStorageService.Object, $"tmp@{pathString}",
+                new StreamMetadata(Option<StreamPartition[]>.None),
                 rowGroupsPerBlock, createSchemaFile, dropCompletionToken: dropCompletionToken),
             this.akkaFixture.Materializer);
 
@@ -66,5 +68,69 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
                 mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
                     It.Is<string>(fn => fn.EndsWith(".COMPLETED")), It.IsAny<bool>()), Times.Exactly(1));
         }
+    }
+
+    [Fact]
+    public async Task RemovesEmptyStreamMetadata()
+    {
+        var basePath = "s3a://bucket/path";
+        var columns = Enumerable
+            .Range(0, 10)
+            .Select(col => new DataColumn(new DataField<int?>(col.ToString()), Enumerable.Range(0, 10).ToArray()))
+            .ToList();
+        var schema = new Schema(columns.Select(c => c.Field).ToList());
+
+        var sink = ParquetSink.Create(schema,
+            this.mockBlobStorageService.Object,
+            basePath,
+            new StreamMetadata(Option<StreamPartition[]>.None),
+            5,
+            true,
+            false);
+
+        await Source.From(Enumerable.Range(0, 10).Select(_ => columns.ToList())).RunWith(sink, this.akkaFixture.Materializer);
+
+        this.mockBlobStorageService.Verify(m => m.RemoveBlob($"{basePath}/metadata", "partitions.json"), Times.Once);
+    }
+
+    [Fact]
+    public async Task OverwritesExistingSchemaMetadata()
+    {
+        var basePath = "s3a://bucket/path";
+        var columns = Enumerable
+            .Range(0, 10)
+            .Select(col => new DataColumn(new DataField<int?>(col.ToString()), Enumerable.Range(0, 10).ToArray()))
+            .ToList();
+        var schema = new Schema(columns.Select(c => c.Field).ToList());
+
+        var metadata = new StreamMetadata(
+            new[]
+            {
+                new StreamPartition
+                {
+                    Name = "date",
+                    FieldName = "my_column_with_date",
+                    FieldFormat = "datetime"
+                },
+                new StreamPartition
+                {
+                    Name = "sales_organisation",
+                    FieldName = "my_column_with_sales_org",
+                    FieldFormat = "string"
+                }
+            });
+        var sink = ParquetSink.Create(schema,
+            this.mockBlobStorageService.Object,
+            basePath,
+            metadata,
+            5,
+            true,
+            false);
+
+        await Source.From(Enumerable.Range(0, 10).Select(_ => columns.ToList())).RunWith(sink, this.akkaFixture.Materializer);
+
+        var expectedMetadata =
+            """[{"name":"date","field_name":"my_column_with_date","field_format":"datetime"},{"name":"sales_organisation","field_name":"my_column_with_sales_org","field_format":"string"}]""";
+        this.mockBlobStorageService.Verify(m => m.SaveTextAsBlob(expectedMetadata, $"{basePath}/metadata", "partitions.json"), Times.Once);
     }
 }

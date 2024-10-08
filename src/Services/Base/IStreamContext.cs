@@ -1,4 +1,7 @@
-﻿namespace Arcane.Framework.Services.Base;
+﻿using Akka.Util;
+using Arcane.Framework.Sinks.Models;
+
+namespace Arcane.Framework.Services.Base;
 
 /// <summary>
 /// Provides red-only access to the stream configuration properties and the stream metadata to the stream stages.
@@ -6,7 +9,7 @@
 public interface IStreamContext
 {
     /// <summary>
-    /// Id of the stream
+    /// The stream identifier
     /// </summary>
     string StreamId { get; }
 
@@ -19,4 +22,9 @@ public interface IStreamContext
     /// Kind of the custom resource that manages the stream
     /// </summary>
     string StreamKind { get; }
+
+    /// <summary>
+    /// Stream metadata that can be used by the stream consumer
+    /// </summary>
+    public Option<StreamMetadata> StreamMetadata { get; }
 }
