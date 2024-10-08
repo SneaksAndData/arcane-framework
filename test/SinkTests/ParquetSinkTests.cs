@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Akka;
 using Akka.Streams.Dsl;
 using Arcane.Framework.Sinks;
 using Arcane.Framework.Sinks.Parquet;
@@ -66,5 +67,30 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
                 mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
                     It.Is<string>(fn => fn.EndsWith(".COMPLETED")), It.IsAny<bool>()), Times.Exactly(1));
         }
+    }
+
+    [Fact]
+    public async Task HandleSchemaFailures()
+    {
+        this.mockBlobStorageService
+            .Setup(s => s.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<bool>()))
+            .ThrowsAsync(new Exception());
+
+        var columns = Enumerable.Range(0, 10)
+            .Select(col => new DataColumn(new DataField<int?>(col.ToString()), Enumerable.Range(0, 10).ToArray()))
+            .ToArray();
+
+        var schema = new Schema(columns.Select(c => c.Field).ToList());
+        var source = Source.From(Enumerable.Range(0, 10).Select(_ => columns.ToList()));
+
+        var sink = ParquetSink.Create(schema,
+            this.mockBlobStorageService.Object,
+            "s3a://bucket/object",
+            1,
+            true,
+            dropCompletionToken: true);
+
+        await Assert.ThrowsAsync<Exception>(async () => await source.RunWith(sink, this.akkaFixture.Materializer));
     }
 }
