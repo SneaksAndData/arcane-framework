@@ -7,6 +7,9 @@ using Akka.Actor;
 using Akka.Event;
 using Akka.Streams;
 using Akka.Streams.Stage;
+using Arcane.Framework.Sinks.Extensions;
+using Arcane.Framework.Sinks.Models;
+using Arcane.Framework.Sinks.Services.Base;
 using Parquet;
 using Parquet.Data;
 using Snd.Sdk.Storage.Base;
@@ -29,14 +32,16 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     private readonly string path;
     private readonly int rowGroupsPerFile;
     private readonly string schemaSinkPathSegment;
+    private readonly string metadataSinkPathSegment;
     private readonly IBlobStorageWriter storageWriter;
+    private readonly StreamMetadata metadata;
 
     /// <summary>
     /// Creates a new instance of <see cref="ParquetSink"/>
     /// </summary>
     private ParquetSink(Schema parquetSchema, IBlobStorageWriter storageWriter, string parquetFilePath,
         int rowGroupsPerFile, bool createSchemaFile, bool partitionByDate, string dataSinkPathSegment,
-        string schemaSinkPathSegment, bool dropCompletionToken)
+        string schemaSinkPathSegment, bool dropCompletionToken, StreamMetadata streamMetadata, string metadataSinkPathSegment)
     {
         this.parquetSchema = parquetSchema;
         this.storageWriter = storageWriter;
@@ -49,7 +54,9 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         this.partitionByDate = partitionByDate;
         this.dataSinkPathSegment = dataSinkPathSegment;
         this.schemaSinkPathSegment = schemaSinkPathSegment;
+        this.metadataSinkPathSegment = metadataSinkPathSegment;
         this.dropCompletionToken = dropCompletionToken;
+        this.metadata = streamMetadata;
 
         this.Shape = new SinkShape<List<ParquetColumn>>(this.In);
     }
@@ -77,13 +84,17 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     /// <param name="dataSinkPathSegment">Folder name to emit data</param>
     /// <param name="schemaSinkPathSegment">Folder name to emit schema</param>
     /// <param name="dropCompletionToken">True if sink should drop a file when complete.</param>
+    /// <param name="streamMetadata">Metadata that describes data produced by the stream</param>
+    /// <param name="metadataSinkPathSegment">Folder name to emit metadata</param>
     /// <returns></returns>
     public static ParquetSink Create(Schema parquetSchema, IBlobStorageWriter storageWriter, string parquetFilePath,
-        int rowGroupsPerFile = 1, bool createSchemaFile = false, bool partitionByDate = false,
-        string dataSinkPathSegment = "data", string schemaSinkPathSegment = "schema", bool dropCompletionToken = false)
+        StreamMetadata streamMetadata, int rowGroupsPerFile = 1, bool createSchemaFile = false,
+        bool partitionByDate = false, string dataSinkPathSegment = "data", string schemaSinkPathSegment = "schema",
+        bool dropCompletionToken = false, string metadataSinkPathSegment = "metadata")
     {
         return new ParquetSink(parquetSchema, storageWriter, parquetFilePath, rowGroupsPerFile, createSchemaFile,
-            partitionByDate, dataSinkPathSegment, schemaSinkPathSegment, dropCompletionToken);
+            partitionByDate, dataSinkPathSegment, schemaSinkPathSegment, dropCompletionToken, streamMetadata,
+            metadataSinkPathSegment);
     }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.CreateLogicAndMaterializedValue"/>
@@ -104,12 +115,14 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         private string schemaHash;
 
         private bool writeInProgress;
+        private readonly IMetadataWriter metadataWriter;
 
         public SinkLogic(ParquetSink sink, TaskCompletionSource<NotUsed> taskCompletion) :
             base(sink.Shape)
         {
             this.sink = sink;
             this.taskCompletion = taskCompletion;
+            this.metadataWriter = sink.metadata.ToStreamMetadataWriter(this.sink.storageWriter, this.GetMetadataPath());
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
@@ -142,6 +155,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
             // Keep going even if the upstream has finished so that we can process the task from the last element
             this.SetKeepGoing(true);
 
+            this.metadataWriter.Write(this.Log).GetAwaiter().GetResult();
             if (this.sink.createSchemaFile)
                 // dump empty schema file and then pull first element
             {
@@ -166,6 +180,11 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         private string GetSchemaPath()
         {
             return $"{this.sink.path}/{this.sink.schemaSinkPathSegment}";
+        }
+
+        private string GetMetadataPath()
+        {
+            return $"{this.sink.path}/{this.sink.metadataSinkPathSegment}";
         }
 
         private Task<UploadedBlob> CreateSchemaFile()
