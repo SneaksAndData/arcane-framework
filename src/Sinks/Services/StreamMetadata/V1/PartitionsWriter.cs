@@ -16,7 +16,7 @@ public class PartitionsWriter: IMetadataWriter
     private readonly IBlobStorageWriter blobStorageWriter;
     private readonly Option<StreamPartition[]> partitions;
     private readonly string basePath;
-    private const string MetadataFileName = "v1/partitions.json";
+    private const string MetadataFileName = "v0/partitions.json";
 
     /// <summary>
     /// A stream metadata writer that writes partitions metadata to a blob storage
