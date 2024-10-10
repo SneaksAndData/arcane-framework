@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Event;
 using Akka.Streams;
 using Akka.Streams.Dsl;
 using Akka.Streams.Stage;
@@ -161,7 +160,10 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
             // No more records from Sql Server
             if (readTask.Result.IsEmpty)
             {
-                this.Finish(null);
+                this.Log.Info("Rescheduling polling timer with interval {interval}", this.ChangeCaptureInterval);
+                this.reader.Close();
+                this.GetRows();
+                this.ScheduleOnce(TimerKey, this.ChangeCaptureInterval);
             }
             else
             {
@@ -173,8 +175,13 @@ public class SqlServerSource : GraphStage<SourceShape<List<DataCell>>>, IParquet
         {
             this.recordsReceived = this.GetAsyncCallback<Task<Option<List<DataCell>>>>(this.OnRecordReceived);
             this.sqlConnection.Open();
+            this.GetRows();
+        }
+
+        private void GetRows()
+        {
             var command = new SqlCommand(this.source.GetQuery(), this.sqlConnection)
-                { CommandTimeout = this.source.commandTimeout };
+            { CommandTimeout = this.source.commandTimeout };
             this.reader = command.ExecuteReader();
         }
 
