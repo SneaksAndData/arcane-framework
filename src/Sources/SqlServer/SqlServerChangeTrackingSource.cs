@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -186,7 +185,6 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         private string matchExpression;
         private string mergeExpression;
         private SqlDataReader reader;
-        private SqlTransaction readTran;
         private Action<Task<Option<List<DataCell>>>> recordsReceived;
         private List<(string columnName, bool isPrimaryKey)> tableColumns;
 
@@ -220,7 +218,6 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             try
             {
                 this.reader.Close();
-                this.readTran.Commit();
             }
             catch (Exception ex)
             {
@@ -229,7 +226,6 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
 
             try
             {
-                this.readTran.Dispose();
                 this.sqlConnection.Close();
                 this.sqlConnection.Dispose();
             }
@@ -375,13 +371,15 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                     this.sqlConnection.Database, this.source.schemaName, this.source.tableName, this.currentVersion);
             }
 
-            this.readTran = this.sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted);
 
-            var command =
-                new SqlCommand(this.source.GetChangesQuery(this.mergeExpression, this.columnExpression,
-                        this.matchExpression,
-                        newVersion.GetValueOrDefault(long.MaxValue) - 1), this.sqlConnection)
-                    { CommandTimeout = this.source.commandTimeout, Transaction = this.readTran };
+            var query = this.source.GetChangesQuery(this.mergeExpression,
+                this.columnExpression,
+                this.matchExpression,
+                newVersion.GetValueOrDefault(long.MaxValue) - 1);
+            var command = new SqlCommand(query, this.sqlConnection)
+            {
+                CommandTimeout = this.source.commandTimeout
+            };
             this.TryExecuteReader(command);
 
             if (this.reader.HasRows)
@@ -412,7 +410,6 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             if (readTask.Result.IsEmpty)
             {
                 this.reader.Close();
-                this.readTran.Commit();
                 if (this.CompleteStageAfterFullLoad(this.Finish))
                 {
                     return;
@@ -451,12 +448,12 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             {
                 this.Log.Info("Fetching all rows for the latest version of an entity {database}.{schema}.{table}",
                     this.sqlConnection.Database, this.source.schemaName, this.source.tableName);
-                this.readTran = this.sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted);
 
-                var command =
-                    new SqlCommand(this.source.GetAllQuery(this.mergeExpression, this.GetChangeTrackingColumns("tq")),
-                            this.sqlConnection)
-                        { CommandTimeout = this.source.commandTimeout, Transaction = this.readTran };
+                var query = this.source.GetAllQuery(this.mergeExpression, this.GetChangeTrackingColumns("tq"));
+                var command = new SqlCommand(query, this.sqlConnection)
+                {
+                    CommandTimeout = this.source.commandTimeout
+                };
 
                 this.IsRunningInBackfillMode = true;
                 this.TryExecuteReader(command);
