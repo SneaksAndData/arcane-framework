@@ -41,6 +41,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     private readonly string rootPath;
     private readonly TimeSpan schemaUpdateInterval;
     private readonly bool stopAfterBackfill;
+    private readonly int lookBackRange;
 
     private CdmChangeFeedSource(string rootPath,
         string entityName,
@@ -48,7 +49,9 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         bool isBackfilling,
         TimeSpan changeCaptureInterval,
         bool stopAfterBackfill,
-        TimeSpan schemaUpdateInterval)
+        TimeSpan schemaUpdateInterval,
+        int lookBackRange
+        )
     {
         this.rootPath = rootPath;
         this.entityName = entityName;
@@ -58,6 +61,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         this.stopAfterBackfill = stopAfterBackfill;
         this.Shape = new SourceShape<List<DataCell>>(this.Out);
         this.schemaUpdateInterval = schemaUpdateInterval;
+        this.lookBackRange = lookBackRange;
     }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.InitialAttributes"/>
@@ -95,6 +99,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
     /// <param name="blobStorage">Blob storage service</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="schemaUpdateInterval">Interval to refresh schema.</param>
+    /// <param name="lookBackRange">Timestamp to get minimum commit_ts from.</param>
     /// <param name="isBackfilling">Set to true to stream full current version of the table first.</param>
     /// <param name="stopAfterBackfill">Set to true if stream should stop after full load is finished</param>
     /// <returns></returns>
@@ -105,6 +110,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         bool isBackfilling = true,
         TimeSpan? changeCaptureInterval = null,
         bool stopAfterBackfill = false,
+        int lookBackRange = 86400,
         TimeSpan? schemaUpdateInterval = null)
     {
         if (!isBackfilling && stopAfterBackfill)
@@ -119,7 +125,8 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             isBackfilling,
             changeCaptureInterval ?? TimeSpan.FromSeconds(15),
             stopAfterBackfill,
-            schemaUpdateInterval ?? TimeSpan.FromSeconds(60));
+            schemaUpdateInterval ?? TimeSpan.FromSeconds(60),
+            lookBackRange);
     }
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
@@ -146,7 +153,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
         private readonly string tablesPath;
         private SimpleCdmEntity changeFeedSchema;
         private IEnumerable<List<DataCell>> changes;
-        private DateTimeOffset lastProcessedTimestamp = DateTimeOffset.MinValue;
+        private DateTimeOffset lastProcessedTimestamp;
         private DateTimeOffset? maxAvailableTimestamp;
         private DateTimeOffset? nextSchemaUpdateTimestamp;
 
@@ -155,6 +162,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             this.source = source;
             this.changeFeedPath = $"{source.rootPath}/ChangeFeed/{source.entityName}";
             this.tablesPath = $"{source.rootPath}/Tables";
+            this.lastProcessedTimestamp = DateTimeOffset.UtcNow.AddSeconds(-this.source.lookBackRange);
 
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
@@ -287,8 +295,9 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
         private void PrepareChanges()
         {
-            var blobList = this.source.blobStorage.ListBlobsAsEnumerable(this.changeFeedPath).Where(blob =>
-                blob.LastModified > this.lastProcessedTimestamp && blob.Name.EndsWith(".csv")).ToList();
+            var blobList = this.source.blobStorage.ListBlobsAsEnumerable(this.changeFeedPath)
+                .Where(blob => blob.LastModified > this.lastProcessedTimestamp && blob.Name.EndsWith(".csv")).ToList();
+
             this.maxAvailableTimestamp = blobList.Select(b => b.LastModified).Max();
             this.changes = blobList
                 .Select(blob =>
@@ -351,7 +360,9 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
             }
             else
             {
-                this.lastProcessedTimestamp = this.maxAvailableTimestamp.GetValueOrDefault(DateTimeOffset.MinValue);
+                this.lastProcessedTimestamp = this.maxAvailableTimestamp.HasValue && this.maxAvailableTimestamp > this.lastProcessedTimestamp
+                    ? this.maxAvailableTimestamp.Value
+                    : this.lastProcessedTimestamp;
                 this.EmitMultiple(this.source.Out, this.changes);
 
                 this.changes = Enumerable.Empty<List<DataCell>>();
