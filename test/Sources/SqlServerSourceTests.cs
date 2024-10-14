@@ -25,31 +25,56 @@ public class SqlServerSourceTests : IClassFixture<ServiceFixture>, IClassFixture
     [Fact]
     public async Task TestPullChanges()
     {
+        // Arrange
+        var source = SqlServerSource.Create(this.connectionString,
+            "dbo",
+            nameof(SqlServerSourceTests),
+            TimeSpan.FromSeconds(1));
+
+        // Act
         var result = await Source
-            .FromGraph(SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests), TimeSpan.FromSeconds(1)))
-            .TakeWithin(TimeSpan.FromSeconds(3))
+            .FromGraph(source)
+            .TakeWithin(TimeSpan.FromSeconds(10))
             .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
 
-        Assert.Equal(101, result.Count);
+        // Assert
+        // Expect to receive rows at least two times since the source reschedules polling every second.
+        // And not more then 10 times since we are taking within 10 seconds interval.
+        Assert.InRange(result.Count, 101 * 2, 101 * 10);
     }
 
     [Fact]
     public void GetParquetSchema()
     {
-        var schema = SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests), TimeSpan.FromSeconds(1))
-            .GetParquetSchema();
+        // Arrange
+        var source = SqlServerSource.Create(this.connectionString,
+            "dbo",
+            nameof(SqlServerSourceTests),
+            TimeSpan.FromSeconds(1));
 
+        // Act
+        var schema = source.GetParquetSchema();
+
+        // Assert
         Assert.Equal(2, schema.Fields.Count); // two base columns
     }
 
     [Fact]
     public async Task ChangeCaptureInterval()
     {
+        // Arrange
+        var source = SqlServerSource.Create(this.connectionString,
+            "dbo",
+            nameof(SqlServerSourceTests),
+            TimeSpan.FromSeconds(5));
+
+        // Act
         var result = await Source
-            .FromGraph(SqlServerSource.Create(this.connectionString, "dbo", nameof(SqlServerSourceTests), TimeSpan.FromSeconds(5)))
+            .FromGraph(source)
             .TakeWithin(TimeSpan.FromSeconds(15))
             .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
 
+        // Assert
         Assert.InRange(result.Count, 101, 101 * 3);
     }
 }
