@@ -238,15 +238,14 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
 
         private long? GetChangeTrackingVersion(long version)
         {
-            using var changeTrackingTran = this.sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted);
             var command = (version == 0) switch
             {
                 true => new SqlCommand(
                     $"SELECT MIN(commit_ts) FROM sys.dm_tran_commit_table WHERE commit_time > '{DateTime.UtcNow.AddSeconds(-1 * this.source.lookBackRange):yyyy-MM-dd HH:mm:ss.fff}'",
-                    this.sqlConnection, changeTrackingTran),
+                    this.sqlConnection),
                 false => new SqlCommand(
                     $"SELECT MIN(commit_ts) FROM sys.dm_tran_commit_table WHERE commit_ts > {version}",
-                    this.sqlConnection, changeTrackingTran)
+                    this.sqlConnection)
             };
 
             this.Log.Debug("Executing {command}", command.CommandText);
