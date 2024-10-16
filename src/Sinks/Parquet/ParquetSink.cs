@@ -7,6 +7,7 @@ using Akka.Actor;
 using Akka.Event;
 using Akka.Streams;
 using Akka.Streams.Stage;
+using Akka.Util;
 using Arcane.Framework.Sinks.Extensions;
 using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Services.Base;
@@ -34,14 +35,14 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     private readonly string schemaSinkPathSegment;
     private readonly string metadataSinkPathSegment;
     private readonly IBlobStorageWriter storageWriter;
-    private readonly StreamMetadata metadata;
+    private readonly Option<StreamMetadata> metadata;
 
     /// <summary>
     /// Creates a new instance of <see cref="ParquetSink"/>
     /// </summary>
     private ParquetSink(Schema parquetSchema, IBlobStorageWriter storageWriter, string parquetFilePath,
         int rowGroupsPerFile, bool createSchemaFile, bool partitionByDate, string dataSinkPathSegment,
-        string schemaSinkPathSegment, bool dropCompletionToken, StreamMetadata streamMetadata, string metadataSinkPathSegment)
+        string schemaSinkPathSegment, bool dropCompletionToken, Option<StreamMetadata> streamMetadata, string metadataSinkPathSegment)
     {
         this.parquetSchema = parquetSchema;
         this.storageWriter = storageWriter;
@@ -88,7 +89,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     /// <param name="metadataSinkPathSegment">Folder name to emit metadata</param>
     /// <returns></returns>
     public static ParquetSink Create(Schema parquetSchema, IBlobStorageWriter storageWriter, string parquetFilePath,
-        StreamMetadata streamMetadata, int rowGroupsPerFile = 1, bool createSchemaFile = false,
+        Option<StreamMetadata> streamMetadata, int rowGroupsPerFile = 1, bool createSchemaFile = false,
         bool partitionByDate = false, string dataSinkPathSegment = "data", string schemaSinkPathSegment = "schema",
         bool dropCompletionToken = false, string metadataSinkPathSegment = "metadata")
     {

@@ -94,6 +94,29 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
     }
 
     [Fact]
+    public async Task RemovesIfNoMetadataProvided()
+    {
+        var basePath = "s3a://bucket/path";
+        var columns = Enumerable
+            .Range(0, 10)
+            .Select(col => new DataColumn(new DataField<int?>(col.ToString()), Enumerable.Range(0, 10).ToArray()))
+            .ToList();
+        var schema = new Schema(columns.Select(c => c.Field).ToList());
+
+        var sink = ParquetSink.Create(schema,
+            this.mockBlobStorageService.Object,
+            basePath,
+            Option<StreamMetadata>.None,
+        5,
+            true,
+            false);
+
+        await Source.From(Enumerable.Range(0, 10).Select(_ => columns.ToList())).RunWith(sink, this.akkaFixture.Materializer);
+
+        this.mockBlobStorageService.Verify(m => m.RemoveBlob($"{basePath}/metadata", "v0/partitions.json"), Times.Once);
+    }
+
+    [Fact]
     public async Task OverwritesExistingSchemaMetadata()
     {
         var basePath = "s3a://bucket/path";

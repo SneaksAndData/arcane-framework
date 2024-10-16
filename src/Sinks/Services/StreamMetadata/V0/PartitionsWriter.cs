@@ -6,7 +6,7 @@ using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Services.Base;
 using Snd.Sdk.Storage.Base;
 
-namespace Arcane.Framework.Sinks.Services.StreamMetadata.V1;
+namespace Arcane.Framework.Sinks.Services.StreamMetadata.V0;
 
 /// <summary>
 /// A stream metadata writer that writes partitions metadata to a blob storage
