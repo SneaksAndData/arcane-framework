@@ -105,6 +105,26 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
     }
 
     [Fact]
+    public async Task RemovesIfNoMetadataProvided()
+    {
+        var basePath = "s3a://bucket/path";
+        var mockIn = Enumerable
+            .Range(0, 10)
+            .Select(_ => Enumerable.Range(0, 1).Select(ix => JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(new { Value = ix }))))
+            .ToList();
+        var schema = new Schema(new DataField("test", DataType.Int32));
+
+        var sink = MultilineJsonSink.Create(this.mockBlobStorageService.Object,
+            basePath,
+            schema,
+            Option<StreamMetadata>.None);
+
+        await Source.From(mockIn).Select(v => v.ToList()).RunWith(sink, this.akkaFixture.Materializer);
+
+        this.mockBlobStorageService.Verify(m => m.RemoveBlob($"{basePath}/metadata", "v0/partitions.json"), Times.Once);
+    }
+
+    [Fact]
     public async Task OverwritesExistingSchemaMetadata()
     {
         var basePath = "s3a://bucket/path";

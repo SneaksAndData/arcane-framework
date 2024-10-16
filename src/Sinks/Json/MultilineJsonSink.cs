@@ -8,6 +8,7 @@ using Akka.Actor;
 using Akka.Event;
 using Akka.Streams;
 using Akka.Streams.Stage;
+using Akka.Util;
 using Arcane.Framework.Sinks.Extensions;
 using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Parquet;
@@ -31,9 +32,8 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
     private readonly string schemaPathSegment;
     private readonly Schema sinkSchema;
     private readonly IBlobStorageWriter storageWriter;
-    private readonly StreamMetadata streamMetadata;
+    private readonly Option<StreamMetadata> streamMetadata;
     private readonly string metadataSinkPathSegment;
-    private readonly StreamMetadata metadata;
 
     /// <summary>
     /// Creates a new instance of <see cref="JsonSink"/>
@@ -45,7 +45,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         string schemaPathSegment,
         Schema sinkSchema,
         bool dropCompletionToken,
-        StreamMetadata streamMetadata,
+        Option<StreamMetadata> streamMetadata,
         string metadataSinkPathSegment)
     {
         this.storageWriter = storageWriter;
@@ -56,7 +56,6 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         this.schemaPathSegment = schemaPathSegment;
         this.streamMetadata = streamMetadata;
         this.metadataSinkPathSegment = metadataSinkPathSegment;
-        this.metadata = streamMetadata;
 
         this.Shape = new SinkShape<List<JsonElement>>(this.In);
     }
@@ -88,7 +87,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         IBlobStorageWriter storageWriter,
         string jsonSinkPath,
         Schema sinkSchema,
-        StreamMetadata streamMetadata,
+        Option<StreamMetadata> streamMetadata,
         string dataPathSegment = "data",
         string schemaPathSegment = "schema",
         bool dropCompletionToken = false,
@@ -128,7 +127,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         {
             this.sink = sink;
             this.taskCompletion = taskCompletion;
-            this.metadataWriter = sink.metadata.ToStreamMetadataWriter(this.sink.storageWriter, this.GetMetadataPath());
+            this.metadataWriter = sink.streamMetadata.ToStreamMetadataWriter(this.sink.storageWriter, this.GetMetadataPath());
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
