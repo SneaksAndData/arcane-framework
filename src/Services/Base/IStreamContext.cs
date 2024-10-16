@@ -26,5 +26,5 @@ public interface IStreamContext
     /// <summary>
     /// Stream metadata that can be used by the stream consumer.
     /// </summary>
-    Option<StreamMetadata> StreamMetadata { get; }
+    Option<StreamMetadata> GetStreamMetadata();
 }

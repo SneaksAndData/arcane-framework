@@ -9,7 +9,7 @@ public class TestStreamContext : IStreamContext, IStreamContextWriter
     public string StreamId => nameof(StreamId);
     public bool IsBackfilling => false;
     public string StreamKind => nameof(StreamKind);
-    public Option<StreamMetadata> StreamMetadata => Option<StreamMetadata>.None;
+    public Option<StreamMetadata> GetStreamMetadata() => new();
 
     public void SetStreamId(string streamId)
     {
