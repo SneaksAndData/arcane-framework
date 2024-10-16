@@ -249,6 +249,40 @@ namespace Arcane.Framework.Tests.Sources
             Assert.Equal(expectedRows, result.Count);
         }
 
+        /// <summary>
+        /// This test validates behavior of the lookBackInterval parameter.
+        /// The mocked table last modified date is set to 1 hour ago.
+        /// If lookBackInterval is set to 60 seconds, no rows should be
+        /// returned since the last modified date is older than the lookBackInterval.
+        /// </summary>
+        /// <param name="lookBackInterval">Interval to test</param>
+        /// <param name="entityName">Name of the entity to test</param>
+        /// <param name="expectedRows">Expected number of rows</param>
+        [Theory]
+        [InlineData(60, "ValidEntity", 0)]
+        [InlineData(3800, "ValidEntity", 8)]
+        public async Task SupportsLockBackInterval(int lookBackInterval, string entityName, int expectedRows)
+        {
+            // Arrange
+            this.mockBlobStorageService.Reset();
+            this.SetupTableMocks(entityName, lastModified: DateTimeOffset.UtcNow.AddSeconds(-3600));
+
+            // Act
+            var result = await Source.FromGraph(CdmChangeFeedSource.Create(rootPath: "test",
+                    entityName: entityName,
+                    blobStorage: this.mockBlobStorageService.Object,
+                    isBackfilling: false,
+                    stopAfterBackfill: false,
+                    lookBackRange: lookBackInterval,
+                    changeCaptureInterval: TimeSpan.FromSeconds(1)))
+                .TakeWithin(TimeSpan.FromSeconds(5))
+                .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
+
+
+            // Assert
+            Assert.Equal(expectedRows, result.Count);
+        }
+
         [Theory]
         [InlineData(false, "InvalidBinaryType")]
         [InlineData(true, "InvalidBinaryType")]
@@ -296,7 +330,7 @@ namespace Arcane.Framework.Tests.Sources
             });
         }
 
-        private void SetupTableMocks(string entityName)
+        private void SetupTableMocks(string entityName, DateTimeOffset? lastModified = null)
         {
             this.mockBlobStorageService.Setup(mbs => mbs.ListBlobsAsEnumerable(It.IsAny<string>())).Returns(
                 new[]
@@ -304,7 +338,7 @@ namespace Arcane.Framework.Tests.Sources
                     new StoredBlob
                     {
                         Name = $"Tables/Test1/Test2/{entityName.ToUpper()}_00001.csv",
-                        LastModified = DateTimeOffset.UtcNow
+                        LastModified = lastModified.GetValueOrDefault(DateTimeOffset.UtcNow),
                     }
                 });
 
@@ -315,7 +349,7 @@ namespace Arcane.Framework.Tests.Sources
                     new StoredBlob
                     {
                         Name = "ChangeFeed/changefeed_entry.csv",
-                        LastModified = DateTimeOffset.UtcNow
+                        LastModified = lastModified.GetValueOrDefault(DateTimeOffset.UtcNow),
                     }
                 });
 
