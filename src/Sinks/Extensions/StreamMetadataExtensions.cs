@@ -1,7 +1,7 @@
 using Akka.Util;
 using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Services.Base;
-using Arcane.Framework.Sinks.Services.StreamMetadata.V1;
+using Arcane.Framework.Sinks.Services.StreamMetadata.V0;
 using Snd.Sdk.Storage.Base;
 
 namespace Arcane.Framework.Sinks.Extensions;
