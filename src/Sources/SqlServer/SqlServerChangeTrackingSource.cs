@@ -79,11 +79,12 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         var columnExpression = SourceLogic.GetChangeTrackingColumns(columnSummaries,
             tableAlias: "tq", changesAlias: "ct");
 
-        var command = new SqlCommand(this.GetChangesQuery(
+        using var command = new SqlCommand(this.GetChangesQuery(
             mergeExpression,
             columnExpression,
             matchExpression,
-            long.MaxValue), sqlCon) { CommandTimeout = this.commandTimeout };
+            long.MaxValue), sqlCon);
+        command.CommandTimeout = this.commandTimeout;
 
         using var schemaReader = command.ExecuteReader(CommandBehavior.SchemaOnly);
 
@@ -187,6 +188,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         private SqlDataReader reader;
         private Action<Task<Option<List<DataCell>>>> recordsReceived;
         private List<(string columnName, bool isPrimaryKey)> tableColumns;
+        private SqlCommand command;
 
         public SourceLogic(SqlServerChangeTrackingSource source) : base(source.changeCaptureInterval, source.Shape)
         {
@@ -228,6 +230,8 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             {
                 this.sqlConnection.Close();
                 this.sqlConnection.Dispose();
+                this.command?.Dispose();
+                this.reader?.Close();
             }
             catch (Exception ex)
             {
@@ -244,14 +248,12 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                 false => $"SELECT MIN(commit_ts) FROM sys.dm_tran_commit_table WHERE commit_ts > {version}",
             };
 
-            var command = new SqlCommand(query, this.sqlConnection)
-            {
-                CommandTimeout = this.source.commandTimeout
-            };
+            using var getVersionCommand = new SqlCommand(query, this.sqlConnection);
+            getVersionCommand.CommandTimeout = this.source.commandTimeout;
 
-            this.Log.Debug("Executing {command}", command.CommandText);
+            this.Log.Debug("Executing {command}", getVersionCommand.CommandText);
 
-            var value = command.ExecuteScalar();
+            var value = getVersionCommand.ExecuteScalar();
 
             return value == DBNull.Value ? null : (long?)value;
         }
@@ -344,11 +346,11 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             }
         }
 
-        private void TryExecuteReader(SqlCommand sqlCommand)
+        private void TryExecuteReader()
         {
             try
             {
-                this.reader = sqlCommand.ExecuteReader();
+                this.reader = this.command.ExecuteReader();
             }
             catch (Exception ex)
             {
@@ -376,11 +378,11 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                 this.columnExpression,
                 this.matchExpression,
                 newVersion.GetValueOrDefault(long.MaxValue) - 1);
-            var command = new SqlCommand(query, this.sqlConnection)
+            this.command = new SqlCommand(query, this.sqlConnection)
             {
                 CommandTimeout = this.source.commandTimeout
             };
-            this.TryExecuteReader(command);
+            this.TryExecuteReader();
 
             if (this.reader.HasRows)
                 // reset current version so it can be updated from the source
@@ -410,6 +412,8 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             if (readTask.Result.IsEmpty)
             {
                 this.reader.Close();
+                this.command.Dispose();
+                this.command = null;
                 if (this.CompleteStageAfterFullLoad(this.Finish))
                 {
                     return;
@@ -450,13 +454,13 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                     this.sqlConnection.Database, this.source.schemaName, this.source.tableName);
 
                 var query = this.source.GetAllQuery(this.mergeExpression, this.GetChangeTrackingColumns("tq"));
-                var command = new SqlCommand(query, this.sqlConnection)
+                this.command = new SqlCommand(query, this.sqlConnection)
                 {
                     CommandTimeout = this.source.commandTimeout
                 };
 
                 this.IsRunningInBackfillMode = true;
-                this.TryExecuteReader(command);
+                this.TryExecuteReader();
             }
             else
             {
