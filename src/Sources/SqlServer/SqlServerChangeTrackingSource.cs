@@ -110,7 +110,6 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
     /// <param name="connectionString">Connection string, including database name.</param>
     /// <param name="schemaName">Schema name for the target table.</param>
     /// <param name="tableName">Table name.</param>
-    /// <param name="streamKind">Stream kind</param>
     /// <param name="changeCaptureInterval">How often to track changes.</param>
     /// <param name="commandTimeout">Timeout for sql commands issued by this source.</param>
     /// <param name="lookBackRange">Timestamp to get minimum commit_ts from.</param>
@@ -123,13 +122,12 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         string connectionString,
         string schemaName,
         string tableName,
-        string streamKind,
+        string partitioningExpression,
         TimeSpan? changeCaptureInterval = null,
         int commandTimeout = 3600,
         int lookBackRange = 86400,
         bool fullLoadOnStart = false,
-        bool stopAfterFullLoad = false,
-        string partitioningExpression = "")
+        bool stopAfterFullLoad = false)
     {
         if (stopAfterFullLoad && !fullLoadOnStart)
         {
