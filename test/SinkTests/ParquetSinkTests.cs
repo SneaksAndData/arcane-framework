@@ -108,15 +108,17 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
             {
                 new StreamPartition
                 {
-                    Description = "date",
+                    Description = "date_month",
                     FieldName = "my_column_with_date",
                     FieldFormat = "datetime"
                 },
                 new StreamPartition
                 {
-                    Description = "sales_organisation",
-                    FieldName = "my_column_with_sales_org",
-                    FieldFormat = "string"
+                    Description = "date_month",
+                    FieldName = "",
+                    FieldFormat = "",
+                    FieldExpression = "date_format(cast('test' as date), 'yyyMM')",
+                    IsDatePartition = true
                 }
             });
         var sink = ParquetSink.Create(schema,
@@ -130,7 +132,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
         await Source.From(Enumerable.Range(0, 10).Select(_ => columns.ToList())).RunWith(sink, this.akkaFixture.Materializer);
 
         var expectedMetadata =
-            """[{"name":"date","field_name":"my_column_with_date","field_format":"datetime"},{"name":"sales_organisation","field_name":"my_column_with_sales_org","field_format":"string"}]""";
+            """[{"description":"date_month","field_name":"my_column_with_date","field_format":"datetime","field_expression":null,"is_date_partition":false},{"description":"date_month","field_name":"","field_format":"","field_expression":"date_format(cast(\u0027test\u0027 as date), \u0027yyyMM\u0027)","is_date_partition":true}]""";
         this.mockBlobStorageService.Verify(m => m.SaveTextAsBlob(expectedMetadata, $"{basePath}/metadata", "v0/partitions.json"), Times.Once);
     }
 }
