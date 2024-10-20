@@ -13,13 +13,15 @@ public static class StreamPartitionExtensions
     /// </summary>
     /// <param name="partition"></param>
     /// <returns></returns>
-    public static StreamPartition ToStreamPartition(this PartitionsMetadataDefinition partition)
+    public static StreamPartition ToStreamPartition(this PartitionMetadataDefinition partition)
     {
         return new StreamPartition
         {
-            Name = partition.Name,
+            Description = partition.Description,
             FieldName = partition.FieldName,
-            FieldFormat = partition.FieldFormat
+            FieldFormat = partition.FieldFormat,
+            FieldExpression = (partition as DatePartitionMetadataDefinition)?.FieldExpression,
+            IsDatePartition = (partition as DatePartitionMetadataDefinition) is not null
         };
     }
 }

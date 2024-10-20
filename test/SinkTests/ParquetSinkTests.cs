@@ -108,13 +108,13 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
             {
                 new StreamPartition
                 {
-                    Name = "date",
+                    Description = "date",
                     FieldName = "my_column_with_date",
                     FieldFormat = "datetime"
                 },
                 new StreamPartition
                 {
-                    Name = "sales_organisation",
+                    Description = "sales_organisation",
                     FieldName = "my_column_with_sales_org",
                     FieldFormat = "string"
                 }

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Akka.Util;
+using Arcane.Framework.Services.Models;
 
 namespace Arcane.Framework.Sinks.Models;
 
@@ -11,8 +12,8 @@ public class StreamPartition
     /// <summary>
     /// Partition name
     /// </summary>
-    [JsonPropertyName("name")]
-    public string Name { get; init; }
+    [JsonPropertyName("description")]
+    public string Description { get; init; }
 
     /// <summary>
     /// Partition field name
@@ -25,6 +26,18 @@ public class StreamPartition
     /// </summary>
     [JsonPropertyName("field_format")]
     public string FieldFormat { get; init; }
+
+    /// <summary>
+    /// see <see cref="DatePartitionMetadataDefinition.FieldExpression"/>
+    /// </summary>
+    [JsonPropertyName("field_expression")]
+    public string FieldExpression { get; init; }
+
+    /// <summary>
+    /// If the constructing partition class is <see cref="DatePartitionMetadataDefinition"/>
+    /// </summary>
+    [JsonPropertyName("is_date_partition")]
+    public bool IsDatePartition { get; init; }
 }
 
 /// <summary>

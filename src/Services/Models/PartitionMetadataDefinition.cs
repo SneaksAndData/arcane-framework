@@ -5,23 +5,23 @@ namespace Arcane.Framework.Services.Models;
 /// <summary>
 /// Used to deserialize the stream metadata from the Kubernetes object definition.
 /// </summary>
-public class PartitionsMetadataDefinition
+public class PartitionMetadataDefinition
 {
     /// <summary>
     /// Partition name
     /// </summary>
-    [JsonPropertyName("name")]
-    public string Name { get; init; }
+    [JsonPropertyName("description")]
+    public string Description { get; init; }
 
     /// <summary>
     /// Partition field name
     /// </summary>
     [JsonPropertyName("fieldName")]
-    public string FieldName { get; init; }
+    public virtual string FieldName { get; init; }
 
     /// <summary>
     /// Partition field format
     /// </summary>
     [JsonPropertyName("fieldFormat")]
-    public string FieldFormat { get; init; }
+    public virtual string FieldFormat { get; init; }
 }
