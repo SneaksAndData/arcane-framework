@@ -38,12 +38,12 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
     private readonly string schemaName;
     private readonly bool stopAfterFullLoad;
     private readonly string tableName;
-    private readonly string partitioningExpression;
+    private readonly string datePartitionExpression;
 
 
     private SqlServerChangeTrackingSource(string connectionString, string schemaName, string tableName,
         TimeSpan changeCaptureInterval, int commandTimeout, int lookBackRange, bool fullLoadOnstart,
-        bool stopAfterFullLoad, string partitioningExpression)
+        bool stopAfterFullLoad, string datePartitionExpression = null)
     {
         this.connectionString = connectionString;
         this.schemaName = schemaName;
@@ -53,7 +53,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         this.lookBackRange = lookBackRange;
         this.fullLoadOnstart = fullLoadOnstart;
         this.stopAfterFullLoad = stopAfterFullLoad;
-        this.partitioningExpression = partitioningExpression;
+        this.datePartitionExpression = datePartitionExpression;
         this.Shape = new SourceShape<List<DataCell>>(this.Out);
     }
 
@@ -85,7 +85,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             mergeExpression,
             columnExpression,
             matchExpression,
-            long.MaxValue, this.partitioningExpression), sqlCon);
+            long.MaxValue, this.datePartitionExpression), sqlCon);
         command.CommandTimeout = this.commandTimeout;
 
         using var schemaReader = command.ExecuteReader(CommandBehavior.SchemaOnly);
@@ -122,7 +122,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
         string connectionString,
         string schemaName,
         string tableName,
-        string partitioningExpression,
+        string partitioningExpression = null,
         TimeSpan? changeCaptureInterval = null,
         int commandTimeout = 3600,
         int lookBackRange = 86400,
@@ -144,7 +144,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             lookBackRange: lookBackRange,
             fullLoadOnstart: fullLoadOnStart,
             stopAfterFullLoad: stopAfterFullLoad,
-            partitioningExpression: partitioningExpression);
+            datePartitionExpression: partitioningExpression);
     }
 
     /// <inheritdoc cref="GraphStage{TShape}.CreateLogic"/>
@@ -154,12 +154,19 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
     }
 
     private string GetChangesQuery(string mergeExpression, string columnStatement, string matchStatement,
-        long changeTrackingId, string partitionExpression)
+        long changeTrackingId, string partitionExpression = null)
     {
         var sqlConBuilder = new SqlConnectionStringBuilder(this.connectionString);
-        return File
-            .ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "SqlServer", "SqlSnippets",
-                "GetSelectDeltaQuery.sql"))
+        var baseQuery = string.IsNullOrEmpty(partitionExpression) switch
+        {
+            true => File
+                .ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "SqlServer", "SqlSnippets",
+                    "GetSelectDeltaQuery.sql")),
+            false => File
+                .ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "SqlServer", "SqlSnippets",
+                    "GetSelectDeltaQuery_date_partitioned.sql"))
+        };
+        return baseQuery
             .Replace("{dbName}", sqlConBuilder.InitialCatalog)
             .Replace("{schema}", this.schemaName)
             .Replace("{tableName}", this.tableName)
@@ -172,12 +179,20 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             .Replace("{lastId}", changeTrackingId.ToString());
     }
 
-    private string GetAllQuery(string mergeExpression, string columnStatement, string partitionExpression)
+    private string GetAllQuery(string mergeExpression, string columnStatement, string partitionExpression = null)
     {
         var sqlConBuilder = new SqlConnectionStringBuilder(this.connectionString);
-        return File
-            .ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "SqlServer", "SqlSnippets",
-                "GetSelectAllQuery.sql"))
+        var baseQuery = string.IsNullOrEmpty(partitionExpression) switch
+        {
+            true => File
+                .ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "SqlServer", "SqlSnippets",
+                    "GetSelectAllQuery.sql")),
+            false => File
+                .ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "SqlServer", "SqlSnippets",
+                    "GetSelectAllQuery_date_partitioned.sql"))
+        };
+
+        return baseQuery
             .Replace("{dbName}", sqlConBuilder.InitialCatalog)
             .Replace("{schema}", this.schemaName)
             .Replace("{tableName}", this.tableName)
@@ -390,7 +405,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             var query = this.source.GetChangesQuery(this.mergeExpression,
                 this.columnExpression,
                 this.matchExpression,
-                newVersion.GetValueOrDefault(long.MaxValue) - 1, this.source.partitioningExpression);
+                newVersion.GetValueOrDefault(long.MaxValue) - 1, this.source.datePartitionExpression);
             this.command = new SqlCommand(query, this.sqlConnection)
             {
                 CommandTimeout = this.source.commandTimeout
@@ -398,7 +413,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
             this.TryExecuteReader();
 
             if (this.reader.HasRows)
-                // reset current version so it can be updated from the source
+            // reset current version so it can be updated from the source
             {
                 this.currentVersion = 0;
             }
@@ -466,7 +481,7 @@ public class SqlServerChangeTrackingSource : GraphStage<SourceShape<List<DataCel
                 this.Log.Info("Fetching all rows for the latest version of an entity {database}.{schema}.{table}",
                     this.sqlConnection.Database, this.source.schemaName, this.source.tableName);
 
-                var query = this.source.GetAllQuery(this.mergeExpression, this.GetChangeTrackingColumns("tq"), this.source.partitioningExpression);
+                var query = this.source.GetAllQuery(this.mergeExpression, this.GetChangeTrackingColumns("tq"), this.source.datePartitionExpression);
                 this.command = new SqlCommand(query, this.sqlConnection)
                 {
                     CommandTimeout = this.source.commandTimeout

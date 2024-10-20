@@ -124,7 +124,7 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
             .GetParquetSchema();
 
         // two base columns, SYS_CHANGE_VERSION, SYS_CHANGE_OPERATION, ChangeTrackingVersion, ARCANE_MERGE_KEY, DATE_PARTITION_KEY
-        Assert.Equal(7, schema.Fields .Count);
+        Assert.Equal(7, schema.Fields.Count);
     }
 
     [Fact]
