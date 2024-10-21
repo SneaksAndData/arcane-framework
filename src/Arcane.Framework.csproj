@@ -49,11 +49,9 @@
         <Content Update="Sources/SqlServer/SqlSnippets/GetSelectDeltaQuery_date_partitioned.sql">
           <PackageCopyToOutput>true</PackageCopyToOutput>
         </Content>
-        <None Remove="Sources\SqlServer\SqlSnippets\GetSelectAllQuery_date_partitioned.sql" />
         <Content Include="Sources\SqlServer\SqlSnippets\GetSelectAllQuery_date_partitioned.sql">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <None Remove="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery_date_partitioned.sql" />
         <Content Include="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery_date_partitioned.sql">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
