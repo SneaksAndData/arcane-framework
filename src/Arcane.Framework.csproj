@@ -45,14 +45,10 @@
         </Content>
         <Content Update="Sources/SqlServer/SqlSnippets/GetSelectAllQuery_date_partitioned.sql">
           <PackageCopyToOutput>true</PackageCopyToOutput>
-        </Content>
-        <Content Update="Sources/SqlServer/SqlSnippets/GetSelectDeltaQuery_date_partitioned.sql">
-          <PackageCopyToOutput>true</PackageCopyToOutput>
-        </Content>
-        <Content Include="Sources\SqlServer\SqlSnippets\GetSelectAllQuery_date_partitioned.sql">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Include="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery_date_partitioned.sql">
+          <PackageCopyToOutput>true</PackageCopyToOutput>
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
