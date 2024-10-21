@@ -7,12 +7,6 @@ namespace Arcane.Framework.Services.Models;
 /// </summary>
 public class DatePartitionMetadataDefinition : PartitionMetadataDefinition
 {
-    /// <inheritdoc/>
-    public override string FieldName => "";
-
-    /// <inheritdoc/>
-    public override string FieldFormat => "";
-
     /// <summary>
     /// Expression to compute the partition value for each row - overrides FieldName and FieldFormat
     /// Expression will be executed on Source side and thus will depend on backend engine the Source streams from.

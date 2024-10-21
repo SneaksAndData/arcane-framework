@@ -12,7 +12,7 @@ public class StreamMetadataDefinition
     /// Partitioning information about the stream, datetime-based
     /// Can be either field or an expression to be executed on the engine.
     /// </summary>
-    [JsonPropertyName("partitions")]
+    [JsonPropertyName("datePartition")]
     public DatePartitionMetadataDefinition DatePartition { get; init; }
 
     /// <summary>
