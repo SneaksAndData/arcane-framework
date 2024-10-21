@@ -28,29 +28,34 @@
         <None Update="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery.sql">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Sources\SqlServer\SqlSnippets\GetSelectAllQuery_date_partitioned.sql">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery_date_partitioned.sql">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
     </ItemGroup>
 
     <ItemGroup>
         <Content Include="Sources/SqlServer/SqlSnippets/GetColumns.sql">
             <PackageCopyToOutput>true</PackageCopyToOutput>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Include="Sources/SqlServer/SqlSnippets/GetSelectAllQuery.sql">
             <PackageCopyToOutput>true</PackageCopyToOutput>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Include="Sources/SqlServer/SqlSnippets/GetSelectDeltaQuery.sql">
             <PackageCopyToOutput>true</PackageCopyToOutput>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Update="Sources/SqlServer/SqlSnippets/GetSelectAllQuery_date_partitioned.sql">
           <PackageCopyToOutput>true</PackageCopyToOutput>
         </Content>
         <Content Update="Sources/SqlServer/SqlSnippets/GetSelectDeltaQuery_date_partitioned.sql">
           <PackageCopyToOutput>true</PackageCopyToOutput>
+        </Content>
+        <None Remove="Sources\SqlServer\SqlSnippets\GetSelectAllQuery_date_partitioned.sql" />
+        <Content Include="Sources\SqlServer\SqlSnippets\GetSelectAllQuery_date_partitioned.sql">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery_date_partitioned.sql" />
+        <Content Include="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery_date_partitioned.sql">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
 
