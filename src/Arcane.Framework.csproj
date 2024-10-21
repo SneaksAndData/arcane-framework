@@ -49,11 +49,11 @@
             <PackageCopyToOutput>true</PackageCopyToOutput>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <Content Update="Sources/SqlServer/SqlSnippets/GetSelectAllQuery_date_partitioned.sql">
+        <Content Include="Sources/SqlServer/SqlSnippets/GetSelectAllQuery_date_partitioned.sql">
           <PackageCopyToOutput>true</PackageCopyToOutput>
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <Content Include="Sources\SqlServer\SqlSnippets\GetSelectDeltaQuery_date_partitioned.sql">
+        <Content Include="Sources/SqlServer/SqlSnippets/GetSelectDeltaQuery_date_partitioned.sql">
           <PackageCopyToOutput>true</PackageCopyToOutput>
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
