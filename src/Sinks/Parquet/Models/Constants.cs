@@ -14,4 +14,9 @@ public static class Constants
     /// Name for a merge key column attached to sources that support upserts.
     /// </summary>
     public const string UPSERT_MERGE_KEY = "ARCANE_MERGE_KEY";
+
+    /// <summary>
+    /// Name for a partition key column base on a datetime expression.
+    /// </summary>
+    public const string DATE_PARTITION_KEY = "DATE_PARTITION_KEY";
 }

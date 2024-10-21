@@ -9,8 +9,16 @@ namespace Arcane.Framework.Services.Models;
 public class StreamMetadataDefinition
 {
     /// <summary>
-    /// Partitioning information about the stream.
+    /// Partitioning information about the stream, datetime-based
+    /// Can be either field or an expression to be executed on the engine.
+    /// </summary>
+    [JsonPropertyName("datePartition")]
+    public DatePartitionMetadataDefinition DatePartition { get; init; }
+
+    /// <summary>
+    /// Partitioning information about the stream (non-datetime based)
+    /// Only fields that are present in the data can be used here
     /// </summary>
     [JsonPropertyName("partitions")]
-    public PartitionsMetadataDefinition[] Partitions { get; init; }
+    public PartitionMetadataDefinition[] Partitions { get; init; }
 }

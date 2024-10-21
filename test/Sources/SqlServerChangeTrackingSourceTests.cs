@@ -39,7 +39,7 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
             fullLoadOnStart: fullLoadOnStart,
             lookBackRange: 1,
             changeCaptureInterval: TimeSpan.FromSeconds(30),
-            streamKind: "test");
+            partitioningExpression: "format(getdate(), 'yyyyMM')");
         var result = await Source.FromGraph(source)
             .TakeWithin(TimeSpan.FromSeconds(5))
             .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
@@ -61,7 +61,7 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
                 stopAfterFullLoad: stopAfterFullLoad,
                 lookBackRange: 1,
                 changeCaptureInterval: TimeSpan.FromSeconds(1),
-                streamKind: "test"))
+                partitioningExpression: "format(getdate(), 'yyyyMM')"))
             .TakeWithin(TimeSpan.FromSeconds(5))
             .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
         await Task.Delay(1000);
@@ -80,7 +80,7 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
                 nameof(SqlServerChangeTrackingSourceTests),
                 lookBackRange: 1,
                 changeCaptureInterval: TimeSpan.FromSeconds(1),
-                streamKind: "test"))
+                partitioningExpression: "format(getdate(), 'yyyyMM')"))
             .TakeWithin(TimeSpan.FromSeconds(5))
             .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
         await Task.Delay(1000);
@@ -104,7 +104,7 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
                     stopAfterFullLoad: stopAfterFullLoad,
                     lookBackRange: 1,
                     changeCaptureInterval: TimeSpan.FromSeconds(30),
-                    streamKind: "test"))
+                    partitioningExpression: "format(getdate(), 'yyyyMM')"))
                 .TakeWithin(TimeSpan.FromSeconds(5))
                 .RunWith(Sink.Seq<List<DataCell>>(), this.akkaFixture.Materializer);
         });
@@ -116,11 +116,15 @@ public class SqlServerChangeTrackingSourceTests : IClassFixture<ServiceFixture>,
     public void GetParquetSchema()
     {
         var schema = SqlServerChangeTrackingSource
-            .Create(this.connectionString, "dbo", nameof(SqlServerChangeTrackingSourceTests), "test")
+            .Create(
+                connectionString: this.connectionString,
+                schemaName: "dbo",
+                tableName: nameof(SqlServerChangeTrackingSourceTests),
+                partitioningExpression: "format(getdate(), 'yyyyMM')")
             .GetParquetSchema();
 
-        // two base columns, SYS_CHANGE_VERSION, SYS_CHANGE_OPERATION, ChangeTrackingVersion and ARCANE_MERGE_KEY
-        Assert.Equal(6, schema.Fields .Count);
+        // two base columns, SYS_CHANGE_VERSION, SYS_CHANGE_OPERATION, ChangeTrackingVersion, ARCANE_MERGE_KEY, DATE_PARTITION_KEY
+        Assert.Equal(7, schema.Fields.Count);
     }
 
     [Fact]

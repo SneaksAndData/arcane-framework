@@ -119,15 +119,23 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
             {
                 new StreamPartition
                 {
-                    Name = "date",
-                    FieldName = "my_column_with_date",
-                    FieldFormat = "datetime"
+                    Description = "region",
+                    FieldName = "my_column_with_region",
+                    FieldFormat = "string"
                 },
                 new StreamPartition
                 {
-                    Name = "sales_organisation",
+                    Description = "sales_organisation",
                     FieldName = "my_column_with_sales_org",
                     FieldFormat = "string"
+                },
+                new StreamPartition
+                {
+                    Description = "date_month",
+                    FieldName = "",
+                    FieldFormat = "",
+                    FieldExpression = "date_format(cast('test' as date), 'yyyMM')",
+                    IsDatePartition = true
                 }
             });
         var sink = MultilineJsonSink.Create(this.mockBlobStorageService.Object,
@@ -138,7 +146,7 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
         await Source.From(mockIn).Select(v => v.ToList()).RunWith(sink, this.akkaFixture.Materializer);
 
         var expectedMetadata =
-            """[{"name":"date","field_name":"my_column_with_date","field_format":"datetime"},{"name":"sales_organisation","field_name":"my_column_with_sales_org","field_format":"string"}]""";
+            """[{"description":"region","field_name":"my_column_with_region","field_format":"string","field_expression":null,"is_date_partition":false},{"description":"sales_organisation","field_name":"my_column_with_sales_org","field_format":"string","field_expression":null,"is_date_partition":false},{"description":"date_month","field_name":"","field_format":"","field_expression":"date_format(cast(\u0027test\u0027 as date), \u0027yyyMM\u0027)","is_date_partition":true}]""";
         this.mockBlobStorageService.Verify(m => m.SaveTextAsBlob(expectedMetadata, $"{basePath}/metadata", "v0/partitions.json"), Times.Once);
     }
 }
