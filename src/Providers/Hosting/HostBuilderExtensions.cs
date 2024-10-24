@@ -184,6 +184,11 @@ public static class HostBuilderExtensions
         {
             var completeTask = runner.RunStream(() => graphBuilder.BuildGraph(context));
             await completeTask;
+            if (context.IsBackfilling && lifetimeService.IsStopRequested)
+            {
+               logger.Information("The stream was stopped during backfilling, retrying...");
+               return ExitCodes.RESTART;
+            }
         }
         catch (Exception e)
         {
