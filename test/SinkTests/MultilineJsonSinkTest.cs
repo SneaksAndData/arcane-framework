@@ -3,7 +3,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Akka.Streams.Dsl;
+using Akka.Util;
 using Arcane.Framework.Sinks.Json;
+using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Tests.Fixtures;
 using Moq;
@@ -49,6 +51,7 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
             .From(mockIn)
             .Select(v => v.ToList())
             .RunWith(MultilineJsonSink.Create(this.mockBlobStorageService.Object, mockPath, mockSchema,
+                    new StreamMetadata(Option<StreamPartition[]>.None),
                     "data", "schema", dropsCompletion), this.akkaFixture.Materializer);
 
         foreach (var _ in Enumerable.Range(0, files))
@@ -105,5 +108,71 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
         await Assert.ThrowsAsync<Exception>(async () => await source
             .Select(v => v.ToList())
             .RunWith(sink, this.akkaFixture.Materializer));
+    }
+
+    [Fact]
+    public async Task RemovesEmptyStreamMetadata()
+    {
+        var basePath = "s3a://bucket/path";
+        var mockIn = Enumerable
+            .Range(0, 10)
+            .Select(_ => Enumerable.Range(0, 1).Select(ix => JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(new { Value = ix }))))
+            .ToList();
+        var schema = new Schema(new DataField("test", DataType.Int32));
+
+        var sink = MultilineJsonSink.Create(this.mockBlobStorageService.Object,
+            basePath,
+            schema,
+            new StreamMetadata(Option<StreamPartition[]>.None));
+
+        await Source.From(mockIn).Select(v => v.ToList()).RunWith(sink, this.akkaFixture.Materializer);
+
+        this.mockBlobStorageService.Verify(m => m.RemoveBlob($"{basePath}/metadata", "v0/partitions.json"), Times.Once);
+    }
+
+    [Fact]
+    public async Task OverwritesExistingSchemaMetadata()
+    {
+        var basePath = "s3a://bucket/path";
+        var mockIn = Enumerable
+            .Range(0, 10)
+            .Select(_ => Enumerable.Range(0, 1).Select(ix => JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(new { Value = ix }))))
+            .ToList();
+        var schema = new Schema(new DataField("test", DataType.Int32));
+
+        var metadata = new StreamMetadata(
+            new[]
+            {
+                new StreamPartition
+                {
+                    Description = "region",
+                    FieldName = "my_column_with_region",
+                    FieldFormat = "string"
+                },
+                new StreamPartition
+                {
+                    Description = "sales_organisation",
+                    FieldName = "my_column_with_sales_org",
+                    FieldFormat = "string"
+                },
+                new StreamPartition
+                {
+                    Description = "date_month",
+                    FieldName = "",
+                    FieldFormat = "",
+                    FieldExpression = "date_format(cast('test' as date), 'yyyMM')",
+                    IsDatePartition = true
+                }
+            });
+        var sink = MultilineJsonSink.Create(this.mockBlobStorageService.Object,
+            basePath,
+            schema,
+            metadata);
+
+        await Source.From(mockIn).Select(v => v.ToList()).RunWith(sink, this.akkaFixture.Materializer);
+
+        var expectedMetadata =
+            """[{"description":"region","field_name":"my_column_with_region","field_format":"string","field_expression":null,"is_date_partition":false},{"description":"sales_organisation","field_name":"my_column_with_sales_org","field_format":"string","field_expression":null,"is_date_partition":false},{"description":"date_month","field_name":"","field_format":"","field_expression":"date_format(cast(\u0027test\u0027 as date), \u0027yyyMM\u0027)","is_date_partition":true}]""";
+        this.mockBlobStorageService.Verify(m => m.SaveTextAsBlob(expectedMetadata, $"{basePath}/metadata", "v0/partitions.json"), Times.Once);
     }
 }

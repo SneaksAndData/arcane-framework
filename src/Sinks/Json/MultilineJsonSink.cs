@@ -8,9 +8,12 @@ using Akka.Actor;
 using Akka.Event;
 using Akka.Streams;
 using Akka.Streams.Stage;
+using Arcane.Framework.Sinks.Extensions;
+using Arcane.Framework.Sinks.Models;
 using Akka.Util;
 using Akka.Util.Extensions;
 using Arcane.Framework.Sinks.Parquet;
+using Arcane.Framework.Sinks.Services.Base;
 using Parquet.Data;
 using Snd.Sdk.Storage.Base;
 using Snd.Sdk.Storage.Models;
@@ -30,6 +33,9 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
     private readonly string schemaPathSegment;
     private readonly Schema sinkSchema;
     private readonly IBlobStorageWriter storageWriter;
+    private readonly StreamMetadata streamMetadata;
+    private readonly string metadataSinkPathSegment;
+    private readonly StreamMetadata metadata;
 
     /// <summary>
     /// Creates a new instance of <see cref="JsonSink"/>
@@ -40,7 +46,9 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         string dataPathSegment,
         string schemaPathSegment,
         Schema sinkSchema,
-        bool dropCompletionToken)
+        bool dropCompletionToken,
+        StreamMetadata streamMetadata,
+        string metadataSinkPathSegment)
     {
         this.storageWriter = storageWriter;
         this.jsonSinkPath = jsonSinkPath;
@@ -48,6 +56,9 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         this.dropCompletionToken = dropCompletionToken;
         this.sinkSchema = sinkSchema;
         this.schemaPathSegment = schemaPathSegment;
+        this.streamMetadata = streamMetadata;
+        this.metadataSinkPathSegment = metadataSinkPathSegment;
+        this.metadata = streamMetadata;
 
         this.Shape = new SinkShape<List<JsonElement>>(this.In);
     }
@@ -72,14 +83,18 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
     /// <param name="dataPathSegment">Folder name to emit data</param>
     /// <param name="schemaPathSegment">Folder name to emit schema</param>
     /// <param name="dropCompletionToken">True if sink should drop a file when complete.</param>
+    /// <param name="streamMetadata">Metadata that describes data produced by the stream</param>
+    /// <param name="metadataSinkPathSegment">Folder name to emit metadata</param>
     /// <returns></returns>
     public static MultilineJsonSink Create(
         IBlobStorageWriter storageWriter,
         string jsonSinkPath,
         Schema sinkSchema,
+        StreamMetadata streamMetadata,
         string dataPathSegment = "data",
         string schemaPathSegment = "schema",
-        bool dropCompletionToken = false)
+        bool dropCompletionToken = false,
+        string metadataSinkPathSegment = "metadata")
     {
         return new MultilineJsonSink(
             storageWriter,
@@ -87,7 +102,9 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             sinkSchema: sinkSchema,
             dataPathSegment: dataPathSegment,
             schemaPathSegment: schemaPathSegment,
-            dropCompletionToken: dropCompletionToken);
+            dropCompletionToken: dropCompletionToken,
+            streamMetadata: streamMetadata,
+            metadataSinkPathSegment: metadataSinkPathSegment);
     }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.CreateLogicAndMaterializedValue"/>
@@ -107,11 +124,13 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
         private MemoryStream memoryStream;
         private string schemaHash;
         private bool writeInProgress;
+        private readonly IMetadataWriter metadataWriter;
 
         public SinkLogic(MultilineJsonSink sink, TaskCompletionSource<NotUsed> taskCompletion) : base(sink.Shape)
         {
             this.sink = sink;
             this.taskCompletion = taskCompletion;
+            this.metadataWriter = sink.metadata.ToStreamMetadataWriter(this.sink.storageWriter, this.GetMetadataPath());
             this.decider = Decider.From((ex) => ex.GetType().Name switch
             {
                 nameof(ArgumentException) => Directive.Stop,
@@ -144,6 +163,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             // Keep going even if the upstream has finished so that we can process the task from the last element
             this.SetKeepGoing(true);
 
+            this.metadataWriter.Write(this.Log).GetAwaiter().GetResult();
             // dump empty schema file and then pull first element
             this.CreateSchemaFile().ContinueWith(_ => this.GetAsyncCallback(() => this.Pull(this.sink.In)).Invoke());
         }
@@ -174,6 +194,11 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             }
 
             return Task.FromResult(Option<UploadedBlob>.None);
+        }
+
+        private string GetMetadataPath()
+        {
+            return $"{this.sink.jsonSinkPath}/{this.sink.metadataSinkPathSegment}";
         }
 
         private Task<Option<UploadedBlob>> SaveCompletionToken()

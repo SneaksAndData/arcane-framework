@@ -295,6 +295,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
 
         private void PrepareChanges()
         {
+            this.Log.Info("Reading change feed starting from {lastProcessedTimestamp}", this.lastProcessedTimestamp);
             var blobList = this.source.blobStorage.ListBlobsAsEnumerable(this.changeFeedPath)
                 .Where(blob => blob.LastModified > this.lastProcessedTimestamp && blob.Name.EndsWith(".csv")).ToList();
 
@@ -363,6 +364,7 @@ public class CdmChangeFeedSource : GraphStage<SourceShape<List<DataCell>>>, IPar
                 this.lastProcessedTimestamp = this.maxAvailableTimestamp.HasValue && this.maxAvailableTimestamp > this.lastProcessedTimestamp
                     ? this.maxAvailableTimestamp.Value
                     : this.lastProcessedTimestamp;
+                this.Log.Info("Last processing time stamp is set to {lastProcessedTimestamp}", this.lastProcessedTimestamp);
                 this.EmitMultiple(this.source.Out, this.changes);
 
                 this.changes = Enumerable.Empty<List<DataCell>>();
