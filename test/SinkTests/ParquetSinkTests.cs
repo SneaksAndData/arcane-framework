@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Akka.Streams;
 using Akka.Streams.Dsl;
 using Akka.Util;
+using Arcane.Framework.Services.Base;
 using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Tests.Fixtures;
@@ -47,7 +51,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
             .ReturnsAsync(new UploadedBlob());
 
         await Source.From(Enumerable.Range(0, blocks).Select(_ => columns.ToList())).RunWith(
-            ParquetSink.Create(schema, this.mockBlobStorageService.Object, $"tmp@{pathString}",
+            ParquetSink.Create(schema, this.mockBlobStorageService.Object, Mock.Of<IInterruptionToken>(), $"tmp@{pathString}",
                 new StreamMetadata(Option<StreamPartition[]>.None),
                 rowGroupsPerBlock, createSchemaFile, dropCompletionToken: dropCompletionToken),
             this.akkaFixture.Materializer);
@@ -82,6 +86,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
 
         var sink = ParquetSink.Create(schema,
             this.mockBlobStorageService.Object,
+            Mock.Of<IInterruptionToken>(),
             basePath,
             new StreamMetadata(Option<StreamPartition[]>.None),
             5,
@@ -124,6 +129,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
             });
         var sink = ParquetSink.Create(schema,
             this.mockBlobStorageService.Object,
+            Mock.Of<IInterruptionToken>(),
             basePath,
             metadata,
             5,
@@ -155,6 +161,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
         var source = Source.From(Enumerable.Range(0, 10).Select(_ => columns.ToList()));
 
         var sink = ParquetSink.Create(parquetSchema: schema,
+            interruptionToken: Mock.Of<IInterruptionToken>(),
             storageWriter: this.mockBlobStorageService.Object,
             parquetFilePath: "s3a://bucket/object",
             streamMetadata: new StreamMetadata(Option<StreamPartition[]>.None),
@@ -192,6 +199,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
         var sink = ParquetSink.Create(
             schema,
             this.mockBlobStorageService.Object,
+            Mock.Of<IInterruptionToken>(),
             $"tmp@{pathString}",
             new StreamMetadata(Option<StreamPartition[]>.None),
             4,
@@ -229,6 +237,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
         var sink = ParquetSink.Create(
             schema,
             this.mockBlobStorageService.Object,
+            Mock.Of<IInterruptionToken>(),
             $"tmp@{pathString}",
             new StreamMetadata(Option<StreamPartition[]>.None),
             4,
@@ -244,6 +253,57 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
         );
 
         Assert.Equal("expected exception", ex.Message);
+        this.mockBlobStorageService.Verify(
+            mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
+                It.Is<string>(fn => fn.EndsWith(".COMPLETED")), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ParquetSinkDoesNotDropCompletionTokenOnBackfillCompletion(bool dropCompletionToken)
+    {
+        var columns = Enumerable.Range(0, 10)
+            .Select(ixCol => new DataColumn(new DataField<int?>(ixCol.ToString()), Enumerable.Range(0, 10).ToArray()))
+            .ToArray();
+
+        var pathString = Guid.NewGuid().ToString();
+        var schema = new Schema(columns.Select(c => c.Field).ToList());
+
+        var cts = new CancellationTokenSource();
+        var callCount = 0;
+        this.mockBlobStorageService.Setup(mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(),
+                It.Is<string>(p => p.Contains(pathString)), It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(() =>
+            {
+                if (callCount++ == 3)
+                {
+                    cts.Cancel();
+                }
+                return new UploadedBlob();
+            });
+
+        var interruptionMock = new Mock<IInterruptionToken>();
+        interruptionMock.Setup(i => i.IsInterrupted).Returns(true);
+        var sink = ParquetSink.Create(
+            schema,
+            this.mockBlobStorageService.Object,
+            interruptionMock.Object,
+            $"tmp@{pathString}",
+            new StreamMetadata(Option<StreamPartition[]>.None),
+            4,
+            true,
+            dropCompletionToken: dropCompletionToken);
+
+        var graph = Source.Repeat(columns.ToList())
+            .ViaMaterialized(KillSwitches.Single<List<DataColumn>>(), Keep.Right)
+            .ToMaterialized(sink, Keep.Both);
+
+        var (ks, task) = graph.Run(this.akkaFixture.Materializer);
+        await Task.Delay(5 * 1000);
+        ks.Shutdown();
+        await task;
+
         this.mockBlobStorageService.Verify(
             mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
                 It.Is<string>(fn => fn.EndsWith(".COMPLETED")), It.IsAny<bool>()), Times.Never);

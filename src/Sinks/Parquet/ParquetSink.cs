@@ -6,12 +6,14 @@ using Akka;
 using Akka.Actor;
 using Akka.Event;
 using Akka.Streams;
+using Akka.Streams.Dsl;
 using Akka.Streams.Stage;
 using Arcane.Framework.Sinks.Extensions;
 using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Services.Base;
 using Akka.Util;
 using Akka.Util.Extensions;
+using Arcane.Framework.Services.Base;
 using Parquet;
 using Parquet.Data;
 using Snd.Sdk.Storage.Base;
@@ -37,13 +39,23 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     private readonly string metadataSinkPathSegment;
     private readonly IBlobStorageWriter storageWriter;
     private readonly StreamMetadata metadata;
+    private readonly IInterruptionToken interruptionToken;
 
     /// <summary>
     /// Creates a new instance of <see cref="ParquetSink"/>
     /// </summary>
-    private ParquetSink(Schema parquetSchema, IBlobStorageWriter storageWriter, string parquetFilePath,
-        int rowGroupsPerFile, bool createSchemaFile, bool partitionByDate, string dataSinkPathSegment,
-        string schemaSinkPathSegment, bool dropCompletionToken, StreamMetadata streamMetadata, string metadataSinkPathSegment)
+    private ParquetSink(Schema parquetSchema,
+        IBlobStorageWriter storageWriter,
+        string parquetFilePath,
+        int rowGroupsPerFile,
+        bool createSchemaFile,
+        bool partitionByDate,
+        string dataSinkPathSegment,
+        string schemaSinkPathSegment,
+        bool dropCompletionToken,
+        StreamMetadata streamMetadata,
+        string metadataSinkPathSegment,
+        IInterruptionToken interruptionToken)
     {
         this.parquetSchema = parquetSchema;
         this.storageWriter = storageWriter;
@@ -59,6 +71,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
         this.metadataSinkPathSegment = metadataSinkPathSegment;
         this.dropCompletionToken = dropCompletionToken;
         this.metadata = streamMetadata;
+        this.interruptionToken = interruptionToken;
 
         this.Shape = new SinkShape<List<ParquetColumn>>(this.In);
     }
@@ -88,15 +101,24 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
     /// <param name="dropCompletionToken">True if sink should drop a file when complete.</param>
     /// <param name="streamMetadata">Metadata that describes data produced by the stream</param>
     /// <param name="metadataSinkPathSegment">Folder name to emit metadata</param>
+    /// <param name="interruptionToken">Provides information about streaming container interrupteion</param>
     /// <returns></returns>
-    public static ParquetSink Create(Schema parquetSchema, IBlobStorageWriter storageWriter, string parquetFilePath,
-        StreamMetadata streamMetadata, int rowGroupsPerFile = 1, bool createSchemaFile = false,
-        bool partitionByDate = false, string dataSinkPathSegment = "data", string schemaSinkPathSegment = "schema",
-        bool dropCompletionToken = false, string metadataSinkPathSegment = "metadata")
+    public static ParquetSink Create(Schema parquetSchema,
+        IBlobStorageWriter storageWriter,
+        IInterruptionToken interruptionToken,
+        string parquetFilePath,
+        StreamMetadata streamMetadata,
+        int rowGroupsPerFile = 1,
+        bool createSchemaFile = false,
+        bool partitionByDate = false,
+        string dataSinkPathSegment = "data",
+        string schemaSinkPathSegment = "schema",
+        bool dropCompletionToken = false,
+        string metadataSinkPathSegment = "metadata")
     {
         return new ParquetSink(parquetSchema, storageWriter, parquetFilePath, rowGroupsPerFile, createSchemaFile,
             partitionByDate, dataSinkPathSegment, schemaSinkPathSegment, dropCompletionToken, streamMetadata,
-            metadataSinkPathSegment);
+            metadataSinkPathSegment, interruptionToken);
     }
 
     /// <inheritdoc cref="GraphStageWithMaterializedValue{TShape,TMaterialized}.CreateLogicAndMaterializedValue"/>
@@ -118,6 +140,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
 
         private bool writeInProgress;
         private readonly IMetadataWriter metadataWriter;
+        private readonly IInterruptionToken interruptionToken;
 
         public SinkLogic(ParquetSink sink, TaskCompletionSource<NotUsed> taskCompletion) :
             base(sink.Shape)
@@ -132,6 +155,8 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
                 _ => Directive.Stop
             });
             this.writeInProgress = false;
+            this.interruptionToken = sink.interruptionToken;
+
 
             this.SetHandler(sink.In,
                 () => this.WriteRowGroup(this.Grab(sink.In)),
@@ -218,6 +243,11 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
 
         private Task<Option<UploadedBlob>> SaveCompletionToken()
         {
+            if (this.interruptionToken.IsInterrupted)
+            {
+                this.Log.Info("Stream was interrupted, not saving completion token");
+                return Task.FromResult(Option<UploadedBlob>.None);
+            }
             if (this.sink.dropCompletionToken)
                 // there seems to be an issue with Moq library and how it serializes BinaryData type
                 // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
