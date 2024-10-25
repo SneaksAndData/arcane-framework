@@ -167,8 +167,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task ParquetSinkDoesNotDropCompletionTokenOnFail(
-        bool dropCompletionToken)
+    public async Task ParquetSinkDoesNotDropCompletionTokenOnFail(bool dropCompletionToken)
     {
         var columns = Enumerable.Range(0, 10)
             .Select(ixCol => new DataColumn(new DataField<int?>(ixCol.ToString()), Enumerable.Range(0, 10).ToArray()))
@@ -184,7 +183,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
             {
                 if (callCount++ == 3)
                 {
-                    throw new Exception();
+                    throw new Exception("expected exception");
                 }
 
                 return new UploadedBlob();
@@ -199,12 +198,13 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
             true,
             dropCompletionToken: dropCompletionToken);
 
-        await Assert.ThrowsAsync<Exception>(async () => await Source
+        var ex = await Assert.ThrowsAsync<Exception>(async () => await Source
             .Repeat(columns.ToList())
             .Take(10)
             .RunWith(sink, this.akkaFixture.Materializer)
         );
 
+        Assert.Equal("expected exception", ex.Message);
         this.mockBlobStorageService.Verify(
             mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
                 It.Is<string>(fn => fn.EndsWith(".COMPLETED")), It.IsAny<bool>()), Times.Never);
@@ -213,8 +213,7 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task ParquetSinkDoesNotDropCompletionTokenOnUpstreamFail(
-        bool dropCompletionToken)
+    public async Task ParquetSinkDoesNotDropCompletionTokenOnUpstreamFail(bool dropCompletionToken)
     {
         var columns = Enumerable.Range(0, 10)
             .Select(ixCol => new DataColumn(new DataField<int?>(ixCol.ToString()), Enumerable.Range(0, 10).ToArray()))
@@ -237,13 +236,14 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
             dropCompletionToken: dropCompletionToken);
 
         var callCount = 0;
-        await Assert.ThrowsAsync<Exception>(async () => await Source
+        var ex = await Assert.ThrowsAsync<Exception>(async () => await Source
             .Repeat(columns.ToList())
             .Take(10)
-            .Select(c => callCount++ == 5 ? throw new Exception(): c)
+            .Select(c => callCount++ == 5 ? throw new Exception("expected exception"): c)
             .RunWith(sink, this.akkaFixture.Materializer)
         );
 
+        Assert.Equal("expected exception", ex.Message);
         this.mockBlobStorageService.Verify(
             mb => mb.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.Is<string>(path => path.Contains(pathString)),
                 It.Is<string>(fn => fn.EndsWith(".COMPLETED")), It.IsAny<bool>()), Times.Never);
