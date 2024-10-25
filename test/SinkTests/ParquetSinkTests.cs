@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Akka;
 using Akka.Streams.Dsl;
 using Akka.Util;
 using Arcane.Framework.Sinks.Models;
@@ -152,11 +151,11 @@ public class ParquetSinkTests : IClassFixture<AkkaFixture>
         var schema = new Schema(columns.Select(c => c.Field).ToList());
         var source = Source.From(Enumerable.Range(0, 10).Select(_ => columns.ToList()));
 
-        var sink = ParquetSink.Create(schema,
-            this.mockBlobStorageService.Object,
-            "s3a://bucket/object",
-            1,
-            true,
+        var sink = ParquetSink.Create(parquetSchema: schema,
+            storageWriter: this.mockBlobStorageService.Object,
+            parquetFilePath: "s3a://bucket/object",
+            streamMetadata: new StreamMetadata(Option<StreamPartition[]>.None),
+            createSchemaFile: true,
             dropCompletionToken: true);
 
         await Assert.ThrowsAsync<Exception>(async () => await source.RunWith(sink, this.akkaFixture.Materializer));

@@ -103,7 +103,8 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
         var sink = MultilineJsonSink.Create(
             this.mockBlobStorageService.Object,
             "s3a://bucket/object",
-            schema);
+            schema,
+            new StreamMetadata(Option<StreamPartition[]>.None));
 
         await Assert.ThrowsAsync<Exception>(async () => await source
             .Select(v => v.ToList())
