@@ -82,13 +82,12 @@ public class HostBuilderExtensionsTests
         Assert.Equal(expectedExitCode, exitCode);
     }
 
-
     public static IEnumerable<object[]> GenerateExceptionTestCases()
     {
-        yield return new object[] { new SchemaInconsistentException(1, 2), ExitCodes.RESTART };
-        yield return new object[] { new SchemaMismatchException(), ExitCodes.SUCCESS };
-        yield return new object[] { new Exception(), ExitCodes.FATAL };
-        yield return new object[] { new DivideByZeroException(), 35 };
+        yield return [new SchemaInconsistentException(1, 2), ExitCodes.RESTART];
+        yield return [new SchemaMismatchException(), ExitCodes.SUCCESS];
+        yield return [new Exception(), ExitCodes.FATAL];
+        yield return [new DivideByZeroException(), 35];
     }
 
     private static StreamingHostBuilderContext CreateContext()
@@ -99,5 +98,31 @@ public class HostBuilderExtensionsTests
             StreamId = "StreamId",
             StreamKind = "StreamKind"
         };
+    }
+
+    [Fact]
+    public async Task TestCancellationInBackfillMode()
+    {
+        // Arrange
+        var mock = new Mock<IStreamLifetimeService>();
+        mock.Setup(x => x.IsStopRequested).Returns(true);
+        var host = new HostBuilder()
+            .ConfigureRequiredServices(
+                    getStreamGraphBuilder: services => services.AddStreamGraphBuilder<TestGraphBuilder>(_ => new TestStreamContext(true),
+                    getStreamStatusService: _ => this.streamStatusServiceMock.Object,
+                    getStreamHostContextBuilder: CreateContext),
+                getStreamLifetimeService: _ => mock.Object,
+                getStreamHostContextBuilder: CreateContext)
+            .Build();
+
+        // Act
+        var runnerTask = host.RunStream(Mock.Of<Serilog.ILogger>());
+        var runnerService = host.Services.GetRequiredService<IStreamRunnerService>();
+        await Task.Delay(5000);
+        runnerService.StopStream();
+        var exitCode = await runnerTask;
+
+        // Assert
+        Assert.Equal(ExitCodes.RESTART, exitCode);
     }
 }

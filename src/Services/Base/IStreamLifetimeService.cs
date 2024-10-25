@@ -14,4 +14,9 @@ public interface IStreamLifetimeService: IDisposable
     /// <param name="posixSignal">POSIX signal</param>
     /// <returns></returns>
     void AddStreamTerminationSignal(PosixSignal posixSignal);
+
+    /// <summary>
+    /// Returns true if a stop request has been made
+    /// </summary>
+    bool IsStopRequested { get; }
 }

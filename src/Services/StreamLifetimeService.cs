@@ -38,9 +38,17 @@ internal class StreamLifetimeService: IStreamLifetimeService
         this.registrations.Add(PosixSignalRegistration.Create(posixSignal, this.StopStream));
     }
 
+    /// <inheritdoc cref="IStreamLifetimeService.IsStopRequested"/>>
+    public bool IsStopRequested { get; private set; }
+
+    /// <summary>
+    /// Stops the stream and sets the stop requested flag.
+    /// </summary>
+    /// <param name="context">Posix signal context</param>
     private void StopStream(PosixSignalContext context)
     {
         context.Cancel = true;
+        this.IsStopRequested = true;
         this.logger.LogInformation("Received a signal {signal}. Stopping the hosted stream and shutting down application", context.Signal);
         this.streamRunnerService.StopStream();
     }
