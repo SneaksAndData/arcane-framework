@@ -41,6 +41,9 @@ internal class StreamLifetimeService: IStreamLifetimeService
     /// <inheritdoc cref="IStreamLifetimeService.IsStopRequested"/>>
     public bool IsStopRequested { get; private set; }
 
+    /// <inheritdoc cref="IStreamLifetimeService.IsStopRequested"/>>
+    public bool IsInterrupted => this.IsStopRequested;
+
     /// <summary>
     /// Stops the stream and sets the stop requested flag.
     /// </summary>
