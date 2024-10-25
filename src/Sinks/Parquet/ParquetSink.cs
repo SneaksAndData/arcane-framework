@@ -10,6 +10,8 @@ using Akka.Streams.Stage;
 using Arcane.Framework.Sinks.Extensions;
 using Arcane.Framework.Sinks.Models;
 using Arcane.Framework.Sinks.Services.Base;
+using Akka.Util;
+using Akka.Util.Extensions;
 using Parquet;
 using Parquet.Data;
 using Snd.Sdk.Storage.Base;
@@ -187,7 +189,7 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
             return $"{this.sink.path}/{this.sink.metadataSinkPathSegment}";
         }
 
-        private Task<UploadedBlob> CreateSchemaFile()
+        private Task<Option<UploadedBlob>> CreateSchemaFile()
         {
             var (fullHash, shortHash, schemaBytes) = this.sink.parquetSchema.GetSchemaHash();
             this.schemaHash = shortHash;
@@ -200,29 +202,32 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
                     $"part-{schemaId}-{this.schemaHash}-chunk.parquet")
                 .Map(_ => this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes), this.GetSchemaPath(),
                     $"schema-{schemaId}-{this.schemaHash}.parquet"))
-                .Flatten();
+                .Flatten()
+                .TryMap(s => s.AsOption(), this.HandleError);
         }
 
-        private Task<UploadedBlob> SavePart()
+        private Task<Option<UploadedBlob>> SavePart()
         {
             return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
                 this.GetSavePath(),
                 string.IsNullOrEmpty(this.schemaHash)
                     ? $"part-{Guid.NewGuid()}-chunk.parquet"
-                    : $"part-{Guid.NewGuid()}-{this.schemaHash}-chunk.parquet");
+                    : $"part-{Guid.NewGuid()}-{this.schemaHash}-chunk.parquet")
+                .TryMap(s => s.AsOption(), this.HandleError);
         }
 
-        private Task<UploadedBlob> SaveCompletionToken()
+        private Task<Option<UploadedBlob>> SaveCompletionToken()
         {
             if (this.sink.dropCompletionToken)
                 // there seems to be an issue with Moq library and how it serializes BinaryData type
                 // in order to have consistent behaviour between units and actual runs we write byte 0 to the file
             {
                 return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }), this.GetSavePath(),
-                    $"{this.schemaHash}.COMPLETED");
+                    $"{this.schemaHash}.COMPLETED")
+                .TryMap(s => s.AsOption(), this.HandleError);
             }
 
-            return Task.FromResult(new UploadedBlob());
+            return Task.FromResult(Option<UploadedBlob>.None);
         }
 
         private void WriteRowGroup(List<ParquetColumn> parquetColumns)
@@ -317,6 +322,23 @@ public class ParquetSink : GraphStageWithMaterializedValue<SinkShape<List<Parque
             {
                 this.Pull(this.sink.In);
             }
+        }
+
+        private Option<UploadedBlob> HandleError(Exception ex)
+        {
+            var directive = this.decider.Decide(ex);
+            switch (directive)
+            {
+                case Directive.Stop:
+                case Directive.Restart:
+                case Directive.Escalate:
+                    this.taskCompletion.TrySetException(ex);
+                    this.FailStage(ex);
+                    return Option<UploadedBlob>.None;
+                case Directive.Resume:
+                    return Option<UploadedBlob>.None;
+            }
+            return Option<UploadedBlob>.None;
         }
     }
 }

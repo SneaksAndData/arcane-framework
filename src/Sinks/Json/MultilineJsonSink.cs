@@ -10,6 +10,8 @@ using Akka.Streams;
 using Akka.Streams.Stage;
 using Arcane.Framework.Sinks.Extensions;
 using Arcane.Framework.Sinks.Models;
+using Akka.Util;
+using Akka.Util.Extensions;
 using Arcane.Framework.Sinks.Parquet;
 using Arcane.Framework.Sinks.Services.Base;
 using Parquet.Data;
@@ -166,7 +168,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             this.CreateSchemaFile().ContinueWith(_ => this.GetAsyncCallback(() => this.Pull(this.sink.In)).Invoke());
         }
 
-        private Task<UploadedBlob> CreateSchemaFile()
+        private Task<Option<UploadedBlob>> CreateSchemaFile()
         {
             var (fullHash, shortHash, schemaBytes) = this.sink.sinkSchema.GetSchemaHash();
             this.schemaHash = shortHash;
@@ -177,19 +179,21 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             // Save empty file to base output location and schema store
             return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(schemaBytes),
                 $"{this.sink.jsonSinkPath}/{this.sink.schemaPathSegment}",
-                $"schema-{schemaId}-{this.schemaHash}.parquet");
+                $"schema-{schemaId}-{this.schemaHash}.parquet")
+                .TryMap(s => s.AsOption(), this.HandleError);
         }
 
-        private Task<UploadedBlob> SavePart()
+        private Task<Option<UploadedBlob>> SavePart()
         {
             if (this.memoryStream.ToArray().Length > 0)
             {
                 return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(this.memoryStream.ToArray()),
                     $"{this.sink.jsonSinkPath}/{this.sink.dataPathSegment}",
-                    $"part-{Guid.NewGuid()}-{this.schemaHash}.json");
+                    $"part-{Guid.NewGuid()}-{this.schemaHash}.json")
+                    .TryMap(s => s.AsOption(), this.HandleError);
             }
 
-            return Task.FromResult(new UploadedBlob());
+            return Task.FromResult(Option<UploadedBlob>.None);
         }
 
         private string GetMetadataPath()
@@ -197,7 +201,7 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             return $"{this.sink.jsonSinkPath}/{this.sink.metadataSinkPathSegment}";
         }
 
-        private Task<UploadedBlob> SaveCompletionToken()
+        private Task<Option<UploadedBlob>> SaveCompletionToken()
         {
             if (this.sink.dropCompletionToken)
                 // there seems to be an issue with Moq library and how it serializes BinaryData type
@@ -205,10 +209,11 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             {
                 return this.sink.storageWriter.SaveBytesAsBlob(new BinaryData(new byte[] { 0 }),
                     $"{this.sink.jsonSinkPath}/{this.sink.dataPathSegment}",
-                    $"{this.schemaHash}.COMPLETED");
+                    $"{this.schemaHash}.COMPLETED")
+                    .TryMap(s => s.AsOption(), this.HandleError);
             }
 
-            return Task.FromResult(new UploadedBlob());
+            return Task.FromResult(Option<UploadedBlob>.None);
         }
 
         private void WriteJson(List<JsonElement> batch)
@@ -278,6 +283,23 @@ public class MultilineJsonSink : GraphStageWithMaterializedValue<SinkShape<List<
             {
                 this.Pull(this.sink.In);
             }
+        }
+
+        private Option<UploadedBlob> HandleError(Exception ex)
+        {
+            var directive = this.decider.Decide(ex);
+            switch (directive)
+            {
+                case Directive.Stop:
+                case Directive.Restart:
+                case Directive.Escalate:
+                    this.taskCompletion.TrySetException(ex);
+                    this.FailStage(ex);
+                    return Option<UploadedBlob>.None;
+                case Directive.Resume:
+                    return Option<UploadedBlob>.None;
+            }
+            return Option<UploadedBlob>.None;
         }
     }
 }

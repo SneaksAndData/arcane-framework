@@ -85,6 +85,33 @@ public class MultilineJsonSinkTest : IClassFixture<AkkaFixture>
     }
 
     [Fact]
+    public async Task HandleSchemaFailures()
+    {
+        this.mockBlobStorageService
+            .Setup(s => s.SaveBytesAsBlob(It.IsAny<BinaryData>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<bool>()))
+            .ThrowsAsync(new Exception());
+
+        var columns = Enumerable
+            .Range(0, 10)
+            .Select(_ => Enumerable.Range(0, 10).Select(ix => JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(new { Value = ix }))))
+            .ToList();
+
+        var schema = new Schema(new DataField("test", DataType.Int32));
+        var source = Source.From(columns);
+
+        var sink = MultilineJsonSink.Create(
+            this.mockBlobStorageService.Object,
+            "s3a://bucket/object",
+            schema,
+            new StreamMetadata(Option<StreamPartition[]>.None));
+
+        await Assert.ThrowsAsync<Exception>(async () => await source
+            .Select(v => v.ToList())
+            .RunWith(sink, this.akkaFixture.Materializer));
+    }
+
+    [Fact]
     public async Task RemovesEmptyStreamMetadata()
     {
         var basePath = "s3a://bucket/path";
