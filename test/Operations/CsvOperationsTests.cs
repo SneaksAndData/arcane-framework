@@ -1,5 +1,5 @@
 ﻿using System;
-using Arcane.Framework.Sources.CdmChangeFeedSource.Extensions;
+using Arcane.Framework.Sources.Extensions;
 using Xunit;
 
 namespace Arcane.Framework.Tests.Operations;
