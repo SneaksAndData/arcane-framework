@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="SnD.Sdk" Version="1.1.20" />
+        <PackageReference Include="SnD.Sdk" Version="1.2.9" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2"/>
         <PackageReference Include="Parquet.Net" Version="3.9.1"/>
         <PackageReference Include="Microsoft.OpenApi" Version="1.6.15"/>
