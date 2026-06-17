@@ -39,7 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           version=$(git describe --tags --abbrev=7 | tr -d "v")
           dotnet pack --configuration Release Arcane.Framework.csproj
 
